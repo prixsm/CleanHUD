@@ -1,0 +1,52 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="source\Main.cpp" />
+    <ClCompile Include="HUDElement.cpp">
+      <Filter>Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="CallPatch.cpp">
+      <Filter>Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="HUDManager.cpp">
+      <Filter>Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="VisibilityTimer.cpp">
+      <Filter>Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="HUDComponent.cpp">
+      <Filter>Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="PlayerHUDHook.cpp">
+      <Filter>Helpers</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Helpers">
+      <UniqueIdentifier>{83a76172-0dfe-4e61-8a1f-105bef652820}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="HUDElement.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="CallPatch.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="HUDPatch.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="HUDManager.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="VisibilityTimer.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="HUDComponent.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="PlayerHUDHook.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
