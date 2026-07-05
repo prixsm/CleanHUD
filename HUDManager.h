@@ -2,8 +2,8 @@
 
 #include <cstdint>
 #include <CPlayerPed.h>
-#include "HUDElement.h"
 #include "HUDComponent.h"
+#include "HUDElement.h"
 
 class HUDManager
 {
@@ -20,20 +20,14 @@ public:
 private:
 
     bool m_initialized = false;
-    
+
     struct ActiveWeaponState
     {
         eWeaponType WeaponType = WEAPONTYPE_UNARMED;
 
-        unsigned int AmmoInClip = 0;
-
-        unsigned int AmmoTotal = 0;
-
         bool operator==(const ActiveWeaponState& rhs) const
         {
-            return WeaponType == rhs.WeaponType &&
-                AmmoInClip == rhs.AmmoInClip &&
-                AmmoTotal == rhs.AmmoTotal;
+            return WeaponType == rhs.WeaponType;
         }
 
         bool operator!=(const ActiveWeaponState& rhs) const
@@ -42,7 +36,32 @@ private:
         }
     };
 
+    struct AmmoState
+    {
+        unsigned int AmmoInClip = 0;
+        unsigned int AmmoTotal = 0;
+
+        bool operator==(const AmmoState& rhs) const
+        {
+            return AmmoInClip == rhs.AmmoInClip &&
+                AmmoTotal == rhs.AmmoTotal;
+        }
+
+        bool operator!=(const AmmoState& rhs) const
+        {
+            return !(*this == rhs);
+        }
+    };
+
+    enum class BreathState
+    {
+        Hidden,
+        Underwater,
+        Surface
+    };
+
     ActiveWeaponState GetCurrentWeaponState() const;
+    AmmoState GetCurrentAmmoState() const;
 
     // Player state
     CPlayerPed* mPlayer = nullptr;
@@ -56,22 +75,19 @@ private:
     bool mWasDead = false;
 
     // HUD components
+    HUDComponent mClock;
     HUDComponent mHealth;
     HUDComponent mArmour;
+    HUDComponent mBreath;
     HUDComponent mMoney;
-
     HUDComponent mWeaponIcon;
     HUDComponent mAmmo;
-
-    HUDComponent mClock;
-    HUDComponent mBreath;
 
     // Health tracker
     float mLastHealth = 0.0f;
     float mPreviousHealth = 0.0f;
 
     bool mWaitingForStableHealth = false;
-
     int mHealthStableFrames = 0;
 
     // Armour tracker
@@ -79,23 +95,29 @@ private:
     float mPreviousArmour = 0.0f;
 
     bool mWaitingForStableArmour = false;
-
     int mArmourStableFrames = 0;
+
+    //Breath tracker
+    BreathState mBreathState = BreathState::Hidden;
+    float mLastBreathValue = 0.0f;
+    
+    bool mWatchingBreathRecovery = false;
+    int mBreathStableFrames = 0;
 
     // Money tracker
     int mLastMoney = 0;
     int mPreviousMoney = 0;
 
     bool mWaitingForStableMoney = false;
-
     int mMoneyStableFrames = 0;
 
-    // Weapon tracker
+    // Weapon Icon tracker
     ActiveWeaponState mLastWeaponState;
     bool mWaitingForStableWeapon = false;
     int mWeaponStableFrames = 0;
 
     // Ammo tracker
+    AmmoState mLastAmmoState;
     bool mWaitingForStableAmmo = false;
     int mAmmoStableFrames = 0;
 
@@ -103,13 +125,14 @@ private:
     bool UpdateArmourInitialization(float currentArmour);
     bool UpdateMoneyInitialization(int currentMoney);
     bool UpdateWeaponInitialization(const ActiveWeaponState& current);
+    bool UpdateAmmoInitialization(const AmmoState& current);
 
     bool HasHealthChanged(float currentHealth);
     bool HasArmourChanged(float currentArmour);
     bool HasMoneyChanged(int currentMoney);
     bool HasWeaponChanged(const ActiveWeaponState& current);
+    bool HasAmmoChanged(const AmmoState& current);
 
-    uint32_t mCurrentTime = 0;
     uint32_t mVisibleTime = 4000;
 
     void ResetSessionState();

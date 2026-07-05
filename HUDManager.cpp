@@ -1,27 +1,59 @@
 #include <common.h>
+#include <CClock.h>
+#include <CPad.h>
+#include <CPedIntelligence.h>
+#include <CPlayerData.h>
 #include <CPlayerInfo.h>
 #include <CPlayerPed.h>
+#include <CTaskSimpleSwim.h>
 #include <CTimer.h>
 #include <CWorld.h>
 #include "HUDManager.h"
 
+constexpr int BREATH_STABLE_FRAMES = 5;
+constexpr float BREATH_EPSILON = 0.05f;
+
 HUDManager::HUDManager() :
-    mClock(),
+    mClock({
+    HUDPatch::Clock
+        }),
     mHealth({
     HUDPatch::Health
         }),
     mArmour({
     HUDPatch::Armour
         }),
-    mBreath(),
+    mBreath({
+    HUDPatch::Breath1,
+    HUDPatch::Breath2
+        }),
     mMoney({
     HUDPatch::Money
         }),
     mWeaponIcon({
     HUDPatch::Weapon
         }),
-    mAmmo()
+    mAmmo({
+    HUDPatch::Ammo
+        })
 {
+}
+
+namespace
+{
+    bool IsUnderwaterSwimState(eSwimState state)
+    {
+        return state == SWIM_DIVE_UNDERWATER ||
+            state == SWIM_UNDERWATER_SPRINTING;
+    }
+
+    bool IsSurfaceSwimState(eSwimState state)
+    {
+        return state == SWIM_TREAD ||
+            state == SWIM_SPRINT ||
+            state == SWIM_SPRINTING ||
+            state == SWIM_BACK_TO_SURFACE;
+    }
 }
 
 HUDManager::ActiveWeaponState HUDManager::GetCurrentWeaponState() const
@@ -37,6 +69,22 @@ HUDManager::ActiveWeaponState HUDManager::GetCurrentWeaponState() const
         return state;
 
     state.WeaponType = weapon->m_eWeaponType;
+
+    return state;
+}
+
+HUDManager::AmmoState HUDManager::GetCurrentAmmoState() const
+{
+    AmmoState state;
+
+    if (!mPlayer)
+        return state;
+
+    const CWeapon* weapon = mPlayer->GetWeapon();
+
+    if (!weapon)
+        return state;
+
     state.AmmoInClip = weapon->m_nAmmoInClip;
     state.AmmoTotal = weapon->m_nAmmoTotal;
 
@@ -79,6 +127,18 @@ void HUDManager::Update()
 
     Initialize();
 
+    CPlayerData* playerData = mPlayer->m_pPlayerData;
+    CPad* pad = CPad::GetPad(0);
+
+    if (pad && pad->GetDisplayVitalStats(mPlayer))
+    {
+        mClock.Show();
+    }
+    else
+    {
+        mClock.Hide();
+    }
+
     if (mNeedsReset)
     {
         ResetSessionState();
@@ -110,11 +170,12 @@ void HUDManager::Update()
     // Update HUD components
     UpdateHealth();
     UpdateArmour();
+    UpdateBreath();
     UpdateMoney();
     UpdateWeaponIcon();
-    //UpdateAmmo();
-    //UpdateBreath();
-    //UpdateClock();
+    UpdateAmmo();
+
+    mClock.Update();
 }
 
 void HUDManager::ResetSessionState()
@@ -129,12 +190,20 @@ void HUDManager::ResetSessionState()
     mArmourStableFrames = 0;
     mWaitingForStableArmour = true;
 
+    mBreathState = BreathState::Hidden;
+    mWatchingBreathRecovery = false;
+    mLastBreathValue = 0.0f;
+    mBreathStableFrames = 0;
+
     mPreviousMoney = mLastMoney;
     mMoneyStableFrames = 0;
     mWaitingForStableMoney = true;
 
     mWeaponStableFrames = 0;
     mWaitingForStableWeapon = true;
+    
+    mAmmoStableFrames = 0;
+    mWaitingForStableAmmo = true;
 
     HideAll();
 }
@@ -147,8 +216,7 @@ void HUDManager::SyncTrackedValues()
 
     mWasDead = (mPlayer->m_fHealth <= 0.0f);
     mLastWeaponState = GetCurrentWeaponState();
-    // mLastAmmo
-    // mLastBreath
+    mLastAmmoState = GetCurrentAmmoState();
 }
 
 bool HUDManager::UpdateHealthInitialization(float currentHealth)
@@ -261,6 +329,29 @@ bool HUDManager::UpdateWeaponInitialization(const ActiveWeaponState& current)
     return false;
 }
 
+bool HUDManager::UpdateAmmoInitialization(const AmmoState& current)
+{
+    if (!mWaitingForStableAmmo)
+        return true;
+
+    if (current == mLastAmmoState)
+    {
+        mAmmoStableFrames++;
+
+        if (mAmmoStableFrames >= 2)
+            mWaitingForStableAmmo = false;
+    }
+    else
+    {
+        mAmmoStableFrames = 0;
+        mLastAmmoState = current;
+    }
+
+    mAmmo.Update();
+
+    return false;
+}
+
 bool HUDManager::HasHealthChanged(float currentHealth)
 {
     if (fabs(currentHealth - mLastHealth) <= 0.01f)
@@ -296,6 +387,16 @@ bool HUDManager::HasWeaponChanged(const ActiveWeaponState& current)
         return false;
 
     mLastWeaponState = current;
+
+    return true;
+}
+
+bool HUDManager::HasAmmoChanged(const AmmoState& current)
+{
+    if (current == mLastAmmoState)
+        return false;
+
+    mLastAmmoState = current;
 
     return true;
 }
@@ -336,6 +437,104 @@ void HUDManager::UpdateArmour()
     mArmour.Update();
 }
 
+void HUDManager::UpdateBreath()
+{
+    if (!mPlayer || !mPlayer->m_pPlayerData)
+        return;
+
+    auto* data = mPlayer->m_pPlayerData;
+    const float breath = data->m_fBreath;
+    CTaskSimpleSwim* swim = nullptr;
+
+    if (mPlayer->m_pIntelligence)
+    {
+        swim = mPlayer->m_pIntelligence->GetTaskSwim();
+    }
+
+    if (!swim)
+    {
+        mBreathState = BreathState::Hidden;
+        mBreath.Hide();
+        mBreath.Update();
+        return;
+    }
+
+    const eSwimState swimState = swim->m_nSwimState;
+
+    switch (mBreathState)
+    {
+    case BreathState::Hidden:
+    {
+        if (IsUnderwaterSwimState(swimState))
+        {
+            mBreath.Show();
+
+            mBreathState = BreathState::Underwater;
+        }
+
+        break;
+    }
+
+    case BreathState::Underwater:
+    {
+        mBreath.Show();
+
+        if (IsSurfaceSwimState(swimState))
+        {
+            mWatchingBreathRecovery = true;
+            mLastBreathValue = breath;
+            mBreathStableFrames = 0;
+
+            mBreathState = BreathState::Surface;
+        }
+
+        break;
+    }
+
+    case BreathState::Surface:
+    {
+        mBreath.Show();
+
+        if (IsUnderwaterSwimState(swimState))
+        {
+            mWatchingBreathRecovery = false;
+
+            mBreath.Show();
+
+            mBreathState = BreathState::Underwater;
+
+            break;
+        }
+
+        if (mWatchingBreathRecovery)
+        {
+            if (fabs(breath - mLastBreathValue) > BREATH_EPSILON)
+            {
+                mLastBreathValue = breath;
+                mBreathStableFrames = 0;
+            }
+            else
+            {
+                mBreathStableFrames++;
+
+                if (mBreathStableFrames >= BREATH_STABLE_FRAMES)
+                {
+                    mWatchingBreathRecovery = false;
+
+                    mBreath.ShowFor(mVisibleTime);
+
+                    mBreathState = BreathState::Hidden;
+                }
+            }
+        }
+
+        break;
+    }
+    }
+
+    mBreath.Update();
+}
+
 void HUDManager::UpdateMoney()
 {
     const auto& playerInfo = CWorld::Players[CWorld::PlayerInFocus];
@@ -367,9 +566,28 @@ void HUDManager::UpdateWeaponIcon()
         return;
 
     if (HasWeaponChanged(current))
+    {
         mWeaponIcon.ShowFor(mVisibleTime);
+        mAmmo.ShowFor(mVisibleTime);
+    }
 
     mWeaponIcon.Update();
+}
+
+void HUDManager::UpdateAmmo()
+{
+    AmmoState current = GetCurrentAmmoState();
+
+    if (!UpdateAmmoInitialization(current))
+        return;
+
+    if (HasAmmoChanged(current))
+    {
+        mAmmo.ShowFor(mVisibleTime);
+        mWeaponIcon.ShowFor(mVisibleTime);
+    }
+
+    mAmmo.Update();
 }
 
 void HUDManager::HideAll()

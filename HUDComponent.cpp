@@ -22,13 +22,18 @@ void HUDComponent::ShowFor(uint32_t milliseconds)
 
 void HUDComponent::Hide()
 {
+    mTimer.Hide();
     mElement.Hide();
 }
 
 void HUDComponent::Reset()
 {
-    mTimer.Reset();
-    mElement.Hide();
+    Hide();
+}
+
+void HUDComponent::Show()
+{
+    mTimer.Show();
 }
 
 void HUDComponent::Update()

@@ -12,6 +12,10 @@ public:
 
     void Reset();
 
+    void Show();
+
+    void Hide();
+
 private:
     uint32_t mVisibleUntil = 0;
 };

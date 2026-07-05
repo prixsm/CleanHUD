@@ -18,6 +18,8 @@ public:
 
     void Reset();
 
+    void Show();
+
     void Update();
 
 private:

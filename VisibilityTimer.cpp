@@ -14,7 +14,17 @@ bool VisibilityTimer::Visible() const
         CTimer::m_snTimeInMilliseconds < mVisibleUntil;
 }
 
-void VisibilityTimer::Reset()
+void VisibilityTimer::Hide()
 {
     mVisibleUntil = 0;
+}
+
+void VisibilityTimer::Reset()
+{
+    Hide();
+}
+
+void VisibilityTimer::Show()
+{
+    mVisibleUntil = UINT32_MAX;
 }
