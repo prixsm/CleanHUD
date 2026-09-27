@@ -4,11 +4,11 @@
 #include "HUDPatch.h"
 #include "CallPatch.h"
 
-class HUDElement
+class HUDPatchGroup
 {
 public:
 
-    HUDElement(std::initializer_list<HUDPatch::Call> patches);
+    HUDPatchGroup(std::initializer_list<HUDPatch::Call> patches);
 
     void Show();
     void Hide();

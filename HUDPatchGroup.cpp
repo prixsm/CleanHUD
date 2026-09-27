@@ -1,14 +1,14 @@
-#include "HUDElement.h"
 #include "HUDPatch.h"
+#include "HUDPatchGroup.h"
 
-HUDElement::HUDElement(std::initializer_list<HUDPatch::Call> patches)
+HUDPatchGroup::HUDPatchGroup(std::initializer_list<HUDPatch::Call> patches)
     : m_visible(false)
 {
     for (auto& patch : patches)
         m_patches.emplace_back(patch);
 }
 
-void HUDElement::Show()
+void HUDPatchGroup::Show()
 {
     if (m_visible)
         return;
@@ -19,7 +19,7 @@ void HUDElement::Show()
     m_visible = true;
 }
 
-void HUDElement::Hide()
+void HUDPatchGroup::Hide()
 {
     if (!m_visible)
         return;
@@ -30,7 +30,7 @@ void HUDElement::Hide()
     m_visible = false;
 }
 
-bool HUDElement::IsVisible() const
+bool HUDPatchGroup::IsVisible() const
 {
     return m_visible;
 }

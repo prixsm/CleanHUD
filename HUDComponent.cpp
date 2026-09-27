@@ -1,18 +1,26 @@
 #include "HUDComponent.h"
+#include "HUDLayout.h"
 
-HUDComponent::HUDComponent(std::initializer_list<HUDPatch::Call> patches)
-    : mElement(patches)
+HUDComponent::HUDComponent(HUDComponentType type, std::initializer_list<HUDPatch::Call> patches)
+    : mType(type), mPatches(patches)
 {
 }
 
+HUDComponentType HUDComponent::GetType() const
+{
+    return mType;
+}
+
 HUDComponent::HUDComponent()
-    : mElement({})
+    :
+    mType(HUDComponentType::Health),
+    mPatches({})
 {
 }
 
 bool HUDComponent::IsVisible() const
 {
-    return mElement.IsVisible();
+    return mPatches.IsVisible();
 }
 
 void HUDComponent::ShowFor(uint32_t milliseconds)
@@ -23,7 +31,7 @@ void HUDComponent::ShowFor(uint32_t milliseconds)
 void HUDComponent::Hide()
 {
     mTimer.Hide();
-    mElement.Hide();
+    mPatches.Hide();
 }
 
 void HUDComponent::Reset()
@@ -39,7 +47,7 @@ void HUDComponent::Show()
 void HUDComponent::Update()
 {
     if (mTimer.Visible())
-        mElement.Show();
+        mPatches.Show();
     else
-        mElement.Hide();
+        mPatches.Hide();
 }

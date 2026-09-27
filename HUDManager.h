@@ -1,16 +1,21 @@
 #pragma once
 
 #include <cstdint>
+
 #include <CPlayerPed.h>
+
 #include "HUDComponent.h"
-#include "HUDElement.h"
+#include "HUDLayout.h"
 
 class HUDManager
 {
 public:
     HUDManager();
 
+    bool HasWantedLevel() const;
     bool IsPlayerHUDInitialized() const;
+    bool IsUsingVanillaLayout() const;
+
     void Initialize();
     void OnGameLoaded();
     void Update();
@@ -55,9 +60,9 @@ private:
 
     enum class BreathState
     {
-        Hidden,
+        Idle,
         Underwater,
-        Surface
+        WaitingForRecovery
     };
 
     ActiveWeaponState GetCurrentWeaponState() const;
@@ -82,6 +87,9 @@ private:
     HUDComponent mMoney;
     HUDComponent mWeaponIcon;
     HUDComponent mAmmo;
+    HUDComponent mWanted;
+    
+    HUDLayout mLayout;
 
     // Health tracker
     float mLastHealth = 0.0f;
@@ -98,8 +106,8 @@ private:
     int mArmourStableFrames = 0;
 
     //Breath tracker
-    BreathState mBreathState = BreathState::Hidden;
-    float mLastBreathValue = 0.0f;
+    BreathState mBreathState = BreathState::Idle;
+    float mHighestBreathValue = 0.0f;
     
     bool mWatchingBreathRecovery = false;
     int mBreathStableFrames = 0;
@@ -133,6 +141,8 @@ private:
     bool HasWeaponChanged(const ActiveWeaponState& current);
     bool HasAmmoChanged(const AmmoState& current);
 
+    bool IsBreathRecoveryComplete(float currentBreath);
+
     uint32_t mVisibleTime = 4000;
 
     void ResetSessionState();
@@ -144,6 +154,9 @@ private:
     void UpdateMoney();
     void UpdateWeaponIcon();
     void UpdateAmmo();
+    void UpdateWanted();
+
+    void BuildPlayerHUDLayout();
 
     void HideAll();
 };

@@ -1,4 +1,5 @@
 #include "CallPatch.h"
+
 #include <plugin.h>
 
 using namespace plugin;

@@ -2,51 +2,125 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="source\Main.cpp" />
-    <ClCompile Include="HUDElement.cpp">
-      <Filter>Helpers</Filter>
-    </ClCompile>
     <ClCompile Include="CallPatch.cpp">
-      <Filter>Helpers</Filter>
+      <Filter>Patches</Filter>
     </ClCompile>
-    <ClCompile Include="HUDManager.cpp">
-      <Filter>Helpers</Filter>
+    <ClCompile Include="HUDPatchGroup.cpp">
+      <Filter>Patches</Filter>
+    </ClCompile>
+    <ClCompile Include="ArmourRenderHook.cpp">
+      <Filter>Render\Hooks</Filter>
+    </ClCompile>
+    <ClCompile Include="HealthRenderHook.cpp">
+      <Filter>Render\Hooks</Filter>
+    </ClCompile>
+    <ClCompile Include="HUDLayout.cpp">
+      <Filter>Layout</Filter>
+    </ClCompile>
+    <ClCompile Include="HUDMetrics.cpp">
+      <Filter>Render</Filter>
+    </ClCompile>
+    <ClCompile Include="HUDRenderer.cpp">
+      <Filter>Render</Filter>
     </ClCompile>
     <ClCompile Include="VisibilityTimer.cpp">
-      <Filter>Helpers</Filter>
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="HUDManager.cpp">
+      <Filter>Core</Filter>
     </ClCompile>
     <ClCompile Include="HUDComponent.cpp">
-      <Filter>Helpers</Filter>
+      <Filter>Core</Filter>
     </ClCompile>
-    <ClCompile Include="PlayerHUDHook.cpp">
-      <Filter>Helpers</Filter>
+    <ClCompile Include="PlayerHUDHook.cpp" />
+    <ClCompile Include="HUDRenderHooks.cpp">
+      <Filter>Render\Hooks</Filter>
+    </ClCompile>
+    <ClCompile Include="BreathRenderHook.cpp">
+      <Filter>Render\Hooks</Filter>
+    </ClCompile>
+    <ClCompile Include="MoneyRenderHook.cpp">
+      <Filter>Render\Hooks</Filter>
+    </ClCompile>
+    <ClCompile Include="WantedRenderHook.cpp">
+      <Filter>Render\Hooks</Filter>
+    </ClCompile>
+    <ClCompile Include="WeaponRenderHook.cpp">
+      <Filter>Render\Hooks</Filter>
+    </ClCompile>
+    <ClCompile Include="AmmoRenderHook.cpp">
+      <Filter>Render\Hooks</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Filter Include="Helpers">
-      <UniqueIdentifier>{83a76172-0dfe-4e61-8a1f-105bef652820}</UniqueIdentifier>
+    <Filter Include="Core">
+      <UniqueIdentifier>{cd8293fb-30cf-452f-b19d-02817072c68d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Layout">
+      <UniqueIdentifier>{df726f3b-3b4b-421d-8df8-7556a2740caa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Render">
+      <UniqueIdentifier>{67526be6-b3ba-49e7-ae88-6b8bb878c440}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Render\Hooks">
+      <UniqueIdentifier>{0442577b-0cb0-4af1-a51f-31a85453d81a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Patches">
+      <UniqueIdentifier>{0983eeff-48e6-4583-b29d-b08e78f6be2f}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="HUDElement.h">
-      <Filter>Helpers</Filter>
-    </ClInclude>
     <ClInclude Include="CallPatch.h">
-      <Filter>Helpers</Filter>
+      <Filter>Patches</Filter>
     </ClInclude>
     <ClInclude Include="HUDPatch.h">
-      <Filter>Helpers</Filter>
+      <Filter>Patches</Filter>
     </ClInclude>
-    <ClInclude Include="HUDManager.h">
-      <Filter>Helpers</Filter>
+    <ClInclude Include="HUDPatchGroup.h">
+      <Filter>Patches</Filter>
+    </ClInclude>
+    <ClInclude Include="ArmourRenderHook.h">
+      <Filter>Render\Hooks</Filter>
+    </ClInclude>
+    <ClInclude Include="HealthRenderHook.h">
+      <Filter>Render\Hooks</Filter>
+    </ClInclude>
+    <ClInclude Include="HUDLayout.h">
+      <Filter>Layout</Filter>
+    </ClInclude>
+    <ClInclude Include="HUDRenderer.h">
+      <Filter>Render</Filter>
+    </ClInclude>
+    <ClInclude Include="HUDMetrics.h">
+      <Filter>Render</Filter>
     </ClInclude>
     <ClInclude Include="VisibilityTimer.h">
-      <Filter>Helpers</Filter>
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="HUDManager.h">
+      <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="HUDComponent.h">
-      <Filter>Helpers</Filter>
+      <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="PlayerHUDHook.h">
-      <Filter>Helpers</Filter>
+    <ClInclude Include="PlayerHUDHook.h" />
+    <ClInclude Include="HUDRenderHooks.h">
+      <Filter>Render\Hooks</Filter>
+    </ClInclude>
+    <ClInclude Include="BreathRenderHook.h">
+      <Filter>Render\Hooks</Filter>
+    </ClInclude>
+    <ClInclude Include="MoneyRenderHook.h">
+      <Filter>Render\Hooks</Filter>
+    </ClInclude>
+    <ClInclude Include="WantedRenderHook.h">
+      <Filter>Render\Hooks</Filter>
+    </ClInclude>
+    <ClInclude Include="WeaponRenderHook.h">
+      <Filter>Render\Hooks</Filter>
+    </ClInclude>
+    <ClInclude Include="AmmoRenderHook.h">
+      <Filter>Render\Hooks</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

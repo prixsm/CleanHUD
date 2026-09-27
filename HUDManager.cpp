@@ -1,46 +1,64 @@
 #include <common.h>
 #include <CClock.h>
-#include <CPad.h>
 #include <CPedIntelligence.h>
 #include <CPlayerData.h>
 #include <CPlayerInfo.h>
 #include <CPlayerPed.h>
 #include <CTaskSimpleSwim.h>
 #include <CTimer.h>
+#include <CWanted.h>
 #include <CWorld.h>
-#include "HUDManager.h"
 
-constexpr int BREATH_STABLE_FRAMES = 5;
-constexpr float BREATH_EPSILON = 0.05f;
+#include "HUDManager.h"
+#include "HUDMetrics.h"
+#include "HUDRenderer.h"
 
 HUDManager::HUDManager() :
-    mClock({
-    HUDPatch::Clock
+    mClock(
+        HUDComponentType::Clock,
+        {
+            HUDPatch::Clock
         }),
-    mHealth({
-    HUDPatch::Health
+    mHealth(
+        HUDComponentType::Health,
+        {
+            HUDPatch::Health
         }),
-    mArmour({
-    HUDPatch::Armour
+    mArmour(
+        HUDComponentType::Armour,
+        {
+            HUDPatch::Armour
         }),
-    mBreath({
-    HUDPatch::Breath1,
-    HUDPatch::Breath2
+    mBreath(
+        HUDComponentType::Breath,
+        {
+            HUDPatch::Breath1,
+            HUDPatch::Breath2
         }),
-    mMoney({
-    HUDPatch::Money
+    mMoney(
+        HUDComponentType::Money,
+        {}),
+    mWeaponIcon(
+        HUDComponentType::Weapon,
+        {
+            HUDPatch::Weapon
         }),
-    mWeaponIcon({
-    HUDPatch::Weapon
+    mAmmo(
+        HUDComponentType::Ammo,
+        {
+            HUDPatch::Ammo
         }),
-    mAmmo({
-    HUDPatch::Ammo
-        })
+    mWanted(
+        HUDComponentType::Wanted,
+        {})
 {
 }
 
 namespace
 {
+    constexpr float BREATH_EPSILON = 0.05f;
+    constexpr int BREATH_STABLE_FRAMES = 5;
+
     bool IsUnderwaterSwimState(eSwimState state)
     {
         return state == SWIM_DIVE_UNDERWATER ||
@@ -91,9 +109,23 @@ HUDManager::AmmoState HUDManager::GetCurrentAmmoState() const
     return state;
 }
 
+bool HUDManager::HasWantedLevel() const
+{
+    if (!mPlayer || !mPlayer->m_pPlayerData)
+        return false;
+
+    return mPlayer->m_pPlayerData->m_pWanted &&
+        mPlayer->m_pPlayerData->m_pWanted->m_nWantedLevel > 0;
+}
+
 bool HUDManager::IsPlayerHUDInitialized() const
 {
     return mSessionInitialized;
+}
+
+bool HUDManager::IsUsingVanillaLayout() const
+{
+    return GetAsyncKeyState(VK_TAB) & 0x8000;
 }
 
 void HUDManager::Initialize()
@@ -106,15 +138,12 @@ void HUDManager::Initialize()
 
 void HUDManager::OnGameLoaded()
 {
-    mPlayer = FindPlayerPed();
-
-    if (!mPlayer)
-        return;
-
-    mLastPlayer = mPlayer;
-
     mSessionInitialized = false;
     mShouldIgnoreFirstHealthChange = false;
+
+    mPlayer = nullptr;
+    mLastPlayer = nullptr;
+
     mNeedsReset = true;
 }
 
@@ -123,14 +152,25 @@ void HUDManager::Update()
     mPlayer = FindPlayerPed();
 
     if (!mPlayer)
+    {
+        mSessionInitialized = false;
+        mLastPlayer = nullptr;
         return;
+    }
+
+    const auto origin =
+        HUDRenderer::Get().GetAnchor();
+
+    mLayout.SetAnchor(
+        origin.X,
+        origin.Y);
+    mLayout.Reset();
 
     Initialize();
 
     CPlayerData* playerData = mPlayer->m_pPlayerData;
-    CPad* pad = CPad::GetPad(0);
 
-    if (pad && pad->GetDisplayVitalStats(mPlayer))
+    if (GetAsyncKeyState(VK_TAB) & 0x8000)
     {
         mClock.Show();
     }
@@ -167,21 +207,24 @@ void HUDManager::Update()
 
     mWasDead = isDead;
 
-    // Update HUD components
     UpdateHealth();
     UpdateArmour();
     UpdateBreath();
     UpdateMoney();
     UpdateWeaponIcon();
     UpdateAmmo();
+    UpdateWanted();
 
     mClock.Update();
+    BuildPlayerHUDLayout();
+    HUDRenderer::Get().Build(mLayout);
 }
 
 void HUDManager::ResetSessionState()
 {
-    SyncTrackedValues();
+    HideAll();
 
+    mIgnoreFirstHealthChange = false;
     mPreviousHealth = mLastHealth;
     mHealthStableFrames = 0;
     mWaitingForStableHealth = true;
@@ -190,9 +233,9 @@ void HUDManager::ResetSessionState()
     mArmourStableFrames = 0;
     mWaitingForStableArmour = true;
 
-    mBreathState = BreathState::Hidden;
+    mBreathState = BreathState::Idle;
     mWatchingBreathRecovery = false;
-    mLastBreathValue = 0.0f;
+    mHighestBreathValue = 0.0f;
     mBreathStableFrames = 0;
 
     mPreviousMoney = mLastMoney;
@@ -205,7 +248,7 @@ void HUDManager::ResetSessionState()
     mAmmoStableFrames = 0;
     mWaitingForStableAmmo = true;
 
-    HideAll();
+    SyncTrackedValues();
 }
 
 void HUDManager::SyncTrackedValues()
@@ -401,6 +444,29 @@ bool HUDManager::HasAmmoChanged(const AmmoState& current)
     return true;
 }
 
+bool HUDManager::IsBreathRecoveryComplete(float currentBreath)
+{
+    if (!mWatchingBreathRecovery)
+        return false;
+
+    if (currentBreath >= mHighestBreathValue + BREATH_EPSILON)
+    {
+        mHighestBreathValue = currentBreath;
+        mBreathStableFrames = 0;
+
+        return false;
+    }
+
+    mBreathStableFrames++;
+
+    if (mBreathStableFrames < BREATH_STABLE_FRAMES)
+        return false;
+
+    mWatchingBreathRecovery = false;
+
+    return true;
+}
+
 void HUDManager::UpdateHealth()
 {
     float currentHealth = mPlayer->m_fHealth;
@@ -453,7 +519,7 @@ void HUDManager::UpdateBreath()
 
     if (!swim)
     {
-        mBreathState = BreathState::Hidden;
+        mBreathState = BreathState::Idle;
         mBreath.Hide();
         mBreath.Update();
         return;
@@ -463,13 +529,13 @@ void HUDManager::UpdateBreath()
 
     switch (mBreathState)
     {
-    case BreathState::Hidden:
+    case BreathState::Idle:
     {
         if (IsUnderwaterSwimState(swimState))
         {
-            mBreath.Show();
-
             mBreathState = BreathState::Underwater;
+            
+            mBreath.Show();
         }
 
         break;
@@ -482,50 +548,31 @@ void HUDManager::UpdateBreath()
         if (IsSurfaceSwimState(swimState))
         {
             mWatchingBreathRecovery = true;
-            mLastBreathValue = breath;
+            mHighestBreathValue = breath;
             mBreathStableFrames = 0;
 
-            mBreathState = BreathState::Surface;
+            mBreathState = BreathState::WaitingForRecovery;
         }
 
         break;
     }
 
-    case BreathState::Surface:
+    case BreathState::WaitingForRecovery:
     {
         mBreath.Show();
 
         if (IsUnderwaterSwimState(swimState))
         {
             mWatchingBreathRecovery = false;
-
-            mBreath.Show();
-
             mBreathState = BreathState::Underwater;
-
             break;
         }
 
-        if (mWatchingBreathRecovery)
+        if (IsBreathRecoveryComplete(breath))
         {
-            if (fabs(breath - mLastBreathValue) > BREATH_EPSILON)
-            {
-                mLastBreathValue = breath;
-                mBreathStableFrames = 0;
-            }
-            else
-            {
-                mBreathStableFrames++;
+            mBreath.ShowFor(mVisibleTime);
 
-                if (mBreathStableFrames >= BREATH_STABLE_FRAMES)
-                {
-                    mWatchingBreathRecovery = false;
-
-                    mBreath.ShowFor(mVisibleTime);
-
-                    mBreathState = BreathState::Hidden;
-                }
-            }
+            mBreathState = BreathState::Idle;
         }
 
         break;
@@ -588,6 +635,47 @@ void HUDManager::UpdateAmmo()
     }
 
     mAmmo.Update();
+}
+
+void HUDManager::UpdateWanted()
+{
+    if (HasWantedLevel())
+        mWanted.Show();
+    else
+        mWanted.Hide();
+
+    mWanted.Update();
+}
+
+void HUDManager::BuildPlayerHUDLayout()
+{
+    mLayout.Add(mClock, 18.0f);
+
+    const float spacing =
+        HUDMetrics::GetStatusBarSpacing();
+
+    mLayout.Add(mMoney, spacing);
+    mLayout.Add(mWanted, spacing);
+
+    mLayout.Add(mWeaponIcon, 34.0f);
+    mLayout.Add(mAmmo, 16.0f);
+
+    mLayout.Add(mArmour, spacing);
+    mLayout.Add(mBreath, spacing);
+    mLayout.Add(mHealth, spacing);
+    // CLOCK
+    // MONEY
+    // WANTED
+    // WEAPON
+    // AMMO
+    // ARMOUR
+    // BREATH
+    // HEALTH
+    
+    // TODO:
+    // Status bars currently use vertical stacking.
+    // Future "Compact Status Bars" mode will arrange
+    // Armour, Breath and Health horizontally.
 }
 
 void HUDManager::HideAll()

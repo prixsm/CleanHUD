@@ -1,6 +1,7 @@
 #include <plugin.h>
 #include "../HUDManager.h"
 #include "../PlayerHUDHook.h"
+#include "../HUDRenderHooks.h"
 
 using namespace plugin;
 
@@ -11,6 +12,7 @@ public:
     Plugin()
     {   
         PlayerHUDHook::Install();
+        HUDRenderHooks::Install();
 
         Events::reInitGameEvent += []()
             {
