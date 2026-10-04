@@ -1,68 +1,60 @@
-#include <cmath>
 #include "../safetyhook/safetyhook.hpp"
 #include <extensions/Screen.h>
+#include <cmath>
+#include <cstdint>
+
 #include "AmmoRenderHook.h"
 #include "HUDManager.h"
-#include "HUDMetrics.h"
 #include "HUDRenderer.h"
 
 namespace
 {
-    SafetyHookInline gAmmoHook;
+    SafetyHookMid gAmmoPositionHook;
 
-    static void __cdecl HookedRenderAmmo(
-        int player,
-        int x,
-        int y)
+    static void HookedAmmoDraw(SafetyHookContext& ctx)
     {
         if (HUDManager::Get().IsUsingVanillaLayout())
-        {
-            gAmmoHook.ccall(player, x, y);
             return;
-        }
 
         const auto pos =
-            HUDRenderer::Get().GetArmourPosition();
+            HUDRenderer::Get().GetAmmoPosition();
 
         if (!pos.Valid)
-        {
-            gAmmoHook.ccall(player, x, y);
             return;
-        }
 
-        constexpr float AmmoNativeX = 544.2f;
-        constexpr float AmmoNativeY = 121.0f;
+        const float screenWidth =
+            plugin::screen::GetScreenWidth();
 
         const float screenHeight =
             plugin::screen::GetScreenHeight();
 
-        const float ammoX =
-            HUDMetrics::ScaleNativeRightX(
-                AmmoNativeX);
+        const int layoutX =
+            static_cast<int>(std::lround(
+                static_cast<float>(pos.X) *
+                (screenWidth / 1920.0f)));
 
-        const float ammoY =
-            AmmoNativeY *
-            (screenHeight / 1080.0f);
+        const int layoutY =
+            static_cast<int>(std::lround(
+                static_cast<float>(pos.Y) *
+                (screenHeight / 1080.0f)));
 
-        x = static_cast<int>(
-            std::lround(ammoX));
+        auto* stack =
+            reinterpret_cast<std::uint32_t*>(ctx.esp);
 
-        y = static_cast<int>(
-            std::lround(ammoY));
-
-        gAmmoHook.ccall(player, x, y);
+        stack[1] = static_cast<std::uint32_t>(layoutX);
+        stack[2] = static_cast<std::uint32_t>(layoutY);
     }
 }
 
 void AmmoRenderHook::Install()
 {
-    gAmmoHook =
-        safetyhook::create_inline(
-            reinterpret_cast<void*>(0x5890A0),
-            HookedRenderAmmo);
+    gAmmoPositionHook =
+        safetyhook::create_mid(
+            reinterpret_cast<void*>(0x58FA25),
+            HookedAmmoDraw);
 }
 
 void AmmoRenderHook::Remove()
 {
-    gAmmoHook.reset();
+    gAmmoPositionHook.reset();
 }

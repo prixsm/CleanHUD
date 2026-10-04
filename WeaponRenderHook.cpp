@@ -1,66 +1,71 @@
 #include <cmath>
+#include <cstdint>
+
 #include "../safetyhook/safetyhook.hpp"
 #include <extensions/Screen.h>
+
 #include "WeaponRenderHook.h"
 #include "HUDManager.h"
-#include "HUDMetrics.h"
 #include "HUDRenderer.h"
 
 namespace
 {
-    SafetyHookInline gWeaponHook;
+    SafetyHookMid gWeaponHook;
 
-    static void __cdecl HookedRenderWeapon(
-        int player,
-        int x,
-        int y,
-        float alpha)
+    static void HookedWeaponPosition(
+        SafetyHookContext& ctx)
     {
         if (HUDManager::Get().IsUsingVanillaLayout())
-        {
-            gWeaponHook.ccall(player, x, y, alpha);
             return;
-        }
 
         const auto pos =
             HUDRenderer::Get().GetWeaponPosition();
 
         if (!pos.Valid)
-        {
-            gWeaponHook.ccall(player, x, y, alpha);
             return;
-        }
 
-        constexpr float WeaponNativeX = 525.2f;
-        constexpr float WeaponNativeY = 38.0f;
+        const float screenWidth =
+            plugin::screen::GetScreenWidth();
 
         const float screenHeight =
             plugin::screen::GetScreenHeight();
 
-        const float weaponX =
-            HUDMetrics::ScaleNativeRightX(
-                WeaponNativeX);
+        constexpr float WeaponNativeWidth = 47.0f;
 
-        const float weaponY =
-            WeaponNativeY *
-            (screenHeight / 1080.0f);
+        const float weaponWidth =
+            WeaponNativeWidth *
+            (screenHeight / 480.0f);
 
-        x = static_cast<int>(
-            std::lround(weaponX));
+        const float layoutRightX =
+            static_cast<float>(pos.X) *
+            (screenWidth / 1920.0f);
 
-        y = static_cast<int>(
-            std::lround(weaponY));
+        const int layoutX =
+            static_cast<int>(std::lround(
+                layoutRightX - weaponWidth));
 
-        gWeaponHook.ccall(player, x, y, alpha);
+        const int layoutY =
+            static_cast<int>(std::lround(
+                static_cast<float>(pos.Y) *
+                (screenHeight / 1080.0f)));
+
+        ctx.eax =
+            static_cast<std::uintptr_t>(layoutX);
+
+        auto* stack =
+            reinterpret_cast<std::uint32_t*>(ctx.esp);
+
+        stack[0] =
+            static_cast<std::uint32_t>(layoutY);
     }
 }
 
 void WeaponRenderHook::Install()
 {
-    gWeaponHook = safetyhook::create_inline(
-        reinterpret_cast<void*>(0x58D7D0),
-        reinterpret_cast<void*>(HookedRenderWeapon)
-    );
+    gWeaponHook =
+        safetyhook::create_mid(
+            reinterpret_cast<void*>(0x58F93E),
+            HookedWeaponPosition);
 }
 
 void WeaponRenderHook::Remove()
