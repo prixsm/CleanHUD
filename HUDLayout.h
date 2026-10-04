@@ -48,7 +48,10 @@ public:
 
     void SetAnchor(float x, float y);
 
-    void Add(HUDComponent& component, float height);
+    void Add(
+        HUDComponent& component,
+        float height,
+        float offsetY = 0.0f);
 
     const std::vector<HUDLayoutItem>& GetItems() const;
 

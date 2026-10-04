@@ -1,7 +1,7 @@
+#include <cmath>
+
 #include "../safetyhook/safetyhook.hpp"
 #include <extensions/Screen.h>
-#include <cmath>
-#include <cstdint>
 
 #include "AmmoRenderHook.h"
 #include "HUDManager.h"
@@ -9,18 +9,38 @@
 
 namespace
 {
-    SafetyHookMid gAmmoPositionHook;
+    SafetyHookInline gAmmoHook;
 
-    static void HookedAmmoDraw(SafetyHookContext& ctx)
+    static void __cdecl HookedRenderAmmo(
+        int player,
+        int x,
+        int y,
+        float alpha)
     {
         if (HUDManager::Get().IsUsingVanillaLayout())
+        {
+            gAmmoHook.ccall(
+                player,
+                x,
+                y,
+                alpha);
+
             return;
+        }
 
         const auto pos =
             HUDRenderer::Get().GetAmmoPosition();
 
         if (!pos.Valid)
+        {
+            gAmmoHook.ccall(
+                player,
+                x,
+                y,
+                alpha);
+
             return;
+        }
 
         const float screenWidth =
             plugin::screen::GetScreenWidth();
@@ -28,33 +48,55 @@ namespace
         const float screenHeight =
             plugin::screen::GetScreenHeight();
 
-        const int layoutX =
-            static_cast<int>(std::lround(
-                static_cast<float>(pos.X) *
-                (screenWidth / 1920.0f)));
+        constexpr float WeaponNativeWidth = 47.0f;
 
-        const int layoutY =
-            static_cast<int>(std::lround(
-                static_cast<float>(pos.Y) *
-                (screenHeight / 1080.0f)));
+        const float weaponWidth =
+            WeaponNativeWidth *
+            (screenHeight / 480.0f);
 
-        auto* stack =
-            reinterpret_cast<std::uint32_t*>(ctx.esp);
+        const float layoutRightX =
+            static_cast<float>(pos.X) *
+            (screenWidth / 1920.0f);
 
-        stack[1] = static_cast<std::uint32_t>(layoutX);
-        stack[2] = static_cast<std::uint32_t>(layoutY);
+        constexpr float AmmoNativeCenterOffset = 3.4f;
+
+        const float ammoCenterOffset =
+            AmmoNativeCenterOffset *
+            (screenHeight / 480.0f);
+
+        const float ammoCenterX =
+            layoutRightX -
+            (weaponWidth * 0.5f) -
+            ammoCenterOffset;
+
+        const float layoutY =
+            static_cast<float>(pos.Y) *
+            (screenHeight / 1080.0f);
+
+        x = static_cast<int>(
+            std::lround(ammoCenterX));
+
+        y = static_cast<int>(
+            std::lround(layoutY));
+
+        gAmmoHook.ccall(
+            player,
+            x,
+            y,
+            alpha);
     }
 }
 
 void AmmoRenderHook::Install()
 {
-    gAmmoPositionHook =
-        safetyhook::create_mid(
-            reinterpret_cast<void*>(0x58FA25),
-            HookedAmmoDraw);
+    gAmmoHook =
+        safetyhook::create_inline(
+            reinterpret_cast<void*>(0x5893B0),
+            reinterpret_cast<void*>(HookedRenderAmmo)
+        );
 }
 
 void AmmoRenderHook::Remove()
 {
-    gAmmoPositionHook.reset();
+    gAmmoHook.reset();
 }

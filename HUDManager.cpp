@@ -657,8 +657,19 @@ void HUDManager::BuildPlayerHUDLayout()
     mLayout.Add(mMoney, spacing);
     mLayout.Add(mWanted, spacing);
 
-    mLayout.Add(mWeaponIcon, 34.0f);
-    mLayout.Add(mAmmo, 16.0f);
+    constexpr float WeaponAmmoOffsetY = -12.0f;
+    constexpr float WeaponToAmmoOffset = 83.0f;
+
+    mLayout.Add(
+        mWeaponIcon,
+        WeaponToAmmoOffset -
+        HUDLayoutConstants::StackSpacing,
+        WeaponAmmoOffsetY);
+
+    mLayout.Add(
+        mAmmo,
+        16.0f,
+        WeaponAmmoOffsetY);
 
     mLayout.Add(mArmour, spacing);
     mLayout.Add(mBreath, spacing);

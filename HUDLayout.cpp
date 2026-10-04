@@ -14,7 +14,10 @@ void HUDLayout::SetAnchor(float x, float y)
     mAnchorY = y;
 }
 
-void HUDLayout::Add(HUDComponent& component, float height)
+void HUDLayout::Add(
+    HUDComponent& component,
+    float height,
+    float offsetY)
 {
     if (!component.IsVisible())
         return;
@@ -26,7 +29,7 @@ void HUDLayout::Add(HUDComponent& component, float height)
     item.Position =
     {
         mAnchorX,
-        mCurrentY
+        mCurrentY + offsetY
     };
 
     item.Type = component.GetType();
