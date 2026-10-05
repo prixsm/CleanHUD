@@ -28,6 +28,11 @@ void HUDComponent::ShowFor(uint32_t milliseconds)
     mTimer.ShowFor(milliseconds);
 }
 
+void HUDComponent::ForceVisible()
+{
+    mPatches.Show();
+}
+
 void HUDComponent::Hide()
 {
     mTimer.Hide();

@@ -74,10 +74,10 @@ private:
     CPlayerPed* mLastPlayer = nullptr;
 
     // Session state
+    bool mIgnoreInitialHealthIncrease = false;
     bool mSessionInitialized = false;
-    bool mShouldIgnoreFirstHealthChange = false;
-    bool mIgnoreFirstHealthChange = false;
     bool mNeedsReset = true;
+    bool mVanillaLayoutLatched = false;
     bool mWasDead = false;
 
     // HUD components

@@ -17,6 +17,8 @@ public:
 
     void ShowFor(uint32_t);
 
+    void ForceVisible();
+
     void Hide();
 
     void Reset();

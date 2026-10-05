@@ -134,7 +134,9 @@ bool HUDManager::IsPlayerHUDInitialized() const
 
 bool HUDManager::IsUsingVanillaLayout() const
 {
-    return GetAsyncKeyState(VK_TAB) & 0x8000;
+    return
+        mVanillaLayoutLatched ||
+        (GetAsyncKeyState(VK_TAB) & 0x8000);
 }
 
 bool HUDManager::ShouldDisplayAmmo() const
@@ -160,7 +162,6 @@ bool HUDManager::ShouldDisplayAmmo() const
     if (!weaponInfo)
         return false;
 
-    // All melee / hand-held melee weapons.
     if (IsMeleeWeapon(weaponType))
         return false;
 
@@ -203,7 +204,9 @@ void HUDManager::Initialize()
 void HUDManager::OnGameLoaded()
 {
     mSessionInitialized = false;
-    mShouldIgnoreFirstHealthChange = false;
+
+    mIgnoreInitialHealthIncrease = true;
+    mVanillaLayoutLatched = false;
 
     mPlayer = nullptr;
     mLastPlayer = nullptr;
@@ -222,6 +225,14 @@ void HUDManager::Update()
         return;
     }
 
+    const bool tabHeld =
+        GetAsyncKeyState(VK_TAB) & 0x8000;
+
+    if (tabHeld)
+    {
+        mVanillaLayoutLatched = true;
+    }
+
     const auto origin =
         HUDRenderer::Get().GetAnchor();
 
@@ -234,7 +245,7 @@ void HUDManager::Update()
 
     CPlayerData* playerData = mPlayer->m_pPlayerData;
 
-    if (GetAsyncKeyState(VK_TAB) & 0x8000)
+    if (tabHeld)
     {
         mClock.Show();
     }
@@ -253,7 +264,7 @@ void HUDManager::Update()
     {
         mLastPlayer = mPlayer;
         mSessionInitialized = false;
-        mShouldIgnoreFirstHealthChange = true;
+        mIgnoreInitialHealthIncrease = true;
         mNeedsReset = true;
         return;
     }
@@ -263,7 +274,6 @@ void HUDManager::Update()
     if (mWasDead && !isDead)
     {
         mSessionInitialized = false;
-        mShouldIgnoreFirstHealthChange = true;
         mNeedsReset = true;
         mWasDead = false;
         return;
@@ -280,15 +290,29 @@ void HUDManager::Update()
     UpdateWanted();
 
     mClock.Update();
+
+    if (tabHeld)
+    {
+        mHealth.ForceVisible();
+        mArmour.ForceVisible();
+        mBreath.ForceVisible();
+        mWeaponIcon.ForceVisible();
+        mAmmo.ForceVisible();
+    }
+
     BuildPlayerHUDLayout();
     HUDRenderer::Get().Build(mLayout);
+
+    if (!tabHeld)
+    {
+        mVanillaLayoutLatched = false;
+    }
 }
 
 void HUDManager::ResetSessionState()
 {
     HideAll();
 
-    mIgnoreFirstHealthChange = false;
     mPreviousHealth = mLastHealth;
     mHealthStableFrames = 0;
     mWaitingForStableHealth = true;
@@ -338,12 +362,6 @@ bool HUDManager::UpdateHealthInitialization(float currentHealth)
         if (mHealthStableFrames >= 2)
         {
             mWaitingForStableHealth = false;
-
-            if (mShouldIgnoreFirstHealthChange)
-                mIgnoreFirstHealthChange = true;
-
-            mShouldIgnoreFirstHealthChange = false;
-
             mSessionInitialized = true;
         }
     }
@@ -533,22 +551,33 @@ bool HUDManager::IsBreathRecoveryComplete(float currentBreath)
 
 void HUDManager::UpdateHealth()
 {
-    float currentHealth = mPlayer->m_fHealth;
+    const float currentHealth =
+        mPlayer->m_fHealth;
 
-    if (!UpdateHealthInitialization(currentHealth))
+    if (!UpdateHealthInitialization(
+        currentHealth))
+    {
         return;
+    }
+
+    const float previousHealth =
+        mLastHealth;
 
     if (HasHealthChanged(currentHealth))
     {
-        if (mIgnoreFirstHealthChange)
+        if (mIgnoreInitialHealthIncrease &&
+            currentHealth >= previousHealth)
         {
-            mIgnoreFirstHealthChange = false;
+            mIgnoreInitialHealthIncrease = false;
 
             mHealth.Update();
             return;
         }
 
-        mHealth.ShowFor(mVisibleTime);
+        mIgnoreInitialHealthIncrease = false;
+
+        mHealth.ShowFor(
+            mVisibleTime);
     }
 
     mHealth.Update();

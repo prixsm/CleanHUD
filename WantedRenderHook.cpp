@@ -1,9 +1,10 @@
 #include "../safetyhook/safetyhook.hpp"
+#include <CWorld.h>
 #include <extensions/Screen.h>
 
-#include "WantedRenderHook.h"
 #include "HUDManager.h"
 #include "HUDRenderer.h"
+#include "WantedRenderHook.h"
 
 namespace
 {
@@ -36,14 +37,20 @@ namespace
             return;
         }
 
-        /*
-         * 0x866C5C uses GTA's native 480-high HUD space.
-         *
-         * CleanHUD layout positions use 1080-high design space.
-         */
-        const float nativeWantedY =
+        constexpr float WantedHealthYOffset = 12.0f;
+
+        float nativeWantedY =
             static_cast<float>(pos.Y) *
             (480.0f / 1080.0f);
+
+        const auto& playerInfo =
+            CWorld::Players[CWorld::PlayerInFocus];
+
+        if (playerInfo.m_nMaxHealth < 101)
+        {
+            nativeWantedY +=
+                WantedHealthYOffset;
+        }
 
         *wantedY =
             nativeWantedY;
