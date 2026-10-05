@@ -31,7 +31,6 @@ namespace
         }
 
         constexpr float BreathNativeX = 559.0f;
-        constexpr float BreathNativeY = 119.0f;
 
         const float screenWidth =
             plugin::screen::GetScreenWidth();
@@ -43,15 +42,15 @@ namespace
             HUDMetrics::ScaleNativeRightX(
                 BreathNativeX);
 
-        const float breathY =
-            BreathNativeY *
+        const float layoutY =
+            static_cast<float>(pos.Y) *
             (screenHeight / 1080.0f);
 
         x = static_cast<int>(
             std::lround(breathX));
 
         y = static_cast<int>(
-            std::lround(breathY));
+            std::lround(layoutY));
 
         gBreathHook.ccall(player, x, y);
     }

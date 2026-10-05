@@ -649,40 +649,102 @@ void HUDManager::UpdateWanted()
 
 void HUDManager::BuildPlayerHUDLayout()
 {
-    mLayout.Add(mClock, 18.0f);
+    constexpr float ClockHeight = 18.0f;
+    constexpr float MoneyHeight = 18.0f;
+    constexpr float WantedHeight = 18.0f;
+    constexpr float AmmoHeight = 16.0f;
 
-    const float spacing =
-        HUDMetrics::GetStatusBarSpacing();
+    constexpr float MoneyToWantedSpacing = 40.0f;
+    constexpr float MoneyToWeaponSpacing = 35.0f;
+    constexpr float MoneyToOtherSpacing = 28.0f;
 
-    mLayout.Add(mMoney, spacing);
-    mLayout.Add(mWanted, spacing);
+    constexpr float WantedToWeaponSpacing = 30.0f;
+    constexpr float WantedToOtherSpacing = 23.0f;
+
+    constexpr float ClockSpacing = 40.0f;
+    constexpr float WeaponSpacing = 4.0f;
+    constexpr float AmmoSpacing = 4.0f;
+    constexpr float ArmourSpacing = 4.0f;
+    constexpr float BreathSpacing = 4.0f;
+    constexpr float HealthSpacing = 4.0f;
 
     constexpr float WeaponAmmoOffsetY = -12.0f;
     constexpr float WeaponToAmmoOffset = 83.0f;
 
+    const float statusBarHeight =
+        HUDMetrics::GetStatusBarSpacing();
+
+    const bool weaponGroupVisible =
+        mWeaponIcon.IsVisible() ||
+        mAmmo.IsVisible();
+
+    float moneySpacing =
+        MoneyToOtherSpacing;
+
+    if (mWanted.IsVisible())
+    {
+        moneySpacing =
+            MoneyToWantedSpacing;
+    }
+    else if (weaponGroupVisible)
+    {
+        moneySpacing =
+            MoneyToWeaponSpacing;
+    }
+
+    const float wantedSpacing =
+        weaponGroupVisible
+        ? WantedToWeaponSpacing
+        : WantedToOtherSpacing;
+
+    mLayout.Add(
+        mClock,
+        ClockHeight,
+        0.0f,
+        ClockSpacing);
+
+    mLayout.Add(
+        mMoney,
+        MoneyHeight,
+        0.0f,
+        moneySpacing);
+
+    mLayout.Add(
+        mWanted,
+        WantedHeight,
+        0.0f,
+        wantedSpacing);
+
     mLayout.Add(
         mWeaponIcon,
-        WeaponToAmmoOffset -
-        HUDLayoutConstants::StackSpacing,
-        WeaponAmmoOffsetY);
+        WeaponToAmmoOffset - WeaponSpacing,
+        WeaponAmmoOffsetY,
+        WeaponSpacing);
 
     mLayout.Add(
         mAmmo,
-        16.0f,
-        WeaponAmmoOffsetY);
+        AmmoHeight,
+        WeaponAmmoOffsetY,
+        AmmoSpacing);
 
-    mLayout.Add(mArmour, spacing);
-    mLayout.Add(mBreath, spacing);
-    mLayout.Add(mHealth, spacing);
-    // CLOCK
-    // MONEY
-    // WANTED
-    // WEAPON
-    // AMMO
-    // ARMOUR
-    // BREATH
-    // HEALTH
-    
+    mLayout.Add(
+        mArmour,
+        statusBarHeight,
+        0.0f,
+        ArmourSpacing);
+
+    mLayout.Add(
+        mBreath,
+        statusBarHeight,
+        0.0f,
+        BreathSpacing);
+
+    mLayout.Add(
+        mHealth,
+        statusBarHeight,
+        0.0f,
+        HealthSpacing);
+
     // TODO:
     // Status bars currently use vertical stacking.
     // Future "Compact Status Bars" mode will arrange

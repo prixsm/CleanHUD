@@ -31,7 +31,6 @@ namespace
         }
 
         constexpr float HealthNativeX = 519.0f;
-        constexpr float HealthNativeY = 148.0f;
 
         const float screenHeight =
             plugin::screen::GetScreenHeight();
@@ -40,13 +39,15 @@ namespace
             HUDMetrics::ScaleNativeRightX(
                 HealthNativeX);
 
+        const float layoutY =
+            static_cast<float>(pos.Y) *
+            (screenHeight / 1080.0f);
+
         x = static_cast<int>(
             std::lround(healthX));
 
         y = static_cast<int>(
-            std::lround(
-                HealthNativeY *
-                (screenHeight / 1080.0f)));
+            std::lround(layoutY));
 
         gHealthHook.ccall(player, x, y);
     }

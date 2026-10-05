@@ -17,7 +17,8 @@ void HUDLayout::SetAnchor(float x, float y)
 void HUDLayout::Add(
     HUDComponent& component,
     float height,
-    float offsetY)
+    float offsetY,
+    float spacingAfter)
 {
     if (!component.IsVisible())
         return;
@@ -39,7 +40,7 @@ void HUDLayout::Add(
 
     mCurrentY +=
         height +
-        HUDLayoutConstants::StackSpacing;
+        spacingAfter;
 }
 
 const std::vector<HUDLayoutItem>& HUDLayout::GetItems() const

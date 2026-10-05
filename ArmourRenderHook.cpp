@@ -31,7 +31,6 @@ namespace
         }
 
         constexpr float ArmourNativeX = 559.0f;
-        constexpr float ArmourNativeY = 92.0f;
 
         const float screenWidth =
             plugin::screen::GetScreenWidth();
@@ -43,12 +42,15 @@ namespace
             HUDMetrics::ScaleNativeRightX(
                 ArmourNativeX);
 
+        const float layoutY =
+            static_cast<float>(pos.Y) *
+            (screenHeight / 1080.0f);
+
         x = static_cast<int>(
             std::lround(armourX));
 
-        y = static_cast<int>(std::lround(
-            ArmourNativeY *
-            (screenHeight / 1080.0f)));
+        y = static_cast<int>(
+            std::lround(layoutY));
 
         gArmourHook.ccall(player, x, y);
     }
