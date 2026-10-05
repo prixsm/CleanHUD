@@ -13,6 +13,7 @@ public:
     HUDManager();
 
     bool HasWantedLevel() const;
+    bool IsInitialHealthTrackingBlocked() const;
     bool IsPlayerHUDInitialized() const;
     bool IsUsingVanillaLayout() const;
     bool ShouldDisplayAmmo() const;
@@ -74,7 +75,6 @@ private:
     CPlayerPed* mLastPlayer = nullptr;
 
     // Session state
-    bool mIgnoreInitialHealthIncrease = false;
     bool mSessionInitialized = false;
     bool mNeedsReset = true;
     bool mVanillaLayoutLatched = false;

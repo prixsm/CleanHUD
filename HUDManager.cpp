@@ -1,6 +1,9 @@
 #include <common.h>
+#include <CCamera.h>
 #include <CClock.h>
+#include <CCutsceneMgr.h>
 #include <CDarkel.h>
+#include <CPad.h>
 #include <CPedIntelligence.h>
 #include <CPlayerData.h>
 #include <CPlayerInfo.h>
@@ -127,6 +130,34 @@ bool HUDManager::HasWantedLevel() const
         mPlayer->m_pPlayerData->m_pWanted->m_nWantedLevel > 0;
 }
 
+bool HUDManager::IsInitialHealthTrackingBlocked() const
+{
+    if (!mPlayer)
+        return true;
+
+    CPad* pad =
+        mPlayer->GetPadFromPlayer();
+
+    if (!pad)
+        return true;
+
+    const bool cutsceneActive =
+        CCutsceneMgr::ms_cutsceneProcessing ||
+        pad->bPlayerSafeForCutscene;
+
+    const bool controlsDisabled =
+        pad->DisablePlayerControls != 0;
+
+    const bool screenNotReady =
+        TheCamera.m_bFading ||
+        TheCamera.m_fFadeAlpha > 0.0f;
+
+    return
+        cutsceneActive ||
+        controlsDisabled ||
+        screenNotReady;
+}
+
 bool HUDManager::IsPlayerHUDInitialized() const
 {
     return mSessionInitialized;
@@ -204,8 +235,6 @@ void HUDManager::Initialize()
 void HUDManager::OnGameLoaded()
 {
     mSessionInitialized = false;
-
-    mIgnoreInitialHealthIncrease = true;
     mVanillaLayoutLatched = false;
 
     mPlayer = nullptr;
@@ -264,7 +293,6 @@ void HUDManager::Update()
     {
         mLastPlayer = mPlayer;
         mSessionInitialized = false;
-        mIgnoreInitialHealthIncrease = true;
         mNeedsReset = true;
         return;
     }
@@ -355,6 +383,33 @@ bool HUDManager::UpdateHealthInitialization(float currentHealth)
     if (!mWaitingForStableHealth)
         return true;
 
+    /*
+     * While the initial game/cutscene/fade sequence is
+     * still in progress, health values are setup state,
+     * not gameplay changes.
+     */
+    if (IsInitialHealthTrackingBlocked())
+    {
+        mSessionInitialized = false;
+
+        mHealthStableFrames = 0;
+
+        mLastHealth =
+            currentHealth;
+
+        mPreviousHealth =
+            currentHealth;
+
+        mHealth.Hide();
+        mHealth.Update();
+
+        return false;
+    }
+
+    /*
+     * Once actual gameplay is available, require health
+     * to remain stable before arming change detection.
+     */
     if (currentHealth == mPreviousHealth)
     {
         mHealthStableFrames++;
@@ -370,8 +425,11 @@ bool HUDManager::UpdateHealthInitialization(float currentHealth)
         mHealthStableFrames = 0;
     }
 
-    mLastHealth = currentHealth;
-    mPreviousHealth = currentHealth;
+    mLastHealth =
+        currentHealth;
+
+    mPreviousHealth =
+        currentHealth;
 
     mHealth.Update();
 
@@ -560,22 +618,8 @@ void HUDManager::UpdateHealth()
         return;
     }
 
-    const float previousHealth =
-        mLastHealth;
-
     if (HasHealthChanged(currentHealth))
     {
-        if (mIgnoreInitialHealthIncrease &&
-            currentHealth >= previousHealth)
-        {
-            mIgnoreInitialHealthIncrease = false;
-
-            mHealth.Update();
-            return;
-        }
-
-        mIgnoreInitialHealthIncrease = false;
-
         mHealth.ShowFor(
             mVisibleTime);
     }
