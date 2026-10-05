@@ -35,6 +35,14 @@ private:
     {
         unsigned int AmmoInClip = 0;
         unsigned int AmmoTotal = 0;
+
+        bool operator==(
+            const AmmoState& rhs) const
+        {
+            return
+                AmmoInClip == rhs.AmmoInClip &&
+                AmmoTotal == rhs.AmmoTotal;
+        }
     };
 
     ActiveWeaponState GetCurrentWeaponState() const;

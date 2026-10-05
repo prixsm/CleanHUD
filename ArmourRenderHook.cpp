@@ -37,7 +37,8 @@ namespace
 
         const float armourX =
             HUDMetrics::ScaleNativeRightX(
-                ArmourNativeX);
+                ArmourNativeX +
+                HUDMetrics::ArmourBreathNativeXOffset);
 
         const float layoutY =
             static_cast<float>(pos.Y) *
