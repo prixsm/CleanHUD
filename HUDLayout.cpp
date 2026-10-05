@@ -18,7 +18,8 @@ void HUDLayout::Add(
     HUDComponent& component,
     float height,
     float offsetY,
-    float spacingAfter)
+    float spacingAfter,
+    float offsetX)
 {
     if (!component.IsVisible())
         return;
@@ -29,7 +30,7 @@ void HUDLayout::Add(
 
     item.Position =
     {
-        mAnchorX,
+        mAnchorX + offsetX,
         mCurrentY + offsetY
     };
 

@@ -52,7 +52,8 @@ public:
         HUDComponent& component,
         float height,
         float offsetY = 0.0f,
-        float spacingAfter = HUDLayoutConstants::StackSpacing);
+        float spacingAfter = HUDLayoutConstants::StackSpacing,
+        float offsetX = 0.0f);
 
     const std::vector<HUDLayoutItem>& GetItems() const;
 

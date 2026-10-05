@@ -1,5 +1,6 @@
 #include <common.h>
 #include <CClock.h>
+#include <CDarkel.h>
 #include <CPedIntelligence.h>
 #include <CPlayerData.h>
 #include <CPlayerInfo.h>
@@ -7,6 +8,7 @@
 #include <CTaskSimpleSwim.h>
 #include <CTimer.h>
 #include <CWanted.h>
+#include <CWeaponInfo.h>
 #include <CWorld.h>
 
 #include "HUDManager.h"
@@ -126,6 +128,73 @@ bool HUDManager::IsPlayerHUDInitialized() const
 bool HUDManager::IsUsingVanillaLayout() const
 {
     return GetAsyncKeyState(VK_TAB) & 0x8000;
+}
+
+bool HUDManager::ShouldDisplayAmmo() const
+{
+    if (!mPlayer)
+        return false;
+
+    const CWeapon* weapon =
+        mPlayer->GetWeapon();
+
+    if (!weapon)
+        return false;
+
+    constexpr unsigned int MaxClip = 9999;
+
+    const eWeaponType weaponType =
+        weapon->m_eWeaponType;
+
+    const CWeaponInfo* weaponInfo =
+        CWeaponInfo::GetWeaponInfo(
+            weaponType);
+
+    if (!weaponInfo)
+        return false;
+
+    if (weapon->m_nAmmoTotal -
+        weapon->m_nAmmoInClip >= MaxClip)
+    {
+        return false;
+    }
+
+    if (CDarkel::FrenzyOnGoing())
+        return false;
+
+    /*
+     * Generic categories that do not display ammo.
+     */
+    if (weaponInfo->m_nWeaponFire == WEAPON_FIRE_MELEE ||
+        weaponInfo->m_nWeaponFire == WEAPON_FIRE_USE)
+    {
+        return false;
+    }
+
+    /*
+     * GTA-specific exceptions.
+     */
+    switch (weaponType)
+    {
+    case WEAPONTYPE_UNARMED:
+    case WEAPONTYPE_DETONATOR:
+    case WEAPONTYPE_DILDO1:
+    case WEAPONTYPE_DILDO2:
+    case WEAPONTYPE_VIBE1:
+    case WEAPONTYPE_VIBE2:
+    case WEAPONTYPE_FLOWERS:
+    case WEAPONTYPE_CANE:
+    case WEAPONTYPE_PARACHUTE:
+        return false;
+
+    default:
+        break;
+    }
+
+    if (weaponInfo->m_nSlot <= 1)
+        return false;
+
+    return true;
 }
 
 void HUDManager::Initialize()
@@ -656,10 +725,10 @@ void HUDManager::BuildPlayerHUDLayout()
 
     constexpr float MoneyToWantedSpacing = 40.0f;
     constexpr float MoneyToWeaponSpacing = 35.0f;
-    constexpr float MoneyToOtherSpacing = 28.0f;
+    constexpr float MoneyToStatusBarSpacing = 28.0f;
 
     constexpr float WantedToWeaponSpacing = 30.0f;
-    constexpr float WantedToOtherSpacing = 23.0f;
+    constexpr float WantedToStatusBarSpacing = 20.0f;
 
     constexpr float ClockSpacing = 40.0f;
     constexpr float WeaponSpacing = 4.0f;
@@ -668,18 +737,26 @@ void HUDManager::BuildPlayerHUDLayout()
     constexpr float BreathSpacing = 4.0f;
     constexpr float HealthSpacing = 4.0f;
 
+    constexpr float WeaponAmmoOffsetX = 11.0f;
     constexpr float WeaponAmmoOffsetY = -12.0f;
     constexpr float WeaponToAmmoOffset = 83.0f;
 
     const float statusBarHeight =
         HUDMetrics::GetStatusBarSpacing();
 
+    const bool ammoDisplayed =
+        ShouldDisplayAmmo();
+
     const bool weaponGroupVisible =
         mWeaponIcon.IsVisible() ||
-        mAmmo.IsVisible();
+        (mAmmo.IsVisible() && ammoDisplayed);
 
-    float moneySpacing =
-        MoneyToOtherSpacing;
+    const bool statusBarVisible =
+        mArmour.IsVisible() ||
+        mBreath.IsVisible() ||
+        mHealth.IsVisible();
+
+    float moneySpacing = 0.0f;
 
     if (mWanted.IsVisible())
     {
@@ -691,11 +768,24 @@ void HUDManager::BuildPlayerHUDLayout()
         moneySpacing =
             MoneyToWeaponSpacing;
     }
+    else if (statusBarVisible)
+    {
+        moneySpacing =
+            MoneyToStatusBarSpacing;
+    }
 
-    const float wantedSpacing =
-        weaponGroupVisible
-        ? WantedToWeaponSpacing
-        : WantedToOtherSpacing;
+    float wantedSpacing = 0.0f;
+
+    if (weaponGroupVisible)
+    {
+        wantedSpacing =
+            WantedToWeaponSpacing;
+    }
+    else if (statusBarVisible)
+    {
+        wantedSpacing =
+            WantedToStatusBarSpacing;
+    }
 
     mLayout.Add(
         mClock,
@@ -719,13 +809,18 @@ void HUDManager::BuildPlayerHUDLayout()
         mWeaponIcon,
         WeaponToAmmoOffset - WeaponSpacing,
         WeaponAmmoOffsetY,
-        WeaponSpacing);
+        WeaponSpacing,
+        WeaponAmmoOffsetX);
 
-    mLayout.Add(
-        mAmmo,
-        AmmoHeight,
-        WeaponAmmoOffsetY,
-        AmmoSpacing);
+    if (ammoDisplayed)
+    {
+        mLayout.Add(
+            mAmmo,
+            AmmoHeight,
+            WeaponAmmoOffsetY,
+            AmmoSpacing,
+            WeaponAmmoOffsetX);
+    }
 
     mLayout.Add(
         mArmour,

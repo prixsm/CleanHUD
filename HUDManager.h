@@ -15,6 +15,7 @@ public:
     bool HasWantedLevel() const;
     bool IsPlayerHUDInitialized() const;
     bool IsUsingVanillaLayout() const;
+    bool ShouldDisplayAmmo() const;
 
     void Initialize();
     void OnGameLoaded();
