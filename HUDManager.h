@@ -17,8 +17,8 @@ public:
     bool IsPlayerHUDInitialized() const;
     bool IsUsingVanillaLayout() const;
     bool ShouldDisplayAmmo() const;
+    bool ShouldDisplayArmour() const;
 
-    void Initialize();
     void OnGameLoaded();
     void Update();
 
@@ -26,45 +26,15 @@ public:
 
 private:
 
-    bool m_initialized = false;
-
     struct ActiveWeaponState
     {
         eWeaponType WeaponType = WEAPONTYPE_UNARMED;
-
-        bool operator==(const ActiveWeaponState& rhs) const
-        {
-            return WeaponType == rhs.WeaponType;
-        }
-
-        bool operator!=(const ActiveWeaponState& rhs) const
-        {
-            return !(*this == rhs);
-        }
     };
 
     struct AmmoState
     {
         unsigned int AmmoInClip = 0;
         unsigned int AmmoTotal = 0;
-
-        bool operator==(const AmmoState& rhs) const
-        {
-            return AmmoInClip == rhs.AmmoInClip &&
-                AmmoTotal == rhs.AmmoTotal;
-        }
-
-        bool operator!=(const AmmoState& rhs) const
-        {
-            return !(*this == rhs);
-        }
-    };
-
-    enum class BreathState
-    {
-        Idle,
-        Underwater,
-        WaitingForRecovery
     };
 
     ActiveWeaponState GetCurrentWeaponState() const;
@@ -105,13 +75,6 @@ private:
 
     bool mWaitingForStableArmour = false;
     int mArmourStableFrames = 0;
-
-    // Breath tracker
-    BreathState mBreathState = BreathState::Idle;
-    float mHighestBreathValue = 0.0f;
-    
-    bool mWatchingBreathRecovery = false;
-    int mBreathStableFrames = 0;
 
     // Money tracker
     int mLastMoney = 0;

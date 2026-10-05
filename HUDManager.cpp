@@ -1,6 +1,5 @@
 #include <common.h>
 #include <CCamera.h>
-#include <CClock.h>
 #include <CCutsceneMgr.h>
 #include <CDarkel.h>
 #include <CPad.h>
@@ -10,7 +9,6 @@
 #include <CPlayerPed.h>
 #include <CStats.h>
 #include <CTaskSimpleSwim.h>
-#include <CTimer.h>
 #include <CWanted.h>
 #include <CWeaponInfo.h>
 #include <CWorld.h>
@@ -68,20 +66,6 @@ namespace
     {
         return weaponType >= WEAPONTYPE_UNARMED &&
             weaponType <= WEAPONTYPE_CANE;
-    }
-
-    bool IsUnderwaterSwimState(eSwimState state)
-    {
-        return state == SWIM_DIVE_UNDERWATER ||
-            state == SWIM_UNDERWATER_SPRINTING;
-    }
-
-    bool IsSurfaceSwimState(eSwimState state)
-    {
-        return state == SWIM_TREAD ||
-            state == SWIM_SPRINT ||
-            state == SWIM_SPRINTING ||
-            state == SWIM_BACK_TO_SURFACE;
     }
 }
 
@@ -223,12 +207,10 @@ bool HUDManager::ShouldDisplayAmmo() const
     return true;
 }
 
-void HUDManager::Initialize()
+bool HUDManager::ShouldDisplayArmour() const
 {
-    if (m_initialized)
-        return;
-
-    m_initialized = true;
+    return mPlayer &&
+        mPlayer->m_fArmour > 1.0f;
 }
 
 void HUDManager::OnGameLoaded()
@@ -268,10 +250,6 @@ void HUDManager::Update()
         origin.X,
         origin.Y);
     mLayout.Reset();
-
-    Initialize();
-
-    CPlayerData* playerData = mPlayer->m_pPlayerData;
 
     if (tabHeld)
     {
@@ -756,12 +734,15 @@ void HUDManager::BuildPlayerHUDLayout()
     const bool ammoDisplayed =
         ShouldDisplayAmmo();
 
+    const bool armourDisplayed =
+        ShouldDisplayArmour();
+
     const bool weaponGroupVisible =
         mWeaponIcon.IsVisible() ||
         (mAmmo.IsVisible() && ammoDisplayed);
 
     const bool statusBarVisible =
-        mArmour.IsVisible() ||
+        (mArmour.IsVisible() && armourDisplayed) ||
         mBreath.IsVisible() ||
         mHealth.IsVisible();
 
@@ -831,11 +812,14 @@ void HUDManager::BuildPlayerHUDLayout()
             WeaponAmmoOffsetX);
     }
 
-    mLayout.Add(
-        mArmour,
-        statusBarHeight,
-        0.0f,
-        ArmourSpacing);
+    if (armourDisplayed)
+    {
+        mLayout.Add(
+            mArmour,
+            statusBarHeight,
+            0.0f,
+            ArmourSpacing);
+    }
 
     mLayout.Add(
         mBreath,
@@ -864,6 +848,7 @@ void HUDManager::HideAll()
     mMoney.Reset();
     mWeaponIcon.Reset();
     mAmmo.Reset();
+    mWanted.Reset();
 }
 
 HUDManager& HUDManager::Get()

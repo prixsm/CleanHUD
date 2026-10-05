@@ -32,9 +32,6 @@ namespace
 
         constexpr float BreathNativeX = 559.0f;
 
-        const float screenWidth =
-            plugin::screen::GetScreenWidth();
-
         const float screenHeight =
             plugin::screen::GetScreenHeight();
 
