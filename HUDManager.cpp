@@ -8,6 +8,7 @@
 #include <CPlayerData.h>
 #include <CPlayerInfo.h>
 #include <CPlayerPed.h>
+#include <CStats.h>
 #include <CTaskSimpleSwim.h>
 #include <CTimer.h>
 #include <CWanted.h>
@@ -61,8 +62,6 @@ HUDManager::HUDManager() :
 
 namespace
 {
-    constexpr float BREATH_EPSILON = 0.05f;
-    constexpr int BREATH_STABLE_FRAMES = 5;
 
     static bool IsMeleeWeapon(
         eWeaponType weaponType)
@@ -349,11 +348,6 @@ void HUDManager::ResetSessionState()
     mArmourStableFrames = 0;
     mWaitingForStableArmour = true;
 
-    mBreathState = BreathState::Idle;
-    mWatchingBreathRecovery = false;
-    mHighestBreathValue = 0.0f;
-    mBreathStableFrames = 0;
-
     mPreviousMoney = mLastMoney;
     mMoneyStableFrames = 0;
     mWaitingForStableMoney = true;
@@ -584,29 +578,6 @@ bool HUDManager::HasAmmoChanged(const AmmoState& current)
     return true;
 }
 
-bool HUDManager::IsBreathRecoveryComplete(float currentBreath)
-{
-    if (!mWatchingBreathRecovery)
-        return false;
-
-    if (currentBreath >= mHighestBreathValue + BREATH_EPSILON)
-    {
-        mHighestBreathValue = currentBreath;
-        mBreathStableFrames = 0;
-
-        return false;
-    }
-
-    mBreathStableFrames++;
-
-    if (mBreathStableFrames < BREATH_STABLE_FRAMES)
-        return false;
-
-    mWatchingBreathRecovery = false;
-
-    return true;
-}
-
 void HUDManager::UpdateHealth()
 {
     const float currentHealth =
@@ -642,78 +613,48 @@ void HUDManager::UpdateArmour()
 
 void HUDManager::UpdateBreath()
 {
-    if (!mPlayer || !mPlayer->m_pPlayerData)
-        return;
-
-    auto* data = mPlayer->m_pPlayerData;
-    const float breath = data->m_fBreath;
-    CTaskSimpleSwim* swim = nullptr;
-
-    if (mPlayer->m_pIntelligence)
+    if (!mPlayer ||
+        !mPlayer->m_pPlayerData)
     {
-        swim = mPlayer->m_pIntelligence->GetTaskSwim();
-    }
-
-    if (!swim)
-    {
-        mBreathState = BreathState::Idle;
         mBreath.Hide();
         mBreath.Update();
         return;
     }
 
-    const eSwimState swimState = swim->m_nSwimState;
+    auto* data =
+        mPlayer->m_pPlayerData;
 
-    switch (mBreathState)
+    const float maxBreath =
+        CStats::GetFatAndMuscleModifier(
+            STAT_MOD_AIR_IN_LUNG);
+
+    const bool breathDepleted =
+        data->m_fBreath < maxBreath;
+
+    bool underwater =
+        false;
+
+    if (mPlayer->m_pIntelligence)
     {
-    case BreathState::Idle:
-    {
-        if (IsUnderwaterSwimState(swimState))
+        if (auto* swim =
+            mPlayer->m_pIntelligence->GetTaskSwim())
         {
-            mBreathState = BreathState::Underwater;
-            
-            mBreath.Show();
+            underwater =
+                swim->m_nSwimState ==
+                SWIM_DIVE_UNDERWATER ||
+                swim->m_nSwimState ==
+                SWIM_UNDERWATER_SPRINTING;
         }
-
-        break;
     }
 
-    case BreathState::Underwater:
+    if (underwater ||
+        breathDepleted)
     {
         mBreath.Show();
-
-        if (IsSurfaceSwimState(swimState))
-        {
-            mWatchingBreathRecovery = true;
-            mHighestBreathValue = breath;
-            mBreathStableFrames = 0;
-
-            mBreathState = BreathState::WaitingForRecovery;
-        }
-
-        break;
     }
-
-    case BreathState::WaitingForRecovery:
+    else
     {
-        mBreath.Show();
-
-        if (IsUnderwaterSwimState(swimState))
-        {
-            mWatchingBreathRecovery = false;
-            mBreathState = BreathState::Underwater;
-            break;
-        }
-
-        if (IsBreathRecoveryComplete(breath))
-        {
-            mBreath.ShowFor(mVisibleTime);
-
-            mBreathState = BreathState::Idle;
-        }
-
-        break;
-    }
+        mBreath.Hide();
     }
 
     mBreath.Update();

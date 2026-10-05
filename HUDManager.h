@@ -106,7 +106,7 @@ private:
     bool mWaitingForStableArmour = false;
     int mArmourStableFrames = 0;
 
-    //Breath tracker
+    // Breath tracker
     BreathState mBreathState = BreathState::Idle;
     float mHighestBreathValue = 0.0f;
     
@@ -141,8 +141,6 @@ private:
     bool HasMoneyChanged(int currentMoney);
     bool HasWeaponChanged(const ActiveWeaponState& current);
     bool HasAmmoChanged(const AmmoState& current);
-
-    bool IsBreathRecoveryComplete(float currentBreath);
 
     uint32_t mVisibleTime = 4000;
 
