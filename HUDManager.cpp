@@ -61,6 +61,13 @@ namespace
     constexpr float BREATH_EPSILON = 0.05f;
     constexpr int BREATH_STABLE_FRAMES = 5;
 
+    static bool IsMeleeWeapon(
+        eWeaponType weaponType)
+    {
+        return weaponType >= WEAPONTYPE_UNARMED &&
+            weaponType <= WEAPONTYPE_CANE;
+    }
+
     bool IsUnderwaterSwimState(eSwimState state)
     {
         return state == SWIM_DIVE_UNDERWATER ||
@@ -153,6 +160,10 @@ bool HUDManager::ShouldDisplayAmmo() const
     if (!weaponInfo)
         return false;
 
+    // All melee / hand-held melee weapons.
+    if (IsMeleeWeapon(weaponType))
+        return false;
+
     if (weapon->m_nAmmoTotal -
         weapon->m_nAmmoInClip >= MaxClip)
     {
@@ -162,28 +173,9 @@ bool HUDManager::ShouldDisplayAmmo() const
     if (CDarkel::FrenzyOnGoing())
         return false;
 
-    /*
-     * Generic categories that do not display ammo.
-     */
-    if (weaponInfo->m_nWeaponFire == WEAPON_FIRE_MELEE ||
-        weaponInfo->m_nWeaponFire == WEAPON_FIRE_USE)
-    {
-        return false;
-    }
-
-    /*
-     * GTA-specific exceptions.
-     */
     switch (weaponType)
     {
-    case WEAPONTYPE_UNARMED:
     case WEAPONTYPE_DETONATOR:
-    case WEAPONTYPE_DILDO1:
-    case WEAPONTYPE_DILDO2:
-    case WEAPONTYPE_VIBE1:
-    case WEAPONTYPE_VIBE2:
-    case WEAPONTYPE_FLOWERS:
-    case WEAPONTYPE_CANE:
     case WEAPONTYPE_PARACHUTE:
         return false;
 
@@ -191,8 +183,11 @@ bool HUDManager::ShouldDisplayAmmo() const
         break;
     }
 
-    if (weaponInfo->m_nSlot <= 1)
+    if (weaponInfo->m_nWeaponFire ==
+        WEAPON_FIRE_USE)
+    {
         return false;
+    }
 
     return true;
 }
