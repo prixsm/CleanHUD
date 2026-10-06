@@ -26,6 +26,11 @@ bool HUDRenderer::ShouldOverridePosition() const
     return !HUDManager::Get().IsUsingVanillaLayout();
 }
 
+HUDRenderer::HUDRenderPosition HUDRenderer::GetClockPosition() const
+{
+    return mClock;
+}
+
 HUDRenderer::HUDRenderPosition HUDRenderer::GetWeaponPosition() const
 {
     return mWeapon;
@@ -63,6 +68,7 @@ HUDRenderer::HUDRenderPosition HUDRenderer::GetWantedPosition() const
 
 void HUDRenderer::Reset()
 {
+    mClock = {};
     mWeapon = {};
     mAmmo = {};
     mHealth = {};
@@ -85,6 +91,15 @@ void HUDRenderer::Build(const HUDLayout& layout)
 
         switch (item.Type)
         {
+        case HUDComponentType::Clock:
+
+            SetClockPosition(
+                static_cast<int>(item.Position.X),
+                static_cast<int>(item.Position.Y),
+                alpha);
+
+            break;
+
         case HUDComponentType::Weapon:
 
             SetWeaponPosition(
@@ -148,9 +163,6 @@ void HUDRenderer::Build(const HUDLayout& layout)
 
             break;
 
-        case HUDComponentType::Clock:
-            break;
-
         default:
             break;
         }
@@ -165,6 +177,11 @@ HUDRenderer::HUDAnchor HUDRenderer::GetAnchor() const
 void HUDRenderer::SetAnchor(float x, float y)
 {
     mAnchor = {x, y};
+}
+
+void HUDRenderer::SetClockPosition(int x, int y, uint8_t alpha)
+{
+    mClock = {x, y, alpha, true};
 }
 
 void HUDRenderer::SetWeaponPosition(int x, int y, uint8_t alpha)

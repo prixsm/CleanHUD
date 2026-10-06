@@ -16,15 +16,7 @@ namespace
 
     static void __cdecl HookedRenderHealthBar(int player, int x, int y)
     {
-        if (HUDManager::Get().IsUsingVanillaLayout())
-        {
-            gHealthHook.ccall(player, x, y);
-
-            return;
-        }
-
-        const auto pos =
-            HUDRenderer::Get().GetHealthPosition();
+        const auto pos = HUDRenderer::Get().GetHealthPosition();
 
         if (!pos.Valid)
         {
@@ -33,39 +25,43 @@ namespace
             return;
         }
 
-        constexpr float HealthNativeX =
-            519.0f;
+        if (!HUDManager::Get().IsUsingVanillaLayout())
+        {
+            constexpr float HealthNativeX = 519.0f;
 
-        const float screenHeight =
-            plugin::screen::GetScreenHeight();
+            const float screenHeight =
+                plugin::screen::GetScreenHeight();
 
-        const float healthX =
-            HUDMetrics::ScaleNativeRightX(
-                HealthNativeX);
+            const float healthX =
+                HUDMetrics::ScaleNativeRightX(
+                    HealthNativeX);
 
-        const float layoutY =
-            static_cast<float>(pos.Y) *
-            (screenHeight / 1080.0f);
+            const float layoutY =
+                static_cast<float>(pos.Y) *
+                (screenHeight / 1080.0f);
 
-        x = static_cast<int>(
-            std::lround(healthX));
+            x = static_cast<int>(
+                std::lround(healthX));
 
-        y = static_cast<int>(
-            std::lround(layoutY));
+            y = static_cast<int>(
+                std::lround(layoutY));
+        }
 
-        auto& colour =
-            HudColour.m_aColours[HUD_COLOUR_RED];
+        auto& colour = HudColour.m_aColours[HUD_COLOUR_RED];
 
-        const unsigned char originalAlpha =
-            colour.alpha;
+        const unsigned char originalAlpha = colour.alpha;
 
         colour.alpha =
-            pos.Alpha;
+            static_cast<unsigned char>(
+                static_cast<unsigned int>(
+                    originalAlpha) *
+                static_cast<unsigned int>(
+                    pos.Alpha) /
+                255u);
 
         gHealthHook.ccall(player, x, y);
 
-        colour.alpha =
-            originalAlpha;
+        colour.alpha = originalAlpha;
     }
 }
 

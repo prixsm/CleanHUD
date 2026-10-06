@@ -12,6 +12,7 @@ public:
     void Reset();
     void Build(const HUDLayout& layout);
 
+    void SetClockPosition(int x, int y, uint8_t alpha);
     void SetWeaponPosition(int x, int y, uint8_t alpha);
     void SetAmmoPosition(int x, int y, uint8_t alpha);
     void SetHealthPosition(int x, int y, uint8_t alpha);
@@ -40,6 +41,7 @@ public:
     };
 
     bool ShouldOverridePosition() const;
+    HUDRenderPosition GetClockPosition() const;
     HUDRenderPosition GetWeaponPosition() const;
     HUDRenderPosition GetAmmoPosition() const;
     HUDRenderPosition GetHealthPosition() const;
@@ -52,6 +54,7 @@ private:
     HUDRenderer() = default;
     HUDAnchor mAnchor;
 
+    HUDRenderPosition mClock;
     HUDRenderPosition mWeapon;
     HUDRenderPosition mAmmo;
     HUDRenderPosition mHealth;

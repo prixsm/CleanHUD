@@ -16,15 +16,7 @@ namespace
 
     static void __cdecl HookedRenderBreathBar(int player, int x, int y)
     {
-        if (HUDManager::Get().IsUsingVanillaLayout())
-        {
-            gBreathHook.ccall(player, x, y);
-
-            return;
-        }
-
-        const auto pos =
-            HUDRenderer::Get().GetBreathPosition();
+        const auto pos = HUDRenderer::Get().GetBreathPosition();
 
         if (!pos.Valid)
         {
@@ -33,35 +25,41 @@ namespace
             return;
         }
 
-        constexpr float BreathNativeX =
-            559.0f;
+        if (!HUDManager::Get().IsUsingVanillaLayout())
+        {
+            constexpr float BreathNativeX = 559.0f;
 
-        const float screenHeight =
-            plugin::screen::GetScreenHeight();
+            const float screenHeight =
+                plugin::screen::GetScreenHeight();
 
-        const float breathX =
-            HUDMetrics::ScaleNativeRightX(
-                BreathNativeX +
-                HUDMetrics::ArmourBreathNativeXOffset);
+            const float breathX =
+                HUDMetrics::ScaleNativeRightX(
+                    BreathNativeX +
+                    HUDMetrics::
+                    ArmourBreathNativeXOffset);
 
-        const float layoutY =
-            static_cast<float>(pos.Y) *
-            (screenHeight / 1080.0f);
+            const float layoutY =
+                static_cast<float>(pos.Y) *
+                (screenHeight / 1080.0f);
 
-        x = static_cast<int>(
-            std::lround(breathX));
+            x = static_cast<int>(
+                std::lround(breathX));
 
-        y = static_cast<int>(
-            std::lround(layoutY));
+            y = static_cast<int>(
+                std::lround(layoutY));
+        }
 
-        auto& colour =
-            HudColour.m_aColours[HUD_COLOUR_BLUELIGHT];
+        auto& colour = HudColour.m_aColours[HUD_COLOUR_BLUELIGHT];
 
-        const unsigned char originalAlpha =
-            colour.alpha;
+        const unsigned char originalAlpha = colour.alpha;
 
         colour.alpha =
-            pos.Alpha;
+            static_cast<unsigned char>(
+                static_cast<unsigned int>(
+                    originalAlpha) *
+                static_cast<unsigned int>(
+                    pos.Alpha) /
+                255u);
 
         gBreathHook.ccall(player, x, y);
 

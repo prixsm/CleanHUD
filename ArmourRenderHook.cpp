@@ -16,15 +16,7 @@ namespace
 
     static void __cdecl HookedRenderArmourBar(int player, int x, int y)
     {
-        if (HUDManager::Get().IsUsingVanillaLayout())
-        {
-            gArmourHook.ccall(player, x, y);
-
-            return;
-        }
-
-        const auto pos =
-            HUDRenderer::Get().GetArmourPosition();
+        const auto pos = HUDRenderer::Get().GetArmourPosition();
 
         if (!pos.Valid)
         {
@@ -33,40 +25,45 @@ namespace
             return;
         }
 
-        constexpr float ArmourNativeX =
-            559.0f;
+        if (!HUDManager::Get().IsUsingVanillaLayout())
+        {
+            constexpr float ArmourNativeX = 559.0f;
 
-        const float screenHeight =
-            plugin::screen::GetScreenHeight();
+            const float screenHeight =
+                plugin::screen::GetScreenHeight();
 
-        const float armourX =
-            HUDMetrics::ScaleNativeRightX(
-                ArmourNativeX +
-                HUDMetrics::ArmourBreathNativeXOffset);
+            const float armourX =
+                HUDMetrics::ScaleNativeRightX(
+                    ArmourNativeX +
+                    HUDMetrics::
+                    ArmourBreathNativeXOffset);
 
-        const float layoutY =
-            static_cast<float>(pos.Y) *
-            (screenHeight / 1080.0f);
+            const float layoutY =
+                static_cast<float>(pos.Y) *
+                (screenHeight / 1080.0f);
 
-        x = static_cast<int>(
-            std::lround(armourX));
+            x = static_cast<int>(
+                std::lround(armourX));
 
-        y = static_cast<int>(
-            std::lround(layoutY));
+            y = static_cast<int>(
+                std::lround(layoutY));
+        }
 
-        auto& colour =
-            HudColour.m_aColours[HUD_COLOUR_WHITE];
+        auto& colour = HudColour.m_aColours[HUD_COLOUR_WHITE];
 
-        const unsigned char originalAlpha =
-            colour.alpha;
+        const unsigned char originalAlpha = colour.alpha;
 
         colour.alpha =
-            pos.Alpha;
+            static_cast<unsigned char>(
+                static_cast<unsigned int>(
+                    originalAlpha) *
+                static_cast<unsigned int>(
+                    pos.Alpha) /
+                255u);
 
         gArmourHook.ccall(player, x, y);
 
-        colour.alpha =
-            originalAlpha;
+        colour.alpha = originalAlpha;
     }
 }
 

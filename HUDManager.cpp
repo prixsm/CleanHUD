@@ -318,9 +318,7 @@ void HUDManager::Update()
     mHealth.Update(tabHeld);
     mArmour.Update(tabHeld);
     mBreath.Update(tabHeld);
-
-    mMoney.Update();
-
+    mMoney.Update(tabHeld);
     mWeaponIcon.Update(tabHeld);
     mAmmo.Update(tabHeld);
 
@@ -332,6 +330,8 @@ void HUDManager::Update()
     if (!tabHeld)
     {
         const bool tabFadeOutActive =
+            mClock.IsFadingOut() ||
+            mMoney.IsFadingOut() ||
             mHealth.IsFadingOut() ||
             mArmour.IsFadingOut() ||
             mBreath.IsFadingOut() ||

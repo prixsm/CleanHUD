@@ -32,80 +32,62 @@ namespace
             255u);
     }
 
-    static void HookedMoneyDraw(
-        SafetyHookContext& ctx)
+    static void HookedMoneyDraw(SafetyHookContext& ctx)
     {
-        auto* stack =
-            reinterpret_cast<float*>(
-                ctx.esp);
+        auto* stack = reinterpret_cast<float*>(ctx.esp);
 
-        if (HUDManager::Get().
-            IsUsingVanillaLayout())
-        {
-            return;
-        }
+        const bool vanillaLayout = HUDManager::Get().IsUsingVanillaLayout();
 
-        const auto pos =
-            HUDRenderer::Get().
-            GetMoneyPosition();
+        const auto pos = HUDRenderer::Get().GetMoneyPosition();
 
         if (!pos.Valid)
         {
-            ctx.eip = 0x58F60C;
+            if (!vanillaLayout)
+            {
+                ctx.eip = 0x58F60C;
+            }
+
             return;
         }
 
-        const float screenWidth =
-            plugin::screen::GetScreenWidth();
+        if (!vanillaLayout)
+        {
+            const float screenWidth = plugin::screen::GetScreenWidth();
 
-        const float screenHeight =
-            plugin::screen::GetScreenHeight();
+            const float screenHeight = plugin::screen::GetScreenHeight();
 
-        const float layoutX =
-            static_cast<float>(pos.X) *
-            (screenWidth / 1920.0f);
+            const float layoutX =
+                static_cast<float>(pos.X) *
+                (screenWidth / 1920.0f);
 
-        const float layoutY =
-            static_cast<float>(pos.Y) *
-            (screenHeight / 1080.0f);
+            const float layoutY =
+                static_cast<float>(pos.Y) *
+                (screenHeight / 1080.0f);
 
-        stack[0] =
-            layoutX +
-            HUDMetrics::MoneyRightOffset;
+            stack[0] = layoutX + HUDMetrics::MoneyRightOffset;
 
-        stack[1] =
-            layoutY;
+            stack[1] = layoutY;
+        }
 
-        gOriginalMoneyColourAlpha =
-            CFont::m_Color->a;
+        gOriginalMoneyColourAlpha = CFont::m_Color->a;
 
-        gOriginalMoneyDropAlpha =
-            CFont::m_FontDropColor->a;
+        gOriginalMoneyDropAlpha = CFont::m_FontDropColor->a;
 
-        CFont::m_Color->a =
-            ScaleAlpha(
-                gOriginalMoneyColourAlpha,
-                pos.Alpha);
+        CFont::m_Color->a = ScaleAlpha(gOriginalMoneyColourAlpha, pos.Alpha);
 
-        CFont::m_FontDropColor->a =
-            ScaleAlpha(
-                gOriginalMoneyDropAlpha,
-                pos.Alpha);
+        CFont::m_FontDropColor->a = ScaleAlpha(gOriginalMoneyDropAlpha, pos.Alpha);
 
         gMoneyAlphaModified = true;
     }
 
-    static void RestoreMoneyAlpha(
-        SafetyHookContext& ctx)
+    static void RestoreMoneyAlpha(SafetyHookContext& ctx)
     {
         if (!gMoneyAlphaModified)
             return;
 
-        CFont::m_Color->a =
-            gOriginalMoneyColourAlpha;
+        CFont::m_Color->a = gOriginalMoneyColourAlpha;
 
-        CFont::m_FontDropColor->a =
-            gOriginalMoneyDropAlpha;
+        CFont::m_FontDropColor->a = gOriginalMoneyDropAlpha;
 
         gMoneyAlphaModified = false;
     }
@@ -133,11 +115,9 @@ void MoneyRenderHook::Remove()
 
     if (gMoneyAlphaModified)
     {
-        CFont::m_Color->a =
-            gOriginalMoneyColourAlpha;
+        CFont::m_Color->a = gOriginalMoneyColourAlpha;
 
-        CFont::m_FontDropColor->a =
-            gOriginalMoneyDropAlpha;
+        CFont::m_FontDropColor->a = gOriginalMoneyDropAlpha;
 
         gMoneyAlphaModified = false;
     }

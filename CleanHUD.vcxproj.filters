@@ -51,6 +51,9 @@
     <ClCompile Include="AmmoRenderHook.cpp">
       <Filter>Render\Hooks</Filter>
     </ClCompile>
+    <ClCompile Include="ClockRenderHook.cpp">
+      <Filter>Render\Hooks</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Core">
@@ -120,6 +123,9 @@
       <Filter>Render\Hooks</Filter>
     </ClInclude>
     <ClInclude Include="AmmoRenderHook.h">
+      <Filter>Render\Hooks</Filter>
+    </ClInclude>
+    <ClInclude Include="ClockRenderHook.h">
       <Filter>Render\Hooks</Filter>
     </ClInclude>
   </ItemGroup>

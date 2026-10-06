@@ -1,6 +1,5 @@
 #include <cmath>
 #include <cstdint>
-#include <intrin.h>
 
 #include "../safetyhook/safetyhook.hpp"
 
@@ -13,38 +12,38 @@
 namespace
 {
     SafetyHookMid gWeaponHook;
-    SafetyHookInline gWeaponSpriteHook;
+    SafetyHookMid gWeaponSpriteAlphaHook;
 
-    constexpr std::uintptr_t WeaponIconStart =
-        0x58D7D0;
+    constexpr std::uintptr_t WeaponIconStart = 0x58D7D0;
 
-    constexpr std::uintptr_t WeaponIconEnd =
-        0x58D9A0;
+    constexpr std::uintptr_t WeaponIconEnd = 0x58D9A0;
 
-    static void HookedWeaponPosition(
-        SafetyHookContext& ctx)
+    static void HookedWeaponPosition(SafetyHookContext& ctx)
     {
-        if (HUDManager::Get().
-            IsUsingVanillaLayout())
-        {
-            return;
-        }
-
-        const auto pos =
-            HUDRenderer::Get().
-            GetWeaponPosition();
+        const auto pos = HUDRenderer::Get().GetWeaponPosition();
 
         if (!pos.Valid)
             return;
 
-        const float screenWidth =
-            plugin::screen::GetScreenWidth();
+        auto* alpha =
+            reinterpret_cast<float*>(
+                ctx.esp + 4);
 
-        const float screenHeight =
-            plugin::screen::GetScreenHeight();
+        *alpha *=
+            static_cast<float>(
+                pos.Alpha) /
+            255.0f;
 
-        constexpr float WeaponNativeWidth =
-            47.0f;
+        if (HUDManager::Get().IsUsingVanillaLayout())
+        {
+            return;
+        }
+
+        const float screenWidth = plugin::screen::GetScreenWidth();
+
+        const float screenHeight = plugin::screen::GetScreenHeight();
+
+        constexpr float WeaponNativeWidth = 47.0f;
 
         const float weaponWidth =
             WeaponNativeWidth *
@@ -71,79 +70,45 @@ namespace
                 layoutX);
 
         auto* stack =
-            reinterpret_cast<std::uint32_t*>(
+            reinterpret_cast<
+            std::uint32_t*>(
                 ctx.esp);
 
         stack[0] =
             static_cast<std::uint32_t>(
                 layoutY);
-
-        auto* alpha =
-            reinterpret_cast<float*>(
-                ctx.esp +
-                sizeof(std::uint32_t));
-
-        *alpha *=
-            static_cast<float>(pos.Alpha) /
-            255.0f;
     }
 
-    static void __cdecl HookedWeaponSprite(
-        float x,
-        float y,
-        float z,
-        float halfWidth,
-        float halfHeight,
-        unsigned char red,
-        unsigned char green,
-        unsigned char blue,
-        short alpha,
-        float rhw,
-        unsigned char intensity,
-        unsigned char udir,
-        unsigned char vdir)
+    static void HookedWeaponSpriteAlpha(SafetyHookContext& ctx)
     {
-        const auto returnAddress =
-            reinterpret_cast<std::uintptr_t>(
-                _ReturnAddress());
+        auto* stack =
+            reinterpret_cast<std::uint32_t*>(
+                ctx.esp);
 
-        const bool calledFromWeaponIcon =
-            returnAddress >= WeaponIconStart &&
-            returnAddress < WeaponIconEnd;
+        const std::uintptr_t returnAddress =
+            stack[0];
 
-        if (calledFromWeaponIcon &&
-            !HUDManager::Get().
-            IsUsingVanillaLayout())
+        if (returnAddress < WeaponIconStart ||
+            returnAddress >= WeaponIconEnd)
         {
-            const auto pos =
-                HUDRenderer::Get().
-                GetWeaponPosition();
-
-            if (pos.Valid)
-            {
-                alpha =
-                    static_cast<short>(
-                        static_cast<int>(alpha) *
-                        static_cast<int>(
-                            pos.Alpha) /
-                        255);
-            }
+            return;
         }
 
-        gWeaponSpriteHook.ccall(
-            x,
-            y,
-            z,
-            halfWidth,
-            halfHeight,
-            red,
-            green,
-            blue,
-            alpha,
-            rhw,
-            intensity,
-            udir,
-            vdir);
+        const auto pos = HUDRenderer::Get().GetWeaponPosition();
+
+        if (!pos.Valid)
+            return;
+
+        const std::uint32_t originalAlpha =
+            stack[9];
+
+        const std::uint32_t cleanAlpha =
+            pos.Alpha;
+
+        stack[9] =
+            originalAlpha *
+            cleanAlpha /
+            255u;
     }
 }
 
@@ -155,15 +120,15 @@ void WeaponRenderHook::Install()
                 0x58F93E),
             HookedWeaponPosition);
 
-    gWeaponSpriteHook =
-        safetyhook::create_inline(
+    gWeaponSpriteAlphaHook =
+        safetyhook::create_mid(
             reinterpret_cast<void*>(
                 0x70D000),
-            HookedWeaponSprite);
+            HookedWeaponSpriteAlpha);
 }
 
 void WeaponRenderHook::Remove()
 {
-    gWeaponSpriteHook.reset();
+    gWeaponSpriteAlphaHook.reset();
     gWeaponHook.reset();
 }

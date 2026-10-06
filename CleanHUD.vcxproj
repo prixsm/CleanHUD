@@ -134,6 +134,7 @@ xcopy /Y "$(TargetPath)" "$(GTA_SA_DIR)\scripts"
     <ClCompile Include="ArmourRenderHook.cpp" />
     <ClCompile Include="BreathRenderHook.cpp" />
     <ClCompile Include="CallPatch.cpp" />
+    <ClCompile Include="ClockRenderHook.cpp" />
     <ClCompile Include="HealthRenderHook.cpp" />
     <ClCompile Include="HUDComponent.cpp" />
     <ClCompile Include="HUDPatchGroup.cpp" />
@@ -154,6 +155,7 @@ xcopy /Y "$(TargetPath)" "$(GTA_SA_DIR)\scripts"
     <ClInclude Include="ArmourRenderHook.h" />
     <ClInclude Include="BreathRenderHook.h" />
     <ClInclude Include="CallPatch.h" />
+    <ClInclude Include="ClockRenderHook.h" />
     <ClInclude Include="HealthRenderHook.h" />
     <ClInclude Include="HUDComponent.h" />
     <ClInclude Include="HUDPatchGroup.h" />
