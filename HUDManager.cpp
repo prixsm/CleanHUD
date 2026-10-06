@@ -1,3 +1,5 @@
+#include <algorithm>
+
 #include <common.h>
 #include <CCamera.h>
 #include <CCutsceneMgr.h>
@@ -61,12 +63,28 @@ HUDManager::HUDManager() :
 
 namespace
 {
-
     static bool IsMeleeWeapon(
         eWeaponType weaponType)
     {
         return weaponType >= WEAPONTYPE_UNARMED &&
             weaponType <= WEAPONTYPE_CANE;
+    }
+
+    static float Lerp(
+        float from,
+        float to,
+        float progress)
+    {
+        progress =
+            std::clamp(
+                progress,
+                0.0f,
+                1.0f);
+
+        return
+            from +
+            (to - from) *
+            progress;
     }
 }
 
@@ -735,14 +753,24 @@ void HUDManager::BuildPlayerHUDLayout()
     const bool armourDisplayed =
         ShouldDisplayArmour();
 
-    const bool weaponGroupVisible =
-        mWeaponIcon.IsVisible() ||
-        (mAmmo.IsVisible() && ammoDisplayed);
+    const float weaponProgress =
+        std::max(
+            mWeaponIcon.GetLayoutProgress(),
+            ammoDisplayed
+            ? mAmmo.GetLayoutProgress()
+            : 0.0f);
 
-    const bool statusBarVisible =
-        (mArmour.IsVisible() && armourDisplayed) ||
-        mBreath.IsVisible() ||
-        mHealth.IsVisible();
+    const float armourProgress =
+        armourDisplayed
+        ? mArmour.GetLayoutProgress()
+        : 0.0f;
+
+    const float statusBarProgress =
+        std::max(
+            armourProgress,
+            std::max(
+                mBreath.GetLayoutProgress(),
+                mHealth.GetLayoutProgress()));
 
     float moneySpacing = 0.0f;
 
@@ -751,28 +779,32 @@ void HUDManager::BuildPlayerHUDLayout()
         moneySpacing =
             MoneyToWantedSpacing;
     }
-    else if (weaponGroupVisible)
+    else
     {
+        const float statusSpacing =
+            MoneyToStatusBarSpacing *
+            statusBarProgress;
+
         moneySpacing =
-            MoneyToWeaponSpacing;
-    }
-    else if (statusBarVisible)
-    {
-        moneySpacing =
-            MoneyToStatusBarSpacing;
+            Lerp(
+                statusSpacing,
+                MoneyToWeaponSpacing,
+                weaponProgress);
     }
 
     float wantedSpacing = 0.0f;
 
-    if (weaponGroupVisible)
+    if (mWanted.IsVisible())
     {
+        const float statusSpacing =
+            WantedToStatusBarSpacing *
+            statusBarProgress;
+
         wantedSpacing =
-            WantedToWeaponSpacing;
-    }
-    else if (statusBarVisible)
-    {
-        wantedSpacing =
-            WantedToStatusBarSpacing;
+            Lerp(
+                statusSpacing,
+                WantedToWeaponSpacing,
+                weaponProgress);
     }
 
     mLayout.Add(

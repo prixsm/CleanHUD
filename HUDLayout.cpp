@@ -24,6 +24,9 @@ void HUDLayout::Add(
     if (!component.IsVisible())
         return;
 
+    const float layoutProgress =
+        component.GetLayoutProgress();
+
     HUDLayoutItem item;
 
     item.Component = &component;
@@ -35,13 +38,14 @@ void HUDLayout::Add(
     };
 
     item.Type = component.GetType();
+
     item.Height = height;
 
     mItems.push_back(item);
 
     mCurrentY +=
-        height +
-        spacingAfter;
+        (height + spacingAfter) *
+        layoutProgress;
 }
 
 const std::vector<HUDLayoutItem>& HUDLayout::GetItems() const
