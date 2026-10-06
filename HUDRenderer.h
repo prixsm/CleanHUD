@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 class HUDLayout;
 
 class HUDRenderer
@@ -10,13 +12,13 @@ public:
     void Reset();
     void Build(const HUDLayout& layout);
 
-    void SetWeaponPosition(int x, int y);
-    void SetAmmoPosition(int x, int y);
-    void SetHealthPosition(int x, int y);
-    void SetArmourPosition(int x, int y);
-    void SetBreathPosition(int x, int y);
-    void SetMoneyPosition(int x, int y);
-    void SetWantedPosition(int x, int y);
+    void SetWeaponPosition(int x, int y, uint8_t alpha);
+    void SetAmmoPosition(int x, int y, uint8_t alpha);
+    void SetHealthPosition(int x, int y, uint8_t alpha);
+    void SetArmourPosition(int x, int y, uint8_t alpha);
+    void SetBreathPosition(int x, int y, uint8_t alpha);
+    void SetMoneyPosition(int x, int y, uint8_t alpha);
+    void SetWantedPosition(int x, int y, uint8_t alpha);
 
     struct HUDAnchor
     {
@@ -31,6 +33,8 @@ public:
     {
         int X = 0;
         int Y = 0;
+
+        uint8_t Alpha = 255;
 
         bool Valid = false;
     };

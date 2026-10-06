@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <cmath>
 
 #include "../safetyhook/safetyhook.hpp"
@@ -79,11 +80,17 @@ namespace
         y = static_cast<int>(
             std::lround(layoutY));
 
-        gAmmoHook.ccall(
-            player,
-            x,
-            y,
-            alpha);
+        const float cleanAlpha =
+            static_cast<float>(pos.Alpha) /
+            255.0f;
+
+        alpha =
+            std::clamp(
+                alpha * cleanAlpha,
+                0.0f,
+                255.0f);
+
+        gAmmoHook.ccall(player, x, y, alpha);
     }
 }
 

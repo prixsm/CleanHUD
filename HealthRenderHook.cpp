@@ -1,6 +1,10 @@
 #include <cmath>
+
 #include "../safetyhook/safetyhook.hpp"
+
+#include <CHudColours.h>
 #include <extensions/Screen.h>
+
 #include "HealthRenderHook.h"
 #include "HUDManager.h"
 #include "HUDMetrics.h"
@@ -10,14 +14,12 @@ namespace
 {
     SafetyHookInline gHealthHook;
 
-    static void __cdecl HookedRenderHealthBar(
-        int player,
-        int x,
-        int y)
+    static void __cdecl HookedRenderHealthBar(int player, int x, int y)
     {
         if (HUDManager::Get().IsUsingVanillaLayout())
         {
             gHealthHook.ccall(player, x, y);
+
             return;
         }
 
@@ -27,10 +29,12 @@ namespace
         if (!pos.Valid)
         {
             gHealthHook.ccall(player, x, y);
+
             return;
         }
 
-        constexpr float HealthNativeX = 519.0f;
+        constexpr float HealthNativeX =
+            519.0f;
 
         const float screenHeight =
             plugin::screen::GetScreenHeight();
@@ -49,7 +53,19 @@ namespace
         y = static_cast<int>(
             std::lround(layoutY));
 
+        auto& colour =
+            HudColour.m_aColours[HUD_COLOUR_RED];
+
+        const unsigned char originalAlpha =
+            colour.alpha;
+
+        colour.alpha =
+            pos.Alpha;
+
         gHealthHook.ccall(player, x, y);
+
+        colour.alpha =
+            originalAlpha;
     }
 }
 

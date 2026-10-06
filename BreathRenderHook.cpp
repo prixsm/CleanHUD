@@ -1,23 +1,25 @@
 #include <cmath>
+
 #include "../safetyhook/safetyhook.hpp"
+
+#include <CHudColours.h>
 #include <extensions/Screen.h>
+
 #include "BreathRenderHook.h"
 #include "HUDManager.h"
-#include "HUDRenderer.h"
 #include "HUDMetrics.h"
+#include "HUDRenderer.h"
 
 namespace
 {
     SafetyHookInline gBreathHook;
 
-    static void __cdecl HookedRenderBreathBar(
-        int player,
-        int x,
-        int y)
+    static void __cdecl HookedRenderBreathBar(int player, int x, int y)
     {
         if (HUDManager::Get().IsUsingVanillaLayout())
         {
             gBreathHook.ccall(player, x, y);
+
             return;
         }
 
@@ -27,10 +29,12 @@ namespace
         if (!pos.Valid)
         {
             gBreathHook.ccall(player, x, y);
+
             return;
         }
 
-        constexpr float BreathNativeX = 559.0f;
+        constexpr float BreathNativeX =
+            559.0f;
 
         const float screenHeight =
             plugin::screen::GetScreenHeight();
@@ -50,16 +54,28 @@ namespace
         y = static_cast<int>(
             std::lround(layoutY));
 
+        auto& colour =
+            HudColour.m_aColours[HUD_COLOUR_BLUELIGHT];
+
+        const unsigned char originalAlpha =
+            colour.alpha;
+
+        colour.alpha =
+            pos.Alpha;
+
         gBreathHook.ccall(player, x, y);
+
+        colour.alpha =
+            originalAlpha;
     }
 }
 
 void BreathRenderHook::Install()
 {
-    gBreathHook = safetyhook::create_inline(
-        reinterpret_cast<void*>(0x589190),
-        reinterpret_cast<void*>(HookedRenderBreathBar)
-    );
+    gBreathHook =
+        safetyhook::create_inline(
+            reinterpret_cast<void*>(0x589190),
+            HookedRenderBreathBar);
 }
 
 void BreathRenderHook::Remove()

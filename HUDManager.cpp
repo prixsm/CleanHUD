@@ -54,7 +54,8 @@ HUDManager::HUDManager() :
         }),
     mWanted(
         HUDComponentType::Wanted,
-        {})
+        {},
+        false)
 {
 }
 
@@ -296,21 +297,33 @@ void HUDManager::Update()
 
     mClock.Update();
 
-    if (tabHeld)
-    {
-        mHealth.ForceVisible();
-        mArmour.ForceVisible();
-        mBreath.ForceVisible();
-        mWeaponIcon.ForceVisible();
-        mAmmo.ForceVisible();
-    }
+    mHealth.Update(tabHeld);
+    mArmour.Update(tabHeld);
+    mBreath.Update(tabHeld);
+
+    mMoney.Update();
+
+    mWeaponIcon.Update(tabHeld);
+    mAmmo.Update(tabHeld);
+
+    mWanted.Update();
 
     BuildPlayerHUDLayout();
     HUDRenderer::Get().Build(mLayout);
 
     if (!tabHeld)
     {
-        mVanillaLayoutLatched = false;
+        const bool tabFadeOutActive =
+            mHealth.IsFadingOut() ||
+            mArmour.IsFadingOut() ||
+            mBreath.IsFadingOut() ||
+            mWeaponIcon.IsFadingOut() ||
+            mAmmo.IsFadingOut();
+
+        if (!tabFadeOutActive)
+        {
+            mVanillaLayoutLatched = false;
+        }
     }
 }
 
@@ -403,8 +416,6 @@ bool HUDManager::UpdateHealthInitialization(float currentHealth)
     mPreviousHealth =
         currentHealth;
 
-    mHealth.Update();
-
     return false;
 }
 
@@ -430,8 +441,6 @@ bool HUDManager::UpdateArmourInitialization(float currentArmour)
     mLastArmour = currentArmour;
     mPreviousArmour = currentArmour;
 
-    mArmour.Update();
-
     return false;
 }
 
@@ -455,8 +464,6 @@ bool HUDManager::UpdateMoneyInitialization(int currentMoney)
     mLastMoney = currentMoney;
     mPreviousMoney = currentMoney;
 
-    mMoney.Update();
-
     return false;
 }
 
@@ -479,8 +486,6 @@ bool HUDManager::UpdateWeaponInitialization(const ActiveWeaponState& current)
         mLastWeaponState = current;
     }
 
-    mWeaponIcon.Update();
-
     return false;
 }
 
@@ -501,8 +506,6 @@ bool HUDManager::UpdateAmmoInitialization(const AmmoState& current)
         mAmmoStableFrames = 0;
         mLastAmmoState = current;
     }
-
-    mAmmo.Update();
 
     return false;
 }
@@ -567,13 +570,23 @@ void HUDManager::UpdateHealth()
         return;
     }
 
-    if (HasHealthChanged(currentHealth))
+    const bool healthChanged =
+        HasHealthChanged(currentHealth);
+
+    const bool criticallyLow =
+        static_cast<int>(currentHealth) < 10;
+
+    if (criticallyLow)
+    {
+        mHealth.Show();
+        return;
+    }
+
+    if (healthChanged)
     {
         mHealth.ShowFor(
             mVisibleTime);
     }
-
-    mHealth.Update();
 }
 
 void HUDManager::UpdateArmour()
@@ -585,8 +598,6 @@ void HUDManager::UpdateArmour()
 
     if (HasArmourChanged(currentArmour))
         mArmour.ShowFor(mVisibleTime);
-
-    mArmour.Update();
 }
 
 void HUDManager::UpdateBreath()
@@ -595,7 +606,6 @@ void HUDManager::UpdateBreath()
         !mPlayer->m_pPlayerData)
     {
         mBreath.Hide();
-        mBreath.Update();
         return;
     }
 
@@ -609,8 +619,7 @@ void HUDManager::UpdateBreath()
     const bool breathDepleted =
         data->m_fBreath < maxBreath;
 
-    bool underwater =
-        false;
+    bool underwater = false;
 
     if (mPlayer->m_pIntelligence)
     {
@@ -625,8 +634,7 @@ void HUDManager::UpdateBreath()
         }
     }
 
-    if (underwater ||
-        breathDepleted)
+    if (underwater || breathDepleted)
     {
         mBreath.Show();
     }
@@ -634,8 +642,6 @@ void HUDManager::UpdateBreath()
     {
         mBreath.Hide();
     }
-
-    mBreath.Update();
 }
 
 void HUDManager::UpdateMoney()
@@ -657,8 +663,6 @@ void HUDManager::UpdateMoney()
     {
         mMoney.ShowFor(mVisibleTime);
     }
-
-    mMoney.Update();
 }
 
 void HUDManager::UpdateWeaponIcon()
@@ -673,8 +677,6 @@ void HUDManager::UpdateWeaponIcon()
         mWeaponIcon.ShowFor(mVisibleTime);
         mAmmo.ShowFor(mVisibleTime);
     }
-
-    mWeaponIcon.Update();
 }
 
 void HUDManager::UpdateAmmo()
@@ -689,8 +691,6 @@ void HUDManager::UpdateAmmo()
         mAmmo.ShowFor(mVisibleTime);
         mWeaponIcon.ShowFor(mVisibleTime);
     }
-
-    mAmmo.Update();
 }
 
 void HUDManager::UpdateWanted()
@@ -699,8 +699,6 @@ void HUDManager::UpdateWanted()
         mWanted.Show();
     else
         mWanted.Hide();
-
-    mWanted.Update();
 }
 
 void HUDManager::BuildPlayerHUDLayout()
@@ -715,7 +713,7 @@ void HUDManager::BuildPlayerHUDLayout()
     constexpr float MoneyToStatusBarSpacing = 28.0f;
 
     constexpr float WantedToWeaponSpacing = 30.0f;
-    constexpr float WantedToStatusBarSpacing = 20.0f;
+    constexpr float WantedToStatusBarSpacing = 23.0f;
 
     constexpr float ClockSpacing = 40.0f;
     constexpr float WeaponSpacing = 4.0f;
