@@ -1,4 +1,5 @@
 #include <cstdint>
+#include <intrin.h>
 
 #include "../safetyhook/safetyhook.hpp"
 
@@ -9,13 +10,10 @@
 
 namespace
 {
-    SafetyHookMid gClockAlphaHook;
-    SafetyHookMid gClockRestoreHook;
+    SafetyHookInline gClockPrintHook;
 
-    bool gClockAlphaModified = false;
-
-    std::uint8_t gOriginalColourAlpha = 255;
-    std::uint8_t gOriginalDropAlpha = 255;
+    constexpr std::uintptr_t ClockPrintReturnAddress =
+        0x58EC26;
 
     static std::uint8_t ScaleAlpha(
         std::uint8_t original,
@@ -29,63 +27,86 @@ namespace
             255u);
     }
 
-    static void ApplyClockAlpha(SafetyHookContext&)
+    static void __cdecl HookedPrintString(
+        float x,
+        float y,
+        const char* text)
     {
-        const auto pos = HUDRenderer::Get().GetClockPosition();
+        const auto returnAddress =
+            reinterpret_cast<std::uintptr_t>(
+                _ReturnAddress());
 
-        if (!pos.Valid)
+        if (returnAddress != ClockPrintReturnAddress)
+        {
+            gClockPrintHook.ccall(
+                x,
+                y,
+                text);
+
             return;
+        }
 
-        gOriginalColourAlpha = CFont::m_Color->a;
+        const auto pos =
+            HUDRenderer::Get().GetClockPosition();
 
-        gOriginalDropAlpha = CFont::m_FontDropColor->a;
+        if (!pos.Valid ||
+            pos.Alpha == 255)
+        {
+            gClockPrintHook.ccall(
+                x,
+                y,
+                text);
 
-        CFont::m_Color->a = ScaleAlpha(gOriginalColourAlpha, pos.Alpha);
-
-        CFont::m_FontDropColor->a = ScaleAlpha(gOriginalDropAlpha, pos.Alpha);
-
-        gClockAlphaModified = true;
-    }
-
-    static void RestoreClockAlpha(SafetyHookContext&)
-    {
-        if (!gClockAlphaModified)
             return;
+        }
 
-        CFont::m_Color->a = gOriginalColourAlpha;
+        const auto originalColour =
+            *CFont::m_Color;
 
-        CFont::m_FontDropColor->a = gOriginalDropAlpha;
+        const auto originalDropColour =
+            *CFont::m_FontDropColor;
 
-        gClockAlphaModified = false;
+        CFont::m_Color->a =
+            ScaleAlpha(
+                originalColour.a,
+                pos.Alpha);
+
+        CFont::m_FontDropColor->a =
+            ScaleAlpha(
+                originalDropColour.a,
+                pos.Alpha);
+
+        gClockPrintHook.ccall(
+            x,
+            y,
+            text);
+
+        *CFont::m_Color =
+            originalColour;
+
+        *CFont::m_FontDropColor =
+            originalDropColour;
     }
 }
 
 void ClockRenderHook::Install()
 {
-    gClockAlphaHook =
-        safetyhook::create_mid(
+    // The vanilla clock is printed by a call at 0x58EC21.
+    // Do not hook or patch that call site: it has proven unsafe in
+    // combination with the surrounding DrawPlayerInfo code.
+    //
+    // Instead, hook CFont::PrintString itself and recognize only the
+    // clock invocation by the return address pushed by the untouched
+    // vanilla call (0x58EC26).
+    gClockPrintHook =
+        safetyhook::create_inline(
             reinterpret_cast<void*>(
-                0x58EC1F),
-            ApplyClockAlpha);
-
-    gClockRestoreHook =
-        safetyhook::create_mid(
+                0x71A700),
             reinterpret_cast<void*>(
-                0x58EC26),
-            RestoreClockAlpha);
+                HookedPrintString));
 }
 
 void ClockRenderHook::Remove()
 {
-    gClockRestoreHook.reset();
-    gClockAlphaHook.reset();
-
-    if (gClockAlphaModified)
-    {
-        CFont::m_Color->a = gOriginalColourAlpha;
-
-        CFont::m_FontDropColor->a = gOriginalDropAlpha;
-
-        gClockAlphaModified = false;
-    }
+    gClockPrintHook.reset();
 }
