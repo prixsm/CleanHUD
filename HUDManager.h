@@ -124,6 +124,7 @@ private:
     void UpdateMoney();
     void UpdateWeaponIcon();
     void UpdateAmmo();
+    void UpdateWeaponAiming();
     void UpdateWanted();
 
     void BuildPlayerHUDLayout();
