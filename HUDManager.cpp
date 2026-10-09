@@ -311,6 +311,7 @@ void HUDManager::Update()
     UpdateMoney();
     UpdateWeaponIcon();
     UpdateAmmo();
+    UpdateWeaponAiming();
     UpdateWanted();
 
     mClock.Update();
@@ -711,6 +712,65 @@ void HUDManager::UpdateAmmo()
     }
 }
 
+void HUDManager::UpdateWeaponAiming()
+{
+    // Only react to aiming when the equipped weapon has
+    // ammo that CleanHUD can display. Do not expose the
+    // icon on foot for unarmed/melee targeting, or while
+    // the starting weapon/ammo state is being sampled.
+    if (mWaitingForStableWeapon ||
+        mWaitingForStableAmmo ||
+        !ShouldDisplayAmmo())
+    {
+        return;
+    }
+
+    CPad* pad = mPlayer->GetPadFromPlayer();
+
+    if (!pad || pad->DisablePlayerControls)
+        return;
+
+    bool weaponInUse = false;
+
+    if (mPlayer->bInVehicle)
+    {
+        // Drive-by aiming uses the look-left/right controls,
+        // not the on-foot target button (which can act as
+        // the handbrake while driving).
+        const bool driveByAim =
+            pad->GetLookLeft() ||
+            pad->GetLookRight();
+
+        const eWeaponType weaponType =
+            GetCurrentWeaponState().WeaponType;
+
+        // Also catch drive-by firing for the standard
+        // drive-by SMGs, even without a look direction.
+        const bool driveByWeapon =
+            weaponType == WEAPONTYPE_MICRO_UZI ||
+            weaponType == WEAPONTYPE_TEC9 ||
+            weaponType == WEAPONTYPE_MP5;
+
+        weaponInUse =
+            driveByAim ||
+            (driveByWeapon &&
+                pad->GetCarGunFired() != 0);
+    }
+    else
+    {
+        weaponInUse = pad->GetTarget();
+    }
+
+    if (!weaponInUse)
+        return;
+
+    // Refresh both timers while aiming/doing a drive-by.
+    // Once controls are released, the last ShowFor call
+    // leaves the normal visibility window intact.
+    mWeaponIcon.ShowFor(mVisibleTime);
+    mAmmo.ShowFor(mVisibleTime);
+}
+
 void HUDManager::UpdateWanted()
 {
     if (HasWantedLevel())
@@ -834,10 +894,19 @@ void HUDManager::BuildPlayerHUDLayout()
 
     if (ammoDisplayed)
     {
+        // The weapon reserves its stack height gradually as
+        // it fades in. Cancel that animation for the ammo
+        // position only, keeping ammo directly below the
+        // icon from the first visible frame. The following
+        // status bars still use the animated stack.
+        const float ammoPositionCorrection =
+            WeaponToAmmoOffset *
+            (1.0f - mWeaponIcon.GetLayoutProgress());
+
         mLayout.Add(
             mAmmo,
             AmmoHeight,
-            WeaponAmmoOffsetY,
+            WeaponAmmoOffsetY + ammoPositionCorrection,
             AmmoSpacing,
             WeaponAmmoOffsetX);
     }
