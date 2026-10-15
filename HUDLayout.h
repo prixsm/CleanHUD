@@ -58,6 +58,10 @@ public:
 
     void SetAnchor(float x, float y);
 
+    // Reserve room for a vanilla HUD element without adding it
+    // to CleanHUD's draw list or slide-in animation.
+    void ReserveSpace(float height, float spacingAfter);
+
     void Add(
         HUDComponent& component,
         float height,
