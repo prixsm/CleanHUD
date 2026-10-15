@@ -10,6 +10,7 @@
 #include <CPlayerInfo.h>
 #include <CPlayerPed.h>
 #include <CStats.h>
+#include <CVehicle.h>
 #include <CTaskSimpleSwim.h>
 #include <CWanted.h>
 #include <CWeaponInfo.h>
@@ -236,6 +237,7 @@ void HUDManager::OnGameLoaded()
 {
     mSessionInitialized = false;
     mVanillaLayoutLatched = false;
+    mWasWeaponAiming = false;
 
     mPlayer = nullptr;
     mLastPlayer = nullptr;
@@ -251,6 +253,7 @@ void HUDManager::Update()
     {
         mSessionInitialized = false;
         mLastPlayer = nullptr;
+        mWasWeaponAiming = false;
         return;
     }
 
@@ -311,8 +314,20 @@ void HUDManager::Update()
     UpdateMoney();
     UpdateWeaponIcon();
     UpdateAmmo();
-    UpdateWeaponAiming();
     UpdateWanted();
+
+    const bool weaponAiming = IsWeaponAiming();
+
+    if (mWasWeaponAiming && !weaponAiming)
+    {
+        // Aiming is only a temporary visibility override.
+        // Discard any firing-triggered timers as aiming ends,
+        // so the normal fade-out begins immediately.
+        mWeaponIcon.Hide();
+        mAmmo.Hide();
+    }
+
+    mWasWeaponAiming = weaponAiming;
 
     mClock.Update();
 
@@ -320,10 +335,18 @@ void HUDManager::Update()
     mArmour.Update(tabHeld);
     mBreath.Update(tabHeld);
     mMoney.Update(tabHeld);
-    mWeaponIcon.Update(tabHeld);
-    mAmmo.Update(tabHeld);
+    mWeaponIcon.Update(tabHeld || weaponAiming);
+    mAmmo.Update(tabHeld || weaponAiming);
 
     mWanted.Update();
+
+    if (HasEmptyVehicleAmmo())
+    {
+        // No last-shot "0-0" counter or stale weapon icon
+        // while the player remains inside the vehicle.
+        mWeaponIcon.Reset();
+        mAmmo.Reset();
+    }
 
     BuildPlayerHUDLayout();
     HUDRenderer::Get().Build(mLayout);
@@ -349,6 +372,7 @@ void HUDManager::Update()
 void HUDManager::ResetSessionState()
 {
     HideAll();
+    mWasWeaponAiming = false;
 
     mPreviousHealth = mLastHealth;
     mHealthStableFrames = 0;
@@ -712,63 +736,72 @@ void HUDManager::UpdateAmmo()
     }
 }
 
-void HUDManager::UpdateWeaponAiming()
+bool HUDManager::IsWeaponAiming() const
 {
-    // Only react to aiming when the equipped weapon has
-    // ammo that CleanHUD can display. Do not expose the
-    // icon on foot for unarmed/melee targeting, or while
-    // the starting weapon/ammo state is being sampled.
+    // Aiming should show only the armed weapon/ammo pair,
+    // not fists or other weapons without an ammo counter.
     if (mWaitingForStableWeapon ||
         mWaitingForStableAmmo ||
         !ShouldDisplayAmmo())
     {
-        return;
+        return false;
     }
+
+    const CWeapon* weapon = mPlayer->GetWeapon();
+
+    if (!weapon || weapon->m_nAmmoTotal == 0)
+        return false;
 
     CPad* pad = mPlayer->GetPadFromPlayer();
 
     if (!pad || pad->DisablePlayerControls)
-        return;
+        return false;
 
-    bool weaponInUse = false;
+    if (!mPlayer->bInVehicle)
+        return pad->GetTarget();
 
-    if (mPlayer->bInVehicle)
+    const CVehicle* vehicle = mPlayer->m_pVehicle;
+
+    if (!vehicle ||
+        vehicle->m_nVehicleSubClass == VEHICLE_BMX)
     {
-        // Drive-by aiming uses the look-left/right controls,
-        // not the on-foot target button (which can act as
-        // the handbrake while driving).
-        const bool driveByAim =
-            pad->GetLookLeft() ||
-            pad->GetLookRight();
-
-        const eWeaponType weaponType =
-            GetCurrentWeaponState().WeaponType;
-
-        // Also catch drive-by firing for the standard
-        // drive-by SMGs, even without a look direction.
-        const bool driveByWeapon =
-            weaponType == WEAPONTYPE_MICRO_UZI ||
-            weaponType == WEAPONTYPE_TEC9 ||
-            weaponType == WEAPONTYPE_MP5;
-
-        weaponInUse =
-            driveByAim ||
-            (driveByWeapon &&
-                pad->GetCarGunFired() != 0);
-    }
-    else
-    {
-        weaponInUse = pad->GetTarget();
+        // BMX, mountain bike and bicycle share the bunny
+        // hop input with vehicle fire. None is a drive-by.
+        return false;
     }
 
-    if (!weaponInUse)
-        return;
+    // Drive-by aiming uses vehicle look-left/right controls,
+    // not on-foot targeting (which is the handbrake in cars).
+    const bool driveByAim =
+        pad->GetLookLeft() ||
+        pad->GetLookRight();
 
-    // Refresh both timers while aiming/doing a drive-by.
-    // Once controls are released, the last ShowFor call
-    // leaves the normal visibility window intact.
-    mWeaponIcon.ShowFor(mVisibleTime);
-    mAmmo.ShowFor(mVisibleTime);
+    const eWeaponType weaponType =
+        weapon->m_eWeaponType;
+
+    const bool driveByWeapon =
+        weaponType == WEAPONTYPE_MICRO_UZI ||
+        weaponType == WEAPONTYPE_TEC9 ||
+        weaponType == WEAPONTYPE_MP5;
+
+    return driveByAim ||
+        (driveByWeapon &&
+            pad->GetCarGunFired() != 0);
+}
+
+bool HUDManager::HasEmptyVehicleAmmo() const
+{
+    if (!mPlayer || !mPlayer->bInVehicle ||
+        !ShouldDisplayAmmo())
+    {
+        return false;
+    }
+
+    const CWeapon* weapon = mPlayer->GetWeapon();
+
+    return weapon &&
+        weapon->m_nAmmoTotal == 0 &&
+        weapon->m_nAmmoInClip == 0;
 }
 
 void HUDManager::UpdateWanted()
@@ -795,6 +828,7 @@ void HUDManager::BuildPlayerHUDLayout()
 
     constexpr float ClockSpacing = 40.0f;
     constexpr float WeaponSpacing = 4.0f;
+    constexpr float WeaponToStatusBarSpacingNoAmmo = 16.0f;
     constexpr float AmmoSpacing = 4.0f;
     constexpr float ArmourSpacing = 4.0f;
     constexpr float BreathSpacing = 4.0f;
@@ -889,7 +923,9 @@ void HUDManager::BuildPlayerHUDLayout()
         mWeaponIcon,
         WeaponToAmmoOffset - WeaponSpacing,
         WeaponAmmoOffsetY,
-        WeaponSpacing,
+        ammoDisplayed
+        ? WeaponSpacing
+        : WeaponToStatusBarSpacingNoAmmo,
         WeaponAmmoOffsetX);
 
     if (ammoDisplayed)
