@@ -57,6 +57,7 @@ private:
     bool mNeedsReset = true;
     bool mVanillaLayoutLatched = false;
     bool mWasDead = false;
+    bool mWasWeaponAiming = false;
 
     // HUD components
     HUDComponent mClock;
@@ -124,7 +125,8 @@ private:
     void UpdateMoney();
     void UpdateWeaponIcon();
     void UpdateAmmo();
-    void UpdateWeaponAiming();
+    bool IsWeaponAiming() const;
+    bool HasEmptyVehicleAmmo() const;
     void UpdateWanted();
 
     void BuildPlayerHUDLayout();
