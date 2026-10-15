@@ -940,8 +940,9 @@ void HUDManager::BuildPlayerHUDLayout()
             : 1.0f;
 
         const float ammoPositionCorrection =
-            WeaponToAmmoOffset *
-            (1.0f - weaponReservation);
+            mLayout.UsesFinalEntryPosition(HUDComponentType::Ammo)
+            ? 0.0f
+            : WeaponToAmmoOffset * (1.0f - weaponReservation);
 
         mLayout.Add(
             mAmmo,
