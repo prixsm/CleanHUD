@@ -1,5 +1,6 @@
 #include <plugin.h>
 #include "../HUDManager.h"
+#include "../HUDSettings.h"
 #include "../PlayerHUDHook.h"
 #include "../HUDRenderHooks.h"
 
@@ -10,7 +11,9 @@ class Plugin
 public:
 
     Plugin()
-    {   
+    {
+        HUDSettings::Get().Load();
+
         PlayerHUDHook::Install();
         HUDRenderHooks::Install();
 
