@@ -174,7 +174,7 @@ xcopy /Y "$(TargetPath)" "$(GTA_SA_DIR)\scripts"
     <ClInclude Include="WeaponRenderHook.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="CleanHUD.SA.ini" />
+    <None Include="CleanHUD.ini" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

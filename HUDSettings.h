@@ -17,7 +17,7 @@ public:
     bool SlideStack = false;
     std::uint32_t FadeInMs = 200;
     std::uint32_t FadeOutMs = 200;
-    std::uint32_t VisibilityMs = 4000;
+    std::uint32_t VisibilityMs = 3000;
 
     bool Clock = true;
     bool Money = true;
@@ -31,11 +31,11 @@ public:
     bool ShowOnFootAim = true;
     bool ShowOnVehicleLook = false;
 
-    float MoneyToWantedSpacing = 40.0f;
+    float MoneyToWantedSpacing = 35.0f;
     float MoneyToWeaponSpacing = 35.0f;
-    float MoneyToStatusBarSpacing = 28.0f;
-    float WantedToWeaponSpacing = 25.0f;
-    float WantedToStatusBarSpacing = 23.0f;
+    float MoneyToStatusBarSpacing = 25.0f;
+    float WantedToWeaponSpacing = 35.0f;
+    float WantedToStatusBarSpacing = 25.0f;
     float WeaponToStatusBarSpacingNoAmmo = 10.0f;
     float ClockSpacing = 40.0f;
     float WeaponSpacing = 4.0f;

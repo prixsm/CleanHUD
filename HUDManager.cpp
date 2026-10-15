@@ -911,7 +911,7 @@ void HUDManager::BuildPlayerHUDLayout()
     mLayout.Add(
         mMoney,
         MoneyHeight,
-        0.0f,
+        -7.0f,
         moneySpacing);
 
     mLayout.Add(

@@ -136,6 +136,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="CleanHUD.SA.ini" />
+    <None Include="CleanHUD.ini" />
   </ItemGroup>
 </Project>

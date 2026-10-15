@@ -13,43 +13,43 @@
 namespace
 {
     constexpr char DefaultIni[] =
-        "; CleanHUD - GTA San Andreas (1.0 US)\r\n"
+        "; CleanHUD\r\n"
         "; Place this file beside CleanHUD.SA.asi. Restart after editing.\r\n"
         "; 1 = enabled, 0 = disabled.\r\n"
         "\r\n[Animation]\r\n"
         "; Sliding is optional and off by default.\r\n"
-        "SlideStack=0\r\n"
-        "FadeInMs=200\r\n"
-        "FadeOutMs=200\r\n"
+        "SlideStack = 0\r\n"
+        "FadeInMs = 200\r\n"
+        "FadeOutMs = 200\r\n"
         "\r\n[Visibility]\r\n"
-        "DurationMs=4000\r\n"
+        "DurationMs = 3000\r\n"
         "\r\n[Elements]\r\n"
         "; 0 restores vanilla behavior for the selected element.\r\n"
-        "Clock=1\r\n"
-        "Money=1\r\n"
-        "Wanted=1\r\n"
-        "Weapon=1\r\n"
-        "Ammo=1\r\n"
-        "Armour=1\r\n"
-        "Breath=1\r\n"
-        "Health=1\r\n"
+        "Clock = 1\r\n"
+        "Money = 1\r\n"
+        "Wanted = 1\r\n"
+        "Weapon = 1\r\n"
+        "Ammo = 1\r\n"
+        "Armour = 1\r\n"
+        "Breath = 1\r\n"
+        "Health = 1\r\n"
         "\r\n[WeaponAmmo]\r\n"
-        "ShowOnFootAim=1\r\n"
-        "; Side-looking alone does not reveal weapons.\r\n"
-        "ShowOnVehicleLook=0\r\n"
+        "ShowOnFootAim = 1\r\n"
+        "\r\n; Side-looking alone does not reveal weapons.\r\n"
+        "ShowOnVehicleLook = 0\r\n"
         "\r\n[Spacing]\r\n"
-        "MoneyToWantedSpacing=40.0\r\n"
-        "MoneyToWeaponSpacing=40.0\r\n"
-        "MoneyToStatusBarSpacing=30.0\r\n"
-        "WantedToWeaponSpacing=35.0\r\n"
-        "WantedToStatusBarSpacing=25.0\r\n"
-        "WeaponToStatusBarSpacingNoAmmo=10.0\r\n"
-        "ClockSpacing=40.0\r\n"
-        "WeaponSpacing=4.0\r\n"
-        "AmmoSpacing=4.0\r\n"
-        "ArmourSpacing=4.0\r\n"
-        "BreathSpacing=4.0\r\n"
-        "HealthSpacing=4.0\r\n";
+        "MoneyToWantedSpacing = 35.0\r\n"
+        "MoneyToWeaponSpacing = 35.0\r\n"
+        "MoneyToStatusBarSpacing = 25.0\r\n"
+        "\r\nWantedToWeaponSpacing = 35.0\r\n"
+        "WantedToStatusBarSpacing = 25.0\r\n"
+        "WeaponToStatusBarSpacingNoAmmo = 10.0\r\n"
+        "\r\nClockSpacing = 40.0\r\n"
+        "WeaponSpacing = 4.0\r\n"
+        "AmmoSpacing = 4.0\r\n"
+        "ArmourSpacing = 4.0\r\n"
+        "BreathSpacing = 4.0\r\n"
+        "HealthSpacing = 4.0";
 
     static void CreateDefaultIniIfMissing(const char* path)
     {
@@ -157,7 +157,7 @@ void HUDSettings::Load()
     // including when installed in a subfolder of scripts.
     const std::string path =
         plugin::paths::GetPluginDirRelativePathA(
-            "CleanHUD.SA.ini");
+            "CleanHUD.ini");
 
     CreateDefaultIniIfMissing(path.c_str());
 
@@ -189,19 +189,19 @@ void HUDSettings::Load()
         path.c_str(), "WeaponAmmo", "ShowOnVehicleLook", false);
 
     MoneyToWantedSpacing = ReadFloat(
-        path.c_str(), "Spacing", "MoneyToWantedSpacing", 40.0f);
+        path.c_str(), "Spacing", "MoneyToWantedSpacing", 35.0f);
 
     MoneyToWeaponSpacing = ReadFloat(
         path.c_str(), "Spacing", "MoneyToWeaponSpacing", 35.0f);
 
     MoneyToStatusBarSpacing = ReadFloat(
-        path.c_str(), "Spacing", "MoneyToStatusBarSpacing", 28.0f);
+        path.c_str(), "Spacing", "MoneyToStatusBarSpacing", 25.0f);
 
     WantedToWeaponSpacing = ReadFloat(
-        path.c_str(), "Spacing", "WantedToWeaponSpacing", 25.0f);
+        path.c_str(), "Spacing", "WantedToWeaponSpacing", 35.0f);
 
     WantedToStatusBarSpacing = ReadFloat(
-        path.c_str(), "Spacing", "WantedToStatusBarSpacing", 23.0f);
+        path.c_str(), "Spacing", "WantedToStatusBarSpacing", 25.0f);
 
     WeaponToStatusBarSpacingNoAmmo = ReadFloat(
         path.c_str(), "Spacing", "WeaponToStatusBarSpacingNoAmmo", 10.0f);
