@@ -30,7 +30,6 @@ namespace
 
 void HUDLayout::Reset()
 {
-    // Remember last frame's rendered entries before rebuilding.
     mPreviouslyPresent.fill(false);
 
     for (const auto& item : mItems)
@@ -40,15 +39,18 @@ void HUDLayout::Reset()
 
     mItems.clear();
     mCurrentY = mAnchorY;
+    mFinalY = mAnchorY;
 }
 
 void HUDLayout::ResetHistory()
 {
     mPreviouslyPresent.fill(false);
     mSlideOnEntry.fill(false);
+    mHoldEntrancePosition.fill(false);
     mStackProgress.fill(0.0f);
     mItems.clear();
     mCurrentY = mAnchorY;
+    mFinalY = mAnchorY;
 }
 
 void HUDLayout::PrepareStack(
@@ -67,16 +69,17 @@ void HUDLayout::PrepareStack(
         if (!present)
         {
             mSlideOnEntry[i] = false;
+            mHoldEntrancePosition[i] = false;
             mStackProgress[i] = 0.0f;
             continue;
         }
 
         if (!mPreviouslyPresent[i])
         {
-            // Only a new top-of-stack item may push an already
-            // visible stack downward. New items in the middle
-            // or below existing items fade at their fixed
-            // positions without entering from above.
+            // New components draw at their final position;
+            // only components that were already on screen move.
+            mHoldEntrancePosition[i] = true;
+
             const bool hasVisibleAbove = std::any_of(
                 mPreviouslyPresent.begin(),
                 mPreviouslyPresent.begin() + i,
@@ -87,13 +90,14 @@ void HUDLayout::PrepareStack(
                 mPreviouslyPresent.end(),
                 [](bool visible) { return visible; });
 
+            // Only an insertion above the entire old stack
+            // is allowed to move the previously visible stack.
             mSlideOnEntry[i] = settings.SlideStack &&
                 !hasVisibleAbove && hasVisibleBelow;
         }
 
-        // Keep the last occupied space while fading out.
-        // Lower items must not slide upward or jump down
-        // as the departing element changes its alpha.
+        // Preserve the occupied space during fade-out.
+        // Disappearance never runs a reverse slide.
         if (!mSlideOnEntry[i])
         {
             mStackProgress[i] = 1.0f;
@@ -105,11 +109,51 @@ void HUDLayout::PrepareStack(
                     component.GetLayoutProgress());
         }
     }
+
+    for (std::size_t i = 0; i < components.size(); ++i)
+    {
+        if (!mHoldEntrancePosition[i])
+            continue;
+
+        const HUDComponent& component = *components[i];
+        bool newlyInsertedAbove = false;
+        bool upperSlotStillGrowing = false;
+
+        for (std::size_t j = 0; j < i; ++j)
+        {
+            const bool upperPresent =
+                settings.IsElementEnabled(components[j]->GetType()) &&
+                components[j]->IsVisible();
+
+            if (!upperPresent)
+                continue;
+
+            if (!mPreviouslyPresent[j] && mSlideOnEntry[j])
+                newlyInsertedAbove = true;
+
+            if (mStackProgress[j] < 1.0f)
+                upperSlotStillGrowing = true;
+        }
+
+        // A component from an earlier frame is now part of
+        // the old stack, so a new top entry may move it.
+        if ((mPreviouslyPresent[i] && newlyInsertedAbove) ||
+            (component.GetVisibility() >= 1.0f &&
+                !upperSlotStillGrowing))
+        {
+            mHoldEntrancePosition[i] = false;
+        }
+    }
 }
 
 float HUDLayout::GetStackProgress(HUDComponentType type) const
 {
     return mStackProgress[StackIndex(type)];
+}
+
+bool HUDLayout::UsesFinalEntryPosition(HUDComponentType type) const
+{
+    return mHoldEntrancePosition[StackIndex(type)];
 }
 
 void HUDLayout::SetAnchor(float x, float y)
@@ -135,21 +179,23 @@ void HUDLayout::Add(
     HUDLayoutItem item;
 
     item.Component = &component;
+    item.Type = component.GetType();
 
     item.Position =
     {
         mAnchorX + offsetX,
-        mCurrentY + offsetY
+        (UsesFinalEntryPosition(item.Type)
+            ? mFinalY : mCurrentY) + offsetY
     };
 
-    item.Type = component.GetType();
     item.Height = height;
-
     mItems.push_back(item);
 
     mCurrentY +=
         (height + spacingAfter) *
         GetStackProgress(component.GetType());
+
+    mFinalY += height + spacingAfter;
 }
 
 const std::vector<HUDLayoutItem>& HUDLayout::GetItems() const
