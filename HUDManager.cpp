@@ -889,7 +889,10 @@ void HUDManager::BuildPlayerHUDLayout()
     const auto& settings = HUDSettings::Get();
 
     const bool ammoDisplayed =
-        settings.Ammo && ShouldDisplayAmmo();
+        settings.Ammo &&
+        ShouldDisplayAmmo() &&
+        (!settings.AmmoOnlyWhileFiring ||
+            mAmmo.IsVisible());
 
     const bool armourDisplayed =
         settings.Armour && ShouldDisplayArmour();
