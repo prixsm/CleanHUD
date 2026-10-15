@@ -9,6 +9,7 @@
 #include "HUDManager.h"
 #include "HUDMetrics.h"
 #include "HUDRenderer.h"
+#include "HUDSettings.h"
 
 namespace
 {
@@ -34,6 +35,11 @@ namespace
 
     static void HookedMoneyDraw(SafetyHookContext& ctx)
     {
+        // Disabled elements must retain their normal game draw call.
+        // The original no-position case otherwise skips Money.
+        if (!HUDSettings::Get().Money)
+            return;
+
         auto* stack = reinterpret_cast<float*>(ctx.esp);
 
         const bool vanillaLayout = HUDManager::Get().IsUsingVanillaLayout();
