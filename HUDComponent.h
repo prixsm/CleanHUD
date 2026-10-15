@@ -48,6 +48,4 @@ private:
     uint32_t mLastAnimationTime = 0;
     bool mAnimationInitialized = false;
 
-    static constexpr float FadeInTime = 200.0f;
-    static constexpr float FadeOutTime = 200.0f;
 };

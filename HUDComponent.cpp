@@ -5,6 +5,7 @@
 
 #include "HUDComponent.h"
 #include "HUDLayout.h"
+#include "HUDSettings.h"
 
 HUDComponent::HUDComponent(
     HUDComponentType type,
@@ -162,10 +163,12 @@ void HUDComponent::Update(
 
     mLastAnimationTime = now;
 
+    const auto& settings = HUDSettings::Get();
+
     const float duration =
-        targetVisible
-        ? FadeInTime
-        : FadeOutTime;
+        static_cast<float>(targetVisible
+        ? settings.FadeInMs
+        : settings.FadeOutMs);
 
     const float step =
         duration > 0.0f
