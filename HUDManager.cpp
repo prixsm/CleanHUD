@@ -10,6 +10,7 @@
 #include <CPlayerInfo.h>
 #include <CPlayerPed.h>
 #include <CStats.h>
+#include <CVehicle.h>
 #include <CTaskSimpleSwim.h>
 #include <CWanted.h>
 #include <CWeaponInfo.h>
@@ -130,6 +131,14 @@ bool HUDManager::HasWantedLevel() const
 
     return mPlayer->m_pPlayerData->m_pWanted &&
         mPlayer->m_pPlayerData->m_pWanted->m_nWantedLevel > 0;
+    const CWanted* wanted =
+        mPlayer->m_pPlayerData->m_pWanted;
+
+    if (!wanted)
+        return false;
+
+    return wanted->m_nWantedLevel > 0 ||
+        wanted->m_nWantedLevelBeforeParole > 0;
 }
 
 bool HUDManager::IsInitialHealthTrackingBlocked() const
@@ -236,6 +245,7 @@ void HUDManager::OnGameLoaded()
 {
     mSessionInitialized = false;
     mVanillaLayoutLatched = false;
+    mWasWeaponAiming = false;
 
     mPlayer = nullptr;
     mLastPlayer = nullptr;
@@ -251,6 +261,7 @@ void HUDManager::Update()
     {
         mSessionInitialized = false;
         mLastPlayer = nullptr;
+        mWasWeaponAiming = false;
         return;
     }
 
@@ -313,16 +324,32 @@ void HUDManager::Update()
     UpdateAmmo();
     UpdateWanted();
 
+    const bool weaponAiming = IsWeaponAiming();
+
+    if (mWasWeaponAiming && !weaponAiming)
+    {
+        mWeaponIcon.Hide();
+        mAmmo.Hide();
+    }
+
+    mWasWeaponAiming = weaponAiming;
+
     mClock.Update();
 
     mHealth.Update(tabHeld);
     mArmour.Update(tabHeld);
     mBreath.Update(tabHeld);
     mMoney.Update(tabHeld);
-    mWeaponIcon.Update(tabHeld);
-    mAmmo.Update(tabHeld);
+    mWeaponIcon.Update(tabHeld || weaponAiming);
+    mAmmo.Update(tabHeld || weaponAiming);
 
     mWanted.Update();
+
+    if (HasEmptyVehicleAmmo())
+    {
+        mWeaponIcon.Reset();
+        mAmmo.Reset();
+    }
 
     BuildPlayerHUDLayout();
     HUDRenderer::Get().Build(mLayout);
@@ -348,6 +375,7 @@ void HUDManager::Update()
 void HUDManager::ResetSessionState()
 {
     HideAll();
+    mWasWeaponAiming = false;
 
     mPreviousHealth = mLastHealth;
     mHealthStableFrames = 0;
@@ -363,7 +391,7 @@ void HUDManager::ResetSessionState()
 
     mWeaponStableFrames = 0;
     mWaitingForStableWeapon = true;
-    
+
     mAmmoStableFrames = 0;
     mWaitingForStableAmmo = true;
 
@@ -386,11 +414,6 @@ bool HUDManager::UpdateHealthInitialization(float currentHealth)
     if (!mWaitingForStableHealth)
         return true;
 
-    /*
-     * While the initial game/cutscene/fade sequence is
-     * still in progress, health values are setup state,
-     * not gameplay changes.
-     */
     if (IsInitialHealthTrackingBlocked())
     {
         mSessionInitialized = false;
@@ -409,10 +432,6 @@ bool HUDManager::UpdateHealthInitialization(float currentHealth)
         return false;
     }
 
-    /*
-     * Once actual gameplay is available, require health
-     * to remain stable before arming change detection.
-     */
     if (currentHealth == mPreviousHealth)
     {
         mHealthStableFrames++;
@@ -711,6 +730,68 @@ void HUDManager::UpdateAmmo()
     }
 }
 
+bool HUDManager::IsWeaponAiming() const
+{
+    if (mWaitingForStableWeapon ||
+        mWaitingForStableAmmo ||
+        !ShouldDisplayAmmo())
+    {
+        return false;
+    }
+
+    const CWeapon* weapon = mPlayer->GetWeapon();
+
+    if (!weapon || weapon->m_nAmmoTotal == 0)
+        return false;
+
+    CPad* pad = mPlayer->GetPadFromPlayer();
+
+    if (!pad || pad->DisablePlayerControls)
+        return false;
+
+    if (!mPlayer->bInVehicle)
+        return pad->GetTarget();
+
+    const CVehicle* vehicle = mPlayer->m_pVehicle;
+
+    if (!vehicle ||
+        vehicle->m_nVehicleSubClass == VEHICLE_BMX)
+    {
+        return false;
+    }
+
+    const bool driveByAim =
+        pad->GetLookLeft() ||
+        pad->GetLookRight();
+
+    const eWeaponType weaponType =
+        weapon->m_eWeaponType;
+
+    const bool driveByWeapon =
+        weaponType == WEAPONTYPE_MICRO_UZI ||
+        weaponType == WEAPONTYPE_TEC9 ||
+        weaponType == WEAPONTYPE_MP5;
+
+    return driveByAim ||
+        (driveByWeapon &&
+            pad->GetCarGunFired() != 0);
+}
+
+bool HUDManager::HasEmptyVehicleAmmo() const
+{
+    if (!mPlayer || !mPlayer->bInVehicle ||
+        !ShouldDisplayAmmo())
+    {
+        return false;
+    }
+
+    const CWeapon* weapon = mPlayer->GetWeapon();
+
+    return weapon &&
+        weapon->m_nAmmoTotal == 0 &&
+        weapon->m_nAmmoInClip == 0;
+}
+
 void HUDManager::UpdateWanted()
 {
     if (HasWantedLevel())
@@ -730,8 +811,9 @@ void HUDManager::BuildPlayerHUDLayout()
     constexpr float MoneyToWeaponSpacing = 35.0f;
     constexpr float MoneyToStatusBarSpacing = 28.0f;
 
-    constexpr float WantedToWeaponSpacing = 30.0f;
+    constexpr float WantedToWeaponSpacing = 25.0f;
     constexpr float WantedToStatusBarSpacing = 23.0f;
+    constexpr float WeaponToStatusBarSpacingNoAmmo = 10.0f;
 
     constexpr float ClockSpacing = 40.0f;
     constexpr float WeaponSpacing = 4.0f;
@@ -829,15 +911,21 @@ void HUDManager::BuildPlayerHUDLayout()
         mWeaponIcon,
         WeaponToAmmoOffset - WeaponSpacing,
         WeaponAmmoOffsetY,
-        WeaponSpacing,
+        ammoDisplayed
+        ? WeaponSpacing
+        : WeaponToStatusBarSpacingNoAmmo,
         WeaponAmmoOffsetX);
 
     if (ammoDisplayed)
     {
+        const float ammoPositionCorrection =
+            WeaponToAmmoOffset *
+            (1.0f - mWeaponIcon.GetLayoutProgress());
+
         mLayout.Add(
             mAmmo,
             AmmoHeight,
-            WeaponAmmoOffsetY,
+            WeaponAmmoOffsetY + ammoPositionCorrection,
             AmmoSpacing,
             WeaponAmmoOffsetX);
     }
