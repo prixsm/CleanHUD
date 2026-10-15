@@ -83,13 +83,19 @@ void HUDLayout::PrepareStack(
                     [](bool visible) { return visible; });
         }
 
-        // Keep a full layout reservation during fade-out.
-        // This avoids pulling lower items upward with the
-        // disappearing element's alpha animation.
-        mStackProgress[i] =
-            mSlideOnEntry[i] && !component.IsFadingOut()
-            ? component.GetLayoutProgress()
-            : 1.0f;
+        // Keep the last occupied space while fading out.
+        // Lower items must not slide upward or jump down
+        // as the departing element changes its alpha.
+        if (!mSlideOnEntry[i])
+        {
+            mStackProgress[i] = 1.0f;
+        }
+        else if (!component.IsFadingOut())
+        {
+            mStackProgress[i] =
+                std::max(mStackProgress[i],
+                    component.GetLayoutProgress());
+        }
     }
 }
 
