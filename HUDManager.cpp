@@ -633,6 +633,17 @@ void HUDManager::UpdateHealth()
     const float currentHealth =
         mPlayer->m_fHealth;
 
+    if (!HUDSettings::Get().Health)
+    {
+        // Disabled Health is vanilla from startup, not a
+        // tracked CleanHUD element awaiting stabilization.
+        mLastHealth = currentHealth;
+        mPreviousHealth = currentHealth;
+        mWaitingForStableHealth = false;
+        mSessionInitialized = true;
+        return;
+    }
+
     if (!UpdateHealthInitialization(
         currentHealth))
     {
