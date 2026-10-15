@@ -32,6 +32,9 @@
     <ClCompile Include="HUDComponent.cpp">
       <Filter>Core</Filter>
     </ClCompile>
+    <ClCompile Include="HUDSettings.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
     <ClCompile Include="PlayerHUDHook.cpp" />
     <ClCompile Include="HUDRenderHooks.cpp">
       <Filter>Render\Hooks</Filter>
@@ -106,6 +109,9 @@
     <ClInclude Include="HUDComponent.h">
       <Filter>Core</Filter>
     </ClInclude>
+    <ClInclude Include="HUDSettings.h">
+      <Filter>Core</Filter>
+    </ClInclude>
     <ClInclude Include="PlayerHUDHook.h" />
     <ClInclude Include="HUDRenderHooks.h">
       <Filter>Render\Hooks</Filter>
@@ -128,5 +134,8 @@
     <ClInclude Include="ClockRenderHook.h">
       <Filter>Render\Hooks</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="CleanHUD.SA.ini" />
   </ItemGroup>
 </Project>
