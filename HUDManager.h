@@ -126,6 +126,7 @@ private:
     void UpdateWeaponIcon();
     void UpdateAmmo();
     bool IsWeaponAiming() const;
+    bool IsWeaponFiring() const;
     bool HasEmptyVehicleAmmo() const;
     void UpdateWanted();
 
