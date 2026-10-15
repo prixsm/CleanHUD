@@ -902,11 +902,24 @@ void HUDManager::BuildPlayerHUDLayout()
             wantedSpacing = settings.WantedToStatusBarSpacing;
     }
 
-    mLayout.Add(
-        mClock,
-        ClockHeight,
-        0.0f,
-        settings.ClockSpacing);
+    if (!settings.Clock)
+    {
+        // Clock=0 restores GTA's always-visible vanilla clock.
+        // Keep its vertical slot so CleanHUD starts below it
+        // instead of overlapping it. No Clock draw/alpha hooks
+        // or sliding entries are introduced by this reservation.
+        mLayout.ReserveSpace(
+            ClockHeight,
+            settings.ClockSpacing);
+    }
+    else
+    {
+        mLayout.Add(
+            mClock,
+            ClockHeight,
+            0.0f,
+            settings.ClockSpacing);
+    }
 
     mLayout.Add(
         mMoney,
