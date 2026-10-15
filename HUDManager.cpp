@@ -129,14 +129,16 @@ bool HUDManager::HasWantedLevel() const
     if (!mPlayer || !mPlayer->m_pPlayerData)
         return false;
 
-    return mPlayer->m_pPlayerData->m_pWanted &&
-        mPlayer->m_pPlayerData->m_pWanted->m_nWantedLevel > 0;
     const CWanted* wanted =
         mPlayer->m_pPlayerData->m_pWanted;
 
     if (!wanted)
         return false;
 
+    // Pay 'n Spray and disguises clear the active wanted
+    // level but retain the former stars during parole.
+    // Keep Wanted in the stack through every blink, so
+    // its position (and the elements below it) is stable.
     return wanted->m_nWantedLevel > 0 ||
         wanted->m_nWantedLevelBeforeParole > 0;
 }
@@ -328,6 +330,9 @@ void HUDManager::Update()
 
     if (mWasWeaponAiming && !weaponAiming)
     {
+        // Aiming is only a temporary visibility override.
+        // Discard any firing-triggered timers as aiming ends,
+        // so the normal fade-out begins immediately.
         mWeaponIcon.Hide();
         mAmmo.Hide();
     }
@@ -347,6 +352,8 @@ void HUDManager::Update()
 
     if (HasEmptyVehicleAmmo())
     {
+        // No last-shot "0-0" counter or stale weapon icon
+        // while the player remains inside the vehicle.
         mWeaponIcon.Reset();
         mAmmo.Reset();
     }
@@ -732,6 +739,8 @@ void HUDManager::UpdateAmmo()
 
 bool HUDManager::IsWeaponAiming() const
 {
+    // Aiming should show only the armed weapon/ammo pair,
+    // not fists or other weapons without an ammo counter.
     if (mWaitingForStableWeapon ||
         mWaitingForStableAmmo ||
         !ShouldDisplayAmmo())
@@ -757,9 +766,13 @@ bool HUDManager::IsWeaponAiming() const
     if (!vehicle ||
         vehicle->m_nVehicleSubClass == VEHICLE_BMX)
     {
+        // BMX, mountain bike and bicycle share the bunny
+        // hop input with vehicle fire. None is a drive-by.
         return false;
     }
 
+    // Drive-by aiming uses vehicle look-left/right controls,
+    // not on-foot targeting (which is the handbrake in cars).
     const bool driveByAim =
         pad->GetLookLeft() ||
         pad->GetLookRight();
@@ -817,6 +830,7 @@ void HUDManager::BuildPlayerHUDLayout()
 
     constexpr float ClockSpacing = 40.0f;
     constexpr float WeaponSpacing = 4.0f;
+    constexpr float WeaponToStatusBarSpacingNoAmmo = 16.0f;
     constexpr float AmmoSpacing = 4.0f;
     constexpr float ArmourSpacing = 4.0f;
     constexpr float BreathSpacing = 4.0f;
@@ -918,6 +932,11 @@ void HUDManager::BuildPlayerHUDLayout()
 
     if (ammoDisplayed)
     {
+        // The weapon reserves its stack height gradually as
+        // it fades in. Cancel that animation for the ammo
+        // position only, keeping ammo directly below the
+        // icon from the first visible frame. The following
+        // status bars still use the animated stack.
         const float ammoPositionCorrection =
             WeaponToAmmoOffset *
             (1.0f - mWeaponIcon.GetLayoutProgress());
