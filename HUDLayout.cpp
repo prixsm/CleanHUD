@@ -1,5 +1,6 @@
 #include "HUDComponent.h"
 #include "HUDLayout.h"
+#include "HUDSettings.h"
 
 void HUDLayout::Reset()
 {
@@ -21,8 +22,13 @@ void HUDLayout::Add(
     float spacingAfter,
     float offsetX)
 {
-    if (!component.IsVisible())
+    const auto& settings = HUDSettings::Get();
+
+    if (!settings.IsElementEnabled(component.GetType()) ||
+        !component.IsVisible())
+    {
         return;
+    }
 
     const float layoutProgress =
         component.GetLayoutProgress();
@@ -45,7 +51,7 @@ void HUDLayout::Add(
 
     mCurrentY +=
         (height + spacingAfter) *
-        layoutProgress;
+        (settings.SlideStack ? layoutProgress : 1.0f);
 }
 
 const std::vector<HUDLayoutItem>& HUDLayout::GetItems() const
