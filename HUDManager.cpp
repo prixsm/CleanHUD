@@ -273,6 +273,8 @@ void HUDManager::Update()
 
     const auto& settings = HUDSettings::Get();
 
+    mVisibleTime = settings.VisibilityMs;
+
     const bool tabHeld =
         GetAsyncKeyState(VK_TAB) & 0x8000;
 
@@ -985,8 +987,10 @@ void HUDManager::BuildPlayerHUDLayout()
     if (ammoDisplayed)
     {
         const float ammoPositionCorrection =
-            WeaponToAmmoOffset *
-            (1.0f - mWeaponIcon.GetLayoutProgress());
+            settings.SlideStack
+            ? WeaponToAmmoOffset *
+                (1.0f - mWeaponIcon.GetLayoutProgress())
+            : 0.0f;
 
         mLayout.Add(
             mAmmo,
