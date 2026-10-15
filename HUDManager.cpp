@@ -19,6 +19,7 @@
 #include "HUDManager.h"
 #include "HUDMetrics.h"
 #include "HUDRenderer.h"
+#include "HUDSettings.h"
 
 HUDManager::HUDManager() :
     mClock(
@@ -69,6 +70,13 @@ namespace
     {
         return weaponType >= WEAPONTYPE_UNARMED &&
             weaponType <= WEAPONTYPE_CANE;
+    }
+
+    static bool IsDriveByWeapon(eWeaponType weaponType)
+    {
+        return weaponType == WEAPONTYPE_MICRO_UZI ||
+            weaponType == WEAPONTYPE_TEC9 ||
+            weaponType == WEAPONTYPE_MP5;
     }
 
     static float Lerp(
@@ -263,6 +271,8 @@ void HUDManager::Update()
         return;
     }
 
+    const auto& settings = HUDSettings::Get();
+
     const bool tabHeld =
         GetAsyncKeyState(VK_TAB) & 0x8000;
 
@@ -279,7 +289,7 @@ void HUDManager::Update()
         origin.Y);
     mLayout.Reset();
 
-    if (tabHeld)
+    if (tabHeld || !settings.Clock)
     {
         mClock.Show();
     }
@@ -332,21 +342,42 @@ void HUDManager::Update()
 
     mWasWeaponAiming = weaponAiming;
 
-    mClock.Update();
+    // Optional firing-only ammo stays hidden outside active
+    // shooting. TAB remains the manual HUD inspection override.
+    const bool ammoFiring =
+        settings.AmmoOnlyWhileFiring && IsWeaponFiring();
 
-    mHealth.Update(tabHeld);
-    mArmour.Update(tabHeld);
-    mBreath.Update(tabHeld);
-    mMoney.Update(tabHeld);
-    mWeaponIcon.Update(tabHeld || weaponAiming);
-    mAmmo.Update(tabHeld || weaponAiming);
+    if (settings.AmmoOnlyWhileFiring &&
+        settings.Ammo && !tabHeld && !ammoFiring)
+    {
+        mAmmo.Hide();
+    }
 
-    mWanted.Update();
+    mClock.Update(!settings.Clock);
+
+    // Disabled CleanHUD elements retain vanilla draw calls.
+    // HUDLayout::Add excludes them from CleanHUD's stack.
+    mHealth.Update(tabHeld || !settings.Health);
+    mArmour.Update(tabHeld || !settings.Armour);
+    mBreath.Update(tabHeld || !settings.Breath);
+    mMoney.Update(tabHeld || !settings.Money);
+    mWeaponIcon.Update(
+        tabHeld || weaponAiming || !settings.Weapon);
+    mAmmo.Update(
+        tabHeld || !settings.Ammo ||
+        (settings.AmmoOnlyWhileFiring
+            ? ammoFiring
+            : weaponAiming));
+
+    mWanted.Update(!settings.Wanted);
 
     if (HasEmptyVehicleAmmo())
     {
-        mWeaponIcon.Reset();
-        mAmmo.Reset();
+        if (settings.Weapon)
+            mWeaponIcon.Reset();
+
+        if (settings.Ammo)
+            mAmmo.Reset();
     }
 
     BuildPlayerHUDLayout();
@@ -748,7 +779,8 @@ bool HUDManager::IsWeaponAiming() const
         return false;
 
     if (!mPlayer->bInVehicle)
-        return pad->GetTarget();
+        return HUDSettings::Get().ShowOnFootAim &&
+            pad->GetTarget();
 
     const CVehicle* vehicle = mPlayer->m_pVehicle;
 
@@ -758,20 +790,45 @@ bool HUDManager::IsWeaponAiming() const
         return false;
     }
 
+    const auto& settings = HUDSettings::Get();
+
     const bool driveByAim =
-        pad->GetLookLeft() ||
-        pad->GetLookRight();
+        settings.ShowOnVehicleLook &&
+        (pad->GetLookLeft() || pad->GetLookRight());
 
-    const eWeaponType weaponType =
-        weapon->m_eWeaponType;
+    const bool driveByFire =
+        settings.ShowOnVehicleFire &&
+        IsDriveByWeapon(weapon->m_eWeaponType) &&
+        pad->GetCarGunFired() != 0;
 
-    const bool driveByWeapon =
-        weaponType == WEAPONTYPE_MICRO_UZI ||
-        weaponType == WEAPONTYPE_TEC9 ||
-        weaponType == WEAPONTYPE_MP5;
+    return driveByAim || driveByFire;
+}
 
-    return driveByAim ||
-        (driveByWeapon &&
+bool HUDManager::IsWeaponFiring() const
+{
+    if (!mPlayer || !ShouldDisplayAmmo())
+        return false;
+
+    const CWeapon* weapon = mPlayer->GetWeapon();
+
+    if (!weapon || weapon->m_nAmmoTotal == 0)
+        return false;
+
+    if (!mPlayer->bInVehicle)
+        return weapon->m_nState == WEAPONSTATE_FIRING;
+
+    const CVehicle* vehicle = mPlayer->m_pVehicle;
+
+    if (!vehicle || vehicle->m_nVehicleSubClass == VEHICLE_BMX ||
+        !IsDriveByWeapon(weapon->m_eWeaponType))
+    {
+        return false;
+    }
+
+    CPad* pad = mPlayer->GetPadFromPlayer();
+
+    return weapon->m_nState == WEAPONSTATE_FIRING ||
+        (pad && !pad->DisablePlayerControls &&
             pad->GetCarGunFired() != 0);
 }
 
@@ -827,15 +884,22 @@ void HUDManager::BuildPlayerHUDLayout()
     const float statusBarHeight =
         HUDMetrics::GetStatusBarSpacing();
 
+    const auto& settings = HUDSettings::Get();
+
     const bool ammoDisplayed =
-        ShouldDisplayAmmo();
+        settings.Ammo && ShouldDisplayAmmo();
 
     const bool armourDisplayed =
-        ShouldDisplayArmour();
+        settings.Armour && ShouldDisplayArmour();
+
+    const bool wantedDisplayed =
+        settings.Wanted && mWanted.IsVisible();
 
     const float weaponProgress =
         std::max(
-            mWeaponIcon.GetLayoutProgress(),
+            settings.Weapon
+            ? mWeaponIcon.GetLayoutProgress()
+            : 0.0f,
             ammoDisplayed
             ? mAmmo.GetLayoutProgress()
             : 0.0f);
@@ -849,12 +913,16 @@ void HUDManager::BuildPlayerHUDLayout()
         std::max(
             armourProgress,
             std::max(
-                mBreath.GetLayoutProgress(),
-                mHealth.GetLayoutProgress()));
+                settings.Breath
+                ? mBreath.GetLayoutProgress()
+                : 0.0f,
+                settings.Health
+                ? mHealth.GetLayoutProgress()
+                : 0.0f));
 
     float moneySpacing = 0.0f;
 
-    if (mWanted.IsVisible())
+    if (wantedDisplayed)
     {
         moneySpacing =
             MoneyToWantedSpacing;
@@ -874,7 +942,7 @@ void HUDManager::BuildPlayerHUDLayout()
 
     float wantedSpacing = 0.0f;
 
-    if (mWanted.IsVisible())
+    if (wantedDisplayed)
     {
         const float statusSpacing =
             WantedToStatusBarSpacing *
