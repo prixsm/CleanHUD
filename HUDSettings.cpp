@@ -1,4 +1,8 @@
 #include <algorithm>
+#include <cerrno>
+#include <cmath>
+#include <cctype>
+#include <cstdlib>
 #include <string>
 
 #include <windows.h>
@@ -31,10 +35,21 @@ namespace
         "Health=1\r\n"
         "\r\n[WeaponAmmo]\r\n"
         "ShowOnFootAim=1\r\n"
-        "ShowOnVehicleLook=1\r\n"
-        "ShowOnVehicleFire=1\r\n"
-        "; TAB always allows a HUD preview.\r\n"
-        "AmmoOnlyWhileFiring=0\r\n";
+        "; Side-looking alone does not reveal weapons.\r\n"
+        "ShowOnVehicleLook=0\r\n"
+        "\r\n[Spacing]\r\n"
+        "MoneyToWantedSpacing=40.0\r\n"
+        "MoneyToWeaponSpacing=35.0\r\n"
+        "MoneyToStatusBarSpacing=28.0\r\n"
+        "WantedToWeaponSpacing=25.0\r\n"
+        "WantedToStatusBarSpacing=23.0\r\n"
+        "WeaponToStatusBarSpacingNoAmmo=10.0\r\n"
+        "ClockSpacing=40.0\r\n"
+        "WeaponSpacing=4.0\r\n"
+        "AmmoSpacing=4.0\r\n"
+        "ArmourSpacing=4.0\r\n"
+        "BreathSpacing=4.0\r\n"
+        "HealthSpacing=4.0\r\n";
 
     static void CreateDefaultIniIfMissing(const char* path)
     {
@@ -77,6 +92,44 @@ namespace
                 path));
 
         return std::clamp(value, minimum, maximum);
+    }
+
+    static float ReadFloat(
+        const char* path,
+        const char* section,
+        const char* key,
+        float fallback)
+    {
+        char text[64] = {};
+        GetPrivateProfileStringA(
+            section, key, "", text,
+            sizeof(text), path);
+
+        if (!text[0])
+            return fallback;
+
+        char* end = nullptr;
+        errno = 0;
+        const float value = std::strtof(text, &end);
+
+        if (end == text || errno == ERANGE ||
+            !std::isfinite(value))
+        {
+            return fallback;
+        }
+
+        while (*end &&
+            std::isspace(static_cast<unsigned char>(*end)))
+        {
+            ++end;
+        }
+
+        if (*end)
+            return fallback;
+
+        // Allow fine-tuning without accepting pathological
+        // spacings that would send the HUD offscreen.
+        return std::clamp(value, -200.0f, 500.0f);
     }
 
     static bool ReadBool(
@@ -133,13 +186,43 @@ void HUDSettings::Load()
         path.c_str(), "WeaponAmmo", "ShowOnFootAim", true);
 
     ShowOnVehicleLook = ReadBool(
-        path.c_str(), "WeaponAmmo", "ShowOnVehicleLook", true);
+        path.c_str(), "WeaponAmmo", "ShowOnVehicleLook", false);
 
-    ShowOnVehicleFire = ReadBool(
-        path.c_str(), "WeaponAmmo", "ShowOnVehicleFire", true);
+    MoneyToWantedSpacing = ReadFloat(
+        path.c_str(), "Spacing", "MoneyToWantedSpacing", 40.0f);
 
-    AmmoOnlyWhileFiring = ReadBool(
-        path.c_str(), "WeaponAmmo", "AmmoOnlyWhileFiring", false);
+    MoneyToWeaponSpacing = ReadFloat(
+        path.c_str(), "Spacing", "MoneyToWeaponSpacing", 35.0f);
+
+    MoneyToStatusBarSpacing = ReadFloat(
+        path.c_str(), "Spacing", "MoneyToStatusBarSpacing", 28.0f);
+
+    WantedToWeaponSpacing = ReadFloat(
+        path.c_str(), "Spacing", "WantedToWeaponSpacing", 25.0f);
+
+    WantedToStatusBarSpacing = ReadFloat(
+        path.c_str(), "Spacing", "WantedToStatusBarSpacing", 23.0f);
+
+    WeaponToStatusBarSpacingNoAmmo = ReadFloat(
+        path.c_str(), "Spacing", "WeaponToStatusBarSpacingNoAmmo", 10.0f);
+
+    ClockSpacing = ReadFloat(
+        path.c_str(), "Spacing", "ClockSpacing", 40.0f);
+
+    WeaponSpacing = ReadFloat(
+        path.c_str(), "Spacing", "WeaponSpacing", 4.0f);
+
+    AmmoSpacing = ReadFloat(
+        path.c_str(), "Spacing", "AmmoSpacing", 4.0f);
+
+    ArmourSpacing = ReadFloat(
+        path.c_str(), "Spacing", "ArmourSpacing", 4.0f);
+
+    BreathSpacing = ReadFloat(
+        path.c_str(), "Spacing", "BreathSpacing", 4.0f);
+
+    HealthSpacing = ReadFloat(
+        path.c_str(), "Spacing", "HealthSpacing", 4.0f);
 }
 
 bool HUDSettings::IsElementEnabled(HUDComponentType type) const
