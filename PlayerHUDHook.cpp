@@ -1,6 +1,7 @@
 #include <../safetyhook/safetyhook.hpp>
 #include "PlayerHUDHook.h"
 #include "HUDManager.h"
+#include "HUDSettings.h"
 
 namespace
 {
@@ -8,8 +9,13 @@ namespace
 
     void __cdecl HookedDrawPlayerInfo()
     {
-        if (!HUDManager::Get().IsPlayerHUDInitialized())
+        // Vanilla Health must draw during game startup.
+        // Only gate the HUD when CleanHUD controls Health.
+        if (HUDSettings::Get().Health &&
+            !HUDManager::Get().IsPlayerHUDInitialized())
+        {
             return;
+        }
 
         gPlayerHUDHook.ccall();
     }
