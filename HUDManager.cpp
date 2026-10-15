@@ -897,30 +897,41 @@ void HUDManager::BuildPlayerHUDLayout()
     const bool wantedDisplayed =
         settings.Wanted && mWanted.IsVisible();
 
+    // When sliding is off, all spacing changes are discrete.
+    // This includes the special Money/Wanted spacing rules,
+    // not only the generic HUDLayout stack cursor.
+    const auto stackProgress =
+        [&settings](const HUDComponent& component) -> float
+    {
+        if (!settings.IsElementEnabled(component.GetType()) ||
+            !component.IsVisible())
+        {
+            return 0.0f;
+        }
+
+        return settings.SlideStack
+            ? component.GetLayoutProgress()
+            : 1.0f;
+    };
+
     const float weaponProgress =
         std::max(
-            settings.Weapon
-            ? mWeaponIcon.GetLayoutProgress()
-            : 0.0f,
+            stackProgress(mWeaponIcon),
             ammoDisplayed
-            ? mAmmo.GetLayoutProgress()
+            ? stackProgress(mAmmo)
             : 0.0f);
 
     const float armourProgress =
         armourDisplayed
-        ? mArmour.GetLayoutProgress()
+        ? stackProgress(mArmour)
         : 0.0f;
 
     const float statusBarProgress =
         std::max(
             armourProgress,
             std::max(
-                settings.Breath
-                ? mBreath.GetLayoutProgress()
-                : 0.0f,
-                settings.Health
-                ? mHealth.GetLayoutProgress()
-                : 0.0f));
+                stackProgress(mBreath),
+                stackProgress(mHealth)));
 
     float moneySpacing = 0.0f;
 
