@@ -135,10 +135,6 @@ bool HUDManager::HasWantedLevel() const
     if (!wanted)
         return false;
 
-    // Pay 'n Spray and disguises clear the active wanted
-    // level but retain the former stars during parole.
-    // Keep Wanted in the stack through every blink, so
-    // its position (and the elements below it) is stable.
     return wanted->m_nWantedLevel > 0 ||
         wanted->m_nWantedLevelBeforeParole > 0;
 }
