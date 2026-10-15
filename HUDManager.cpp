@@ -344,17 +344,6 @@ void HUDManager::Update()
 
     mWasWeaponAiming = weaponAiming;
 
-    // Optional firing-only ammo stays hidden outside active
-    // shooting. TAB remains the manual HUD inspection override.
-    const bool ammoFiring =
-        settings.AmmoOnlyWhileFiring && IsWeaponFiring();
-
-    if (settings.AmmoOnlyWhileFiring &&
-        settings.Ammo && !tabHeld && !ammoFiring)
-    {
-        mAmmo.Hide();
-    }
-
     mClock.Update(!settings.Clock);
 
     // Disabled CleanHUD elements retain vanilla draw calls.
@@ -366,10 +355,7 @@ void HUDManager::Update()
     mWeaponIcon.Update(
         tabHeld || weaponAiming || !settings.Weapon);
     mAmmo.Update(
-        tabHeld || !settings.Ammo ||
-        (settings.AmmoOnlyWhileFiring
-            ? ammoFiring
-            : weaponAiming));
+        tabHeld || !settings.Ammo || weaponAiming);
 
     mWanted.Update(!settings.Wanted);
 
@@ -381,6 +367,13 @@ void HUDManager::Update()
         if (settings.Ammo)
             mAmmo.Reset();
     }
+
+    // Prepare one-way stack displacement from what was already
+    // visible in the preceding frame. Order must match layout.
+    mLayout.PrepareStack({
+        &mClock, &mMoney, &mWanted, &mWeaponIcon,
+        &mAmmo, &mArmour, &mBreath, &mHealth
+    });
 
     BuildPlayerHUDLayout();
     HUDRenderer::Get().Build(mLayout);
@@ -406,6 +399,7 @@ void HUDManager::Update()
 void HUDManager::ResetSessionState()
 {
     HideAll();
+    mLayout.ResetHistory();
     mWasWeaponAiming = false;
 
     mPreviousHealth = mLastHealth;
@@ -798,40 +792,12 @@ bool HUDManager::IsWeaponAiming() const
         settings.ShowOnVehicleLook &&
         (pad->GetLookLeft() || pad->GetLookRight());
 
+    // Firing is always an explicit display trigger.
     const bool driveByFire =
-        settings.ShowOnVehicleFire &&
         IsDriveByWeapon(weapon->m_eWeaponType) &&
         pad->GetCarGunFired() != 0;
 
     return driveByAim || driveByFire;
-}
-
-bool HUDManager::IsWeaponFiring() const
-{
-    if (!mPlayer || !ShouldDisplayAmmo())
-        return false;
-
-    const CWeapon* weapon = mPlayer->GetWeapon();
-
-    if (!weapon || weapon->m_nAmmoTotal == 0)
-        return false;
-
-    if (!mPlayer->bInVehicle)
-        return weapon->m_nState == WEAPONSTATE_FIRING;
-
-    const CVehicle* vehicle = mPlayer->m_pVehicle;
-
-    if (!vehicle || vehicle->m_nVehicleSubClass == VEHICLE_BMX ||
-        !IsDriveByWeapon(weapon->m_eWeaponType))
-    {
-        return false;
-    }
-
-    CPad* pad = mPlayer->GetPadFromPlayer();
-
-    return weapon->m_nState == WEAPONSTATE_FIRING ||
-        (pad && !pad->DisablePlayerControls &&
-            pad->GetCarGunFired() != 0);
 }
 
 bool HUDManager::HasEmptyVehicleAmmo() const
@@ -864,35 +830,16 @@ void HUDManager::BuildPlayerHUDLayout()
     constexpr float WantedHeight = 18.0f;
     constexpr float AmmoHeight = 16.0f;
 
-    constexpr float MoneyToWantedSpacing = 40.0f;
-    constexpr float MoneyToWeaponSpacing = 35.0f;
-    constexpr float MoneyToStatusBarSpacing = 28.0f;
-
-    constexpr float WantedToWeaponSpacing = 25.0f;
-    constexpr float WantedToStatusBarSpacing = 23.0f;
-    constexpr float WeaponToStatusBarSpacingNoAmmo = 10.0f;
-
-    constexpr float ClockSpacing = 40.0f;
-    constexpr float WeaponSpacing = 4.0f;
-    constexpr float AmmoSpacing = 4.0f;
-    constexpr float ArmourSpacing = 4.0f;
-    constexpr float BreathSpacing = 4.0f;
-    constexpr float HealthSpacing = 4.0f;
-
     constexpr float WeaponAmmoOffsetX = 12.0f;
     constexpr float WeaponAmmoOffsetY = -12.0f;
     constexpr float WeaponToAmmoOffset = 83.0f;
 
+    const auto& settings = HUDSettings::Get();
     const float statusBarHeight =
         HUDMetrics::GetStatusBarSpacing();
 
-    const auto& settings = HUDSettings::Get();
-
     const bool ammoDisplayed =
-        settings.Ammo &&
-        ShouldDisplayAmmo() &&
-        (!settings.AmmoOnlyWhileFiring ||
-            mAmmo.IsVisible());
+        settings.Ammo && ShouldDisplayAmmo();
 
     const bool armourDisplayed =
         settings.Armour && ShouldDisplayArmour();
@@ -900,82 +847,48 @@ void HUDManager::BuildPlayerHUDLayout()
     const bool wantedDisplayed =
         settings.Wanted && mWanted.IsVisible();
 
-    // When sliding is off, all spacing changes are discrete.
-    // This includes the special Money/Wanted spacing rules,
-    // not only the generic HUDLayout stack cursor.
-    const auto stackProgress =
-        [&settings](const HUDComponent& component) -> float
-    {
-        if (!settings.IsElementEnabled(component.GetType()) ||
-            !component.IsVisible())
-        {
-            return 0.0f;
-        }
+    const bool weaponDisplayed =
+        (settings.Weapon && mWeaponIcon.IsVisible()) ||
+        (ammoDisplayed && mAmmo.IsVisible());
 
-        return settings.SlideStack
-            ? component.GetLayoutProgress()
-            : 1.0f;
-    };
+    const bool statusDisplayed =
+        (armourDisplayed && mArmour.IsVisible()) ||
+        (settings.Breath && mBreath.IsVisible()) ||
+        (settings.Health && mHealth.IsVisible());
 
-    const float weaponProgress =
-        std::max(
-            stackProgress(mWeaponIcon),
-            ammoDisplayed
-            ? stackProgress(mAmmo)
-            : 0.0f);
-
-    const float armourProgress =
-        armourDisplayed
-        ? stackProgress(mArmour)
-        : 0.0f;
-
-    const float statusBarProgress =
-        std::max(
-            armourProgress,
-            std::max(
-                stackProgress(mBreath),
-                stackProgress(mHealth)));
-
+    // Set each gap to its final size as soon as its next
+    // component is present. A newly shown item below the
+    // current stack should fade at that final position.
     float moneySpacing = 0.0f;
 
     if (wantedDisplayed)
     {
-        moneySpacing =
-            MoneyToWantedSpacing;
+        moneySpacing = settings.MoneyToWantedSpacing;
     }
-    else
+    else if (weaponDisplayed)
     {
-        const float statusSpacing =
-            MoneyToStatusBarSpacing *
-            statusBarProgress;
-
-        moneySpacing =
-            Lerp(
-                statusSpacing,
-                MoneyToWeaponSpacing,
-                weaponProgress);
+        moneySpacing = settings.MoneyToWeaponSpacing;
+    }
+    else if (statusDisplayed)
+    {
+        moneySpacing = settings.MoneyToStatusBarSpacing;
     }
 
     float wantedSpacing = 0.0f;
 
     if (wantedDisplayed)
     {
-        const float statusSpacing =
-            WantedToStatusBarSpacing *
-            statusBarProgress;
-
-        wantedSpacing =
-            Lerp(
-                statusSpacing,
-                WantedToWeaponSpacing,
-                weaponProgress);
+        if (weaponDisplayed)
+            wantedSpacing = settings.WantedToWeaponSpacing;
+        else if (statusDisplayed)
+            wantedSpacing = settings.WantedToStatusBarSpacing;
     }
 
     mLayout.Add(
         mClock,
         ClockHeight,
         0.0f,
-        ClockSpacing);
+        settings.ClockSpacing);
 
     mLayout.Add(
         mMoney,
@@ -991,26 +904,32 @@ void HUDManager::BuildPlayerHUDLayout()
 
     mLayout.Add(
         mWeaponIcon,
-        WeaponToAmmoOffset - WeaponSpacing,
+        WeaponToAmmoOffset - settings.WeaponSpacing,
         WeaponAmmoOffsetY,
         ammoDisplayed
-        ? WeaponSpacing
-        : WeaponToStatusBarSpacingNoAmmo,
+        ? settings.WeaponSpacing
+        : settings.WeaponToStatusBarSpacingNoAmmo,
         WeaponAmmoOffsetX);
 
     if (ammoDisplayed)
     {
+        // When Weapon is inserted above an existing stack,
+        // keep Ammo anchored directly beneath its icon
+        // while elements already below move downward.
+        const float weaponReservation =
+            settings.Weapon
+            ? mLayout.GetStackProgress(HUDComponentType::Weapon)
+            : 1.0f;
+
         const float ammoPositionCorrection =
-            settings.SlideStack
-            ? WeaponToAmmoOffset *
-                (1.0f - mWeaponIcon.GetLayoutProgress())
-            : 0.0f;
+            WeaponToAmmoOffset *
+            (1.0f - weaponReservation);
 
         mLayout.Add(
             mAmmo,
             AmmoHeight,
             WeaponAmmoOffsetY + ammoPositionCorrection,
-            AmmoSpacing,
+            settings.AmmoSpacing,
             WeaponAmmoOffsetX);
     }
 
@@ -1020,20 +939,20 @@ void HUDManager::BuildPlayerHUDLayout()
             mArmour,
             statusBarHeight,
             0.0f,
-            ArmourSpacing);
+            settings.ArmourSpacing);
     }
 
     mLayout.Add(
         mBreath,
         statusBarHeight,
         0.0f,
-        BreathSpacing);
+        settings.BreathSpacing);
 
     mLayout.Add(
         mHealth,
         statusBarHeight,
         0.0f,
-        HealthSpacing);
+        settings.HealthSpacing);
 
     // TODO:
     // Status bars currently use vertical stacking.
