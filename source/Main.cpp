@@ -13,6 +13,7 @@ public:
     Plugin()
     {
         HUDSettings::Get().Load();
+        HUDManager::Get().RestoreVanillaElements();
 
         PlayerHUDHook::Install();
         HUDRenderHooks::Install();
