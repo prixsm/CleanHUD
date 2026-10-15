@@ -162,6 +162,17 @@ void HUDLayout::SetAnchor(float x, float y)
     mAnchorY = y;
 }
 
+void HUDLayout::ReserveSpace(float height, float spacingAfter)
+{
+    // This is a fixed layout slot, not a fading component.
+    // Both cursors must move equally so entering components
+    // and already-visible components share the same origin.
+    const float advance = height + spacingAfter;
+
+    mCurrentY += advance;
+    mFinalY += advance;
+}
+
 void HUDLayout::Add(
     HUDComponent& component,
     float height,
