@@ -73,14 +73,22 @@ void HUDLayout::PrepareStack(
 
         if (!mPreviouslyPresent[i])
         {
-            // Slide only when inserting above elements which
-            // were already visible before this frame. Items
-            // entering beneath a stack never rise into place.
+            // Only a new top-of-stack item may push an already
+            // visible stack downward. New items in the middle
+            // or below existing items fade at their fixed
+            // positions without entering from above.
+            const bool hasVisibleAbove = std::any_of(
+                mPreviouslyPresent.begin(),
+                mPreviouslyPresent.begin() + i,
+                [](bool visible) { return visible; });
+
+            const bool hasVisibleBelow = std::any_of(
+                mPreviouslyPresent.begin() + i + 1,
+                mPreviouslyPresent.end(),
+                [](bool visible) { return visible; });
+
             mSlideOnEntry[i] = settings.SlideStack &&
-                std::any_of(
-                    mPreviouslyPresent.begin() + i + 1,
-                    mPreviouslyPresent.end(),
-                    [](bool visible) { return visible; });
+                !hasVisibleAbove && hasVisibleBelow;
         }
 
         // Keep the last occupied space while fading out.
