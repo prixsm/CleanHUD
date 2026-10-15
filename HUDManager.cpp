@@ -79,22 +79,6 @@ namespace
             weaponType == WEAPONTYPE_MP5;
     }
 
-    static float Lerp(
-        float from,
-        float to,
-        float progress)
-    {
-        progress =
-            std::clamp(
-                progress,
-                0.0f,
-                1.0f);
-
-        return
-            from +
-            (to - from) *
-            progress;
-    }
 }
 
 HUDManager::ActiveWeaponState HUDManager::GetCurrentWeaponState() const
@@ -245,6 +229,28 @@ bool HUDManager::ShouldDisplayArmour() const
 {
     return mPlayer &&
         mPlayer->m_fArmour > 1.0f;
+}
+
+void HUDManager::RestoreVanillaElements()
+{
+    const auto& settings = HUDSettings::Get();
+
+    // Construction initially disables all patched draws.
+    // Restore user-disabled components immediately instead
+    // of waiting for health initialization or the first
+    // update frame.
+    if (!settings.Clock)
+        mClock.Update(true);
+    if (!settings.Health)
+        mHealth.Update(true);
+    if (!settings.Armour)
+        mArmour.Update(true);
+    if (!settings.Breath)
+        mBreath.Update(true);
+    if (!settings.Weapon)
+        mWeaponIcon.Update(true);
+    if (!settings.Ammo)
+        mAmmo.Update(true);
 }
 
 void HUDManager::OnGameLoaded()
@@ -399,6 +405,7 @@ void HUDManager::Update()
 void HUDManager::ResetSessionState()
 {
     HideAll();
+    RestoreVanillaElements();
     mLayout.ResetHistory();
     mWasWeaponAiming = false;
 
