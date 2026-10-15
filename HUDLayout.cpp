@@ -1,12 +1,159 @@
+#include <algorithm>
+
 #include "HUDComponent.h"
 #include "HUDLayout.h"
 #include "HUDSettings.h"
 
+namespace
+{
+    // Ordering is independent of HUDComponentType's enum values.
+    constexpr std::array<HUDComponentType, 8> StackOrder = {
+        HUDComponentType::Clock,
+        HUDComponentType::Money,
+        HUDComponentType::Wanted,
+        HUDComponentType::Weapon,
+        HUDComponentType::Ammo,
+        HUDComponentType::Armour,
+        HUDComponentType::Breath,
+        HUDComponentType::Health
+    };
+
+    std::size_t StackIndex(HUDComponentType type)
+    {
+        const auto found =
+            std::find(StackOrder.begin(), StackOrder.end(), type);
+
+        return static_cast<std::size_t>(
+            found - StackOrder.begin());
+    }
+}
+
 void HUDLayout::Reset()
 {
-    mItems.clear();
+    mPreviouslyPresent.fill(false);
 
+    for (const auto& item : mItems)
+    {
+        mPreviouslyPresent[StackIndex(item.Type)] = true;
+    }
+
+    mItems.clear();
     mCurrentY = mAnchorY;
+    mFinalY = mAnchorY;
+}
+
+void HUDLayout::ResetHistory()
+{
+    mPreviouslyPresent.fill(false);
+    mSlideOnEntry.fill(false);
+    mHoldEntrancePosition.fill(false);
+    mStackProgress.fill(0.0f);
+    mItems.clear();
+    mCurrentY = mAnchorY;
+    mFinalY = mAnchorY;
+}
+
+void HUDLayout::PrepareStack(
+    const std::array<HUDComponent*, 8>& components)
+{
+    const auto& settings = HUDSettings::Get();
+
+    for (std::size_t i = 0; i < components.size(); ++i)
+    {
+        const HUDComponent& component = *components[i];
+
+        const bool present =
+            settings.IsElementEnabled(component.GetType()) &&
+            component.IsVisible();
+
+        if (!present)
+        {
+            mSlideOnEntry[i] = false;
+            mHoldEntrancePosition[i] = false;
+            mStackProgress[i] = 0.0f;
+            continue;
+        }
+
+        if (!mPreviouslyPresent[i])
+        {
+            // New components draw at their final position;
+            // only components that were already on screen move.
+            mHoldEntrancePosition[i] = true;
+
+            const bool hasVisibleAbove = std::any_of(
+                mPreviouslyPresent.begin(),
+                mPreviouslyPresent.begin() + i,
+                [](bool visible) { return visible; });
+
+            const bool hasVisibleBelow = std::any_of(
+                mPreviouslyPresent.begin() + i + 1,
+                mPreviouslyPresent.end(),
+                [](bool visible) { return visible; });
+
+            // Only an insertion above the entire old stack
+            // is allowed to move the previously visible stack.
+            mSlideOnEntry[i] = settings.SlideStack &&
+                !hasVisibleAbove && hasVisibleBelow;
+        }
+
+        // Preserve the occupied space during fade-out.
+        // Disappearance never runs a reverse slide.
+        if (!mSlideOnEntry[i])
+        {
+            mStackProgress[i] = 1.0f;
+        }
+        else if (!component.IsFadingOut())
+        {
+            mStackProgress[i] =
+                std::max(mStackProgress[i],
+                    component.GetLayoutProgress());
+        }
+    }
+
+    for (std::size_t i = 0; i < components.size(); ++i)
+    {
+        if (!mHoldEntrancePosition[i])
+            continue;
+
+        const HUDComponent& component = *components[i];
+        bool newlyInsertedAbove = false;
+        bool upperSlotStillGrowing = false;
+
+        for (std::size_t j = 0; j < i; ++j)
+        {
+            const bool upperPresent =
+                settings.IsElementEnabled(components[j]->GetType()) &&
+                components[j]->IsVisible();
+
+            if (!upperPresent)
+                continue;
+
+            if (!mPreviouslyPresent[j] && mSlideOnEntry[j])
+                newlyInsertedAbove = true;
+
+            if (mStackProgress[j] < 1.0f)
+                upperSlotStillGrowing = true;
+        }
+
+        // A component from an earlier frame is now part of
+        // the old stack, so a new top entry may move it.
+        if ((mPreviouslyPresent[i] && newlyInsertedAbove) ||
+            (component.GetVisibility() >= 1.0f &&
+                !upperSlotStillGrowing))
+        {
+            mHoldEntrancePosition[i] = false;
+        }
+    }
+}
+
+float HUDLayout::GetStackProgress(HUDComponentType type) const
+{
+    return mStackProgress[StackIndex(type)];
+}
+
+bool HUDLayout::UsesFinalEntryPosition(HUDComponentType type) const
+{
+    return mHoldEntrancePosition[StackIndex(type)];
 }
 
 void HUDLayout::SetAnchor(float x, float y)
@@ -22,36 +169,33 @@ void HUDLayout::Add(
     float spacingAfter,
     float offsetX)
 {
-    const auto& settings = HUDSettings::Get();
-
-    if (!settings.IsElementEnabled(component.GetType()) ||
+    if (!HUDSettings::Get().IsElementEnabled(
+        component.GetType()) ||
         !component.IsVisible())
     {
         return;
     }
 
-    const float layoutProgress =
-        component.GetLayoutProgress();
-
     HUDLayoutItem item;
 
     item.Component = &component;
+    item.Type = component.GetType();
 
     item.Position =
     {
         mAnchorX + offsetX,
-        mCurrentY + offsetY
+        (UsesFinalEntryPosition(item.Type)
+            ? mFinalY : mCurrentY) + offsetY
     };
 
-    item.Type = component.GetType();
-
     item.Height = height;
-
     mItems.push_back(item);
 
     mCurrentY +=
         (height + spacingAfter) *
-        (settings.SlideStack ? layoutProgress : 1.0f);
+        GetStackProgress(component.GetType());
+
+    mFinalY += height + spacingAfter;
 }
 
 const std::vector<HUDLayoutItem>& HUDLayout::GetItems() const

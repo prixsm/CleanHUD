@@ -20,6 +20,7 @@ public:
     bool ShouldDisplayArmour() const;
 
     void OnGameLoaded();
+    void RestoreVanillaElements();
     void Update();
 
     static HUDManager& Get();
@@ -126,7 +127,6 @@ private:
     void UpdateWeaponIcon();
     void UpdateAmmo();
     bool IsWeaponAiming() const;
-    bool IsWeaponFiring() const;
     bool HasEmptyVehicleAmmo() const;
     void UpdateWanted();
 

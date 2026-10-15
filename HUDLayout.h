@@ -1,5 +1,7 @@
 #pragma once
 
+#include <array>
+#include <cstddef>
 #include <vector>
 
 class HUDComponent;
@@ -45,6 +47,14 @@ public:
     HUDLayout() = default;
 
     void Reset();
+    void ResetHistory();
+
+    // Components in actual top-to-bottom layout order.
+    void PrepareStack(
+        const std::array<HUDComponent*, 8>& components);
+
+    float GetStackProgress(HUDComponentType type) const;
+    bool UsesFinalEntryPosition(HUDComponentType type) const;
 
     void SetAnchor(float x, float y);
 
@@ -63,6 +73,16 @@ private:
     float mAnchorY = 0.0f;
 
     float mCurrentY = 0.0f;
+    float mFinalY = 0.0f;
+
+    static constexpr std::size_t ElementCount = 8;
+
+    // Previous frame's visible entries determine whether a
+    // newly inserted item is above something already shown.
+    std::array<bool, ElementCount> mPreviouslyPresent = {};
+    std::array<bool, ElementCount> mSlideOnEntry = {};
+    std::array<bool, ElementCount> mHoldEntrancePosition = {};
+    std::array<float, ElementCount> mStackProgress = {};
 
     std::vector<HUDLayoutItem> mItems;
 };

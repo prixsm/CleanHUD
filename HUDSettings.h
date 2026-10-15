@@ -29,9 +29,20 @@ public:
     bool Health = true;
 
     bool ShowOnFootAim = true;
-    bool ShowOnVehicleLook = true;
-    bool ShowOnVehicleFire = true;
-    bool AmmoOnlyWhileFiring = false;
+    bool ShowOnVehicleLook = false;
+
+    float MoneyToWantedSpacing = 40.0f;
+    float MoneyToWeaponSpacing = 35.0f;
+    float MoneyToStatusBarSpacing = 28.0f;
+    float WantedToWeaponSpacing = 25.0f;
+    float WantedToStatusBarSpacing = 23.0f;
+    float WeaponToStatusBarSpacingNoAmmo = 10.0f;
+    float ClockSpacing = 40.0f;
+    float WeaponSpacing = 4.0f;
+    float AmmoSpacing = 4.0f;
+    float ArmourSpacing = 4.0f;
+    float BreathSpacing = 4.0f;
+    float HealthSpacing = 4.0f;
 
 private:
     HUDSettings() = default;
