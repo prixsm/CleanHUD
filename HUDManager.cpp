@@ -849,8 +849,8 @@ void HUDManager::BuildPlayerHUDLayout()
     constexpr float AmmoHeight = 16.0f;
 
     constexpr float WeaponAmmoOffsetX = 12.0f;
-    constexpr float WeaponAmmoOffsetY = -12.0f;
-    constexpr float WeaponToAmmoOffset = 83.0f;
+    constexpr float WeaponAmmoOffsetY = -16.0f;
+    constexpr float WeaponToAmmoOffset = 87.0f;
 
     const auto& settings = HUDSettings::Get();
     const float statusBarHeight =
