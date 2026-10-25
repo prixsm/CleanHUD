@@ -902,11 +902,20 @@ void HUDManager::BuildPlayerHUDLayout()
             wantedSpacing = settings.WantedToStatusBarSpacing;
     }
 
-    mLayout.Add(
-        mClock,
-        ClockHeight,
-        0.0f,
-        settings.ClockSpacing);
+    if (!settings.Clock)
+    {
+        mLayout.ReserveSpace(
+            ClockHeight,
+            settings.ClockSpacing);
+    }
+    else
+    {
+        mLayout.Add(
+            mClock,
+            ClockHeight,
+            0.0f,
+            settings.ClockSpacing);
+    }
 
     mLayout.Add(
         mMoney,

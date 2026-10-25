@@ -26,6 +26,7 @@ namespace
         "\r\n[Elements]\r\n"
         "; 0 restores vanilla behavior for the selected element.\r\n"
         "Clock = 1\r\n"
+        "; Clock=0 keeps the vanilla clock visible and reserves its slot.\r\n"
         "Money = 1\r\n"
         "Wanted = 1\r\n"
         "Weapon = 1\r\n"
@@ -44,7 +45,8 @@ namespace
         "\r\nWantedToWeaponSpacing = 35.0\r\n"
         "WantedToStatusBarSpacing = 25.0\r\n"
         "WeaponToStatusBarSpacingNoAmmo = 10.0\r\n"
-        "\r\nClockSpacing = 40.0\r\n"
+        "\r\n; Clock gap also reserves room beneath vanilla clock when Clock=0.\r\n"
+        "ClockSpacing = 40.0\r\n"
         "WeaponSpacing = 4.0\r\n"
         "AmmoSpacing = 4.0\r\n"
         "ArmourSpacing = 4.0\r\n"
@@ -171,7 +173,7 @@ void HUDSettings::Load()
         path.c_str(), "Animation", "FadeOutMs", 200, 0, 2000);
 
     VisibilityMs = ReadInt(
-        path.c_str(), "Visibility", "DurationMs", 4000, 0, 60000);
+        path.c_str(), "Visibility", "DurationMs", 3000, 0, 60000);
 
     Clock = ReadBool(path.c_str(), "Elements", "Clock", true);
     Money = ReadBool(path.c_str(), "Elements", "Money", true);

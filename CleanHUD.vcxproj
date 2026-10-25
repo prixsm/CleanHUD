@@ -130,51 +130,7 @@ xcopy /Y "$(TargetPath)" "$(GTA_SA_DIR)\scripts"
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="AmmoRenderHook.cpp" />
-    <ClCompile Include="ArmourRenderHook.cpp" />
-    <ClCompile Include="BreathRenderHook.cpp" />
-    <ClCompile Include="CallPatch.cpp" />
-    <ClCompile Include="ClockRenderHook.cpp" />
-    <ClCompile Include="HealthRenderHook.cpp" />
-    <ClCompile Include="HUDComponent.cpp" />
-    <ClCompile Include="HUDPatchGroup.cpp" />
-    <ClCompile Include="HUDLayout.cpp" />
-    <ClCompile Include="HUDManager.cpp" />
-    <ClCompile Include="HUDMetrics.cpp" />
-    <ClCompile Include="HUDRenderer.cpp" />
-    <ClCompile Include="HUDSettings.cpp" />
-    <ClCompile Include="MoneyRenderHook.cpp" />
-    <ClCompile Include="PlayerHUDHook.cpp" />
-    <ClCompile Include="HUDRenderHooks.cpp" />
     <ClCompile Include="source\Main.cpp" />
-    <ClCompile Include="VisibilityTimer.cpp" />
-    <ClCompile Include="WantedRenderHook.cpp" />
-    <ClCompile Include="WeaponRenderHook.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="AmmoRenderHook.h" />
-    <ClInclude Include="ArmourRenderHook.h" />
-    <ClInclude Include="BreathRenderHook.h" />
-    <ClInclude Include="CallPatch.h" />
-    <ClInclude Include="ClockRenderHook.h" />
-    <ClInclude Include="HealthRenderHook.h" />
-    <ClInclude Include="HUDComponent.h" />
-    <ClInclude Include="HUDPatchGroup.h" />
-    <ClInclude Include="HUDLayout.h" />
-    <ClInclude Include="HUDManager.h" />
-    <ClInclude Include="HUDMetrics.h" />
-    <ClInclude Include="HUDPatch.h" />
-    <ClInclude Include="HUDRenderer.h" />
-    <ClInclude Include="HUDSettings.h" />
-    <ClInclude Include="MoneyRenderHook.h" />
-    <ClInclude Include="PlayerHUDHook.h" />
-    <ClInclude Include="HUDRenderHooks.h" />
-    <ClInclude Include="VisibilityTimer.h" />
-    <ClInclude Include="WantedRenderHook.h" />
-    <ClInclude Include="WeaponRenderHook.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="CleanHUD.ini" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

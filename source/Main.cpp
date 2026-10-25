@@ -1,8 +1,8 @@
 #include <plugin.h>
-#include "../HUDManager.h"
-#include "../HUDSettings.h"
-#include "../PlayerHUDHook.h"
-#include "../HUDRenderHooks.h"
+#include "../source/Core/HUDManager.h"
+#include "../source/Core/HUDSettings.h"
+#include "../source/PlayerHUDHook.h"
+#include "../source/Render/Hooks/HUDRenderHooks.h"
 
 using namespace plugin;
 
