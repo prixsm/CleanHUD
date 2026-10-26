@@ -11,11 +11,11 @@ namespace
         HUDComponentType::Clock,
         HUDComponentType::Money,
         HUDComponentType::Wanted,
-        HUDComponentType::Weapon,
-        HUDComponentType::Ammo,
         HUDComponentType::Armour,
         HUDComponentType::Breath,
-        HUDComponentType::Health
+        HUDComponentType::Health,
+        HUDComponentType::Weapon,
+        HUDComponentType::Ammo
     };
 
     std::size_t StackIndex(HUDComponentType type)
