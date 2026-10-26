@@ -15,6 +15,7 @@
 #include <CWanted.h>
 #include <CWeaponInfo.h>
 #include <CWorld.h>
+#include <eModelID.h>
 
 #include "HUDManager.h"
 #include "../Render/HUDMetrics.h"
@@ -89,6 +90,74 @@ namespace
         case WEAPONTYPE_SATCHEL_CHARGE:
             return true;
         default:
+            return false;
+        }
+    }
+
+    static bool IsVisionEquipment(eWeaponType type)
+    {
+        return type == WEAPONTYPE_NIGHTVISION ||
+            type == WEAPONTYPE_INFRARED;
+    }
+
+    enum class VehicleFireCapability
+    {
+        None,
+        Bicycle,
+        ForwardAndSide,
+        SideOnly
+    };
+
+    static VehicleFireCapability GetVehicleFireCapability(
+        const CVehicle& vehicle)
+    {
+        // Emergency and weapon-equipped vehicles use their own
+        // controls, not the driver's handheld drive-by weapon.
+        switch (vehicle.m_nModelIndex)
+        {
+        case MODEL_RHINO:
+        case MODEL_SWATVAN:
+        case MODEL_FIRETRUK:
+        case MODEL_FIRELA:
+            return VehicleFireCapability::None;
+        default:
+            break;
+        }
+
+        switch (vehicle.m_nVehicleSubClass)
+        {
+        case VEHICLE_BMX:
+            return VehicleFireCapability::Bicycle;
+        case VEHICLE_BIKE:
+        case VEHICLE_QUAD:
+            return VehicleFireCapability::ForwardAndSide;
+        case VEHICLE_AUTOMOBILE:
+        case VEHICLE_MTRUCK:
+        case VEHICLE_BOAT:
+            return VehicleFireCapability::SideOnly;
+        default:
+            return VehicleFireCapability::None;
+        }
+    }
+
+    static bool IsLookingToOneSide(CPad& pad)
+    {
+        return !pad.GetLookBehindForCar() &&
+            (pad.GetLookLeft() != pad.GetLookRight());
+    }
+
+    static bool AllowsHandheldFireDirection(
+        const CVehicle& vehicle, CPad& pad)
+    {
+        switch (GetVehicleFireCapability(vehicle))
+        {
+        case VehicleFireCapability::SideOnly:
+            return IsLookingToOneSide(pad);
+        case VehicleFireCapability::ForwardAndSide:
+            return !pad.GetLookBehindForCar();
+        default:
+            // Pedal-bike HUD remains based on ammo changes only.
+            // A bunny-hop/fire button isn't evidence of a shot.
             return false;
         }
     }
@@ -226,6 +295,8 @@ bool HUDManager::ShouldDisplayAmmo() const
     {
     case WEAPONTYPE_DETONATOR:
     case WEAPONTYPE_PARACHUTE:
+    case WEAPONTYPE_NIGHTVISION:
+    case WEAPONTYPE_INFRARED:
         return false;
 
     default:
@@ -292,7 +363,8 @@ void HUDManager::OnGameLoaded()
     HUDRenderer::Get().Reset();
     mSessionInitialized = false;
     mVanillaLayoutLatched = false;
-    mWasWeaponAiming = false;
+    mValidVehicleFireInputLastFrame = false;
+    mWeaponChangedThisFrame = false;
 
     mPlayer = nullptr;
     mLastPlayer = nullptr;
@@ -308,7 +380,8 @@ void HUDManager::Update()
     {
         mSessionInitialized = false;
         mLastPlayer = nullptr;
-        mWasWeaponAiming = false;
+        mValidVehicleFireInputLastFrame = false;
+    mWeaponChangedThisFrame = false;
 
         // Returning from gameplay to a frontend or loading
         // screen must not leave our draw-call NOPs in place.
@@ -400,19 +473,15 @@ void HUDManager::Update()
     UpdateArmour();
     UpdateBreath();
     UpdateMoney();
+    mWeaponChangedThisFrame = false;
     UpdateWeaponIcon();
     UpdateAmmo();
+    UpdateVehicleFiring();
     UpdateWanted();
 
+    // Aim-only visibility fades on release. Shot timers remain
+    // active rather than being erased by HUDComponent::Hide().
     const bool weaponAiming = IsWeaponAiming();
-
-    if (mWasWeaponAiming && !weaponAiming)
-    {
-        mWeaponIcon.Hide();
-        mAmmo.Hide();
-    }
-
-    mWasWeaponAiming = weaponAiming;
 
     mClock.Update(!settings.Clock || settings.AlwaysShowClock);
 
@@ -428,6 +497,19 @@ void HUDManager::Update()
         tabHeld || !settings.Ammo || weaponAiming);
 
     mWanted.Update(!settings.Wanted);
+
+    // Goggles are equipment, never a managed weapon display.
+    // Keep the user-disabled elements' vanilla opt-out intact.
+    const auto* currentWeapon = mPlayer->GetWeapon();
+
+    if (currentWeapon &&
+        IsVisionEquipment(currentWeapon->m_eWeaponType))
+    {
+        if (settings.Weapon)
+            mWeaponIcon.Reset();
+        if (settings.Ammo)
+            mAmmo.Reset();
+    }
 
     if (HasEmptyVehicleAmmo())
     {
@@ -481,7 +563,8 @@ void HUDManager::ResetSessionState()
     HideAll();
     RestoreVanillaElements();
     mLayout.ResetHistory();
-    mWasWeaponAiming = false;
+    mValidVehicleFireInputLastFrame = false;
+    mWeaponChangedThisFrame = false;
 
     mPreviousHealth = mLastHealth;
     mHealthStableFrames = 0;
@@ -828,8 +911,13 @@ void HUDManager::UpdateWeaponIcon()
 
     if (HasWeaponChanged(current))
     {
-        mWeaponIcon.ShowFor(mVisibleTime);
-        mAmmo.ShowFor(mVisibleTime);
+        mWeaponChangedThisFrame = true;
+
+        if (!IsVisionEquipment(current.WeaponType))
+        {
+            mWeaponIcon.ShowFor(mVisibleTime);
+            mAmmo.ShowFor(mVisibleTime);
+        }
     }
 }
 
