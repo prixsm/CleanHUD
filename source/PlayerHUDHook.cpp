@@ -1,6 +1,7 @@
 #include <../safetyhook/safetyhook.hpp>
 #include "PlayerHUDHook.h"
 #include "Core/HUDManager.h"
+#include "Core/HUDSettings.h"
 
 namespace
 {
@@ -12,10 +13,19 @@ namespace
 
     void __cdecl HookedDrawPlayerInfo()
     {
-        // Never swallow the entire engine HUD draw if a
-        // save has not initialized, the game is loading,
-        // or CleanHUD's per-frame update has not yet run.
-        // The manager supplies vanilla rendering until ready.
+        // The original game drawing calls are restored while
+        // a save/new game loads. Do not let that fallback flash
+        // the full vanilla HUD before CleanHUD's first layout.
+        //
+        // This hook is for the player HUD, not CFont menu text.
+        // When Health=0, preserve the requested vanilla Health
+        // startup behavior rather than gating the whole HUD.
+        if (HUDSettings::Get().Health &&
+            !HUDManager::Get().IsPlayerHUDInitialized())
+        {
+            return;
+        }
+
         PlayerHUDHookStorage().ccall();
     }
 }
