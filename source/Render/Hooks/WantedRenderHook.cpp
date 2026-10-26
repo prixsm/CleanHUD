@@ -113,8 +113,8 @@ void WantedRenderHook::Install()
             reinterpret_cast<void*>(0x58D9A0),
             HookedWantedY);
 
-    SafetyHookMid& hook = WantedPositionHookStorage();
-    hook =
+    SafetyHookMid& secondHook = WantedPositionHookStorage();
+    secondHook =
         safetyhook::create_mid(
             reinterpret_cast<void*>(0x58DFD3),
             HookedWantedDraw);
