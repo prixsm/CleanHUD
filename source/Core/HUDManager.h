@@ -132,6 +132,7 @@ private:
     void UpdateWanted();
 
     void BuildPlayerHUDLayout();
+    void BuildMinimalHUDLayout();
 
     void HideAll();
 };

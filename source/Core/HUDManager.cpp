@@ -79,6 +79,20 @@ namespace
             weaponType == WEAPONTYPE_MP5;
     }
 
+    static bool IsThrowableWeapon(eWeaponType weaponType)
+    {
+        switch (weaponType)
+        {
+        case WEAPONTYPE_GRENADE:
+        case WEAPONTYPE_TEARGAS:
+        case WEAPONTYPE_MOLOTOV:
+        case WEAPONTYPE_SATCHEL_CHARGE:
+            return true;
+        default:
+            return false;
+        }
+    }
+
 }
 
 HUDManager::ActiveWeaponState HUDManager::GetCurrentWeaponState() const
@@ -167,6 +181,7 @@ bool HUDManager::IsPlayerHUDInitialized() const
 bool HUDManager::IsUsingVanillaLayout() const
 {
     return
+        HUDSettings::Get().Mode == HUDMode::Minimal ||
         !mSessionInitialized ||
         mVanillaLayoutLatched ||
         (GetAsyncKeyState(VK_TAB) & 0x8000);
@@ -377,7 +392,7 @@ void HUDManager::Update()
         mLayout.ResetHistory();
     }
 
-    if (tabHeld || !settings.Clock)
+    if (tabHeld || !settings.Clock || settings.AlwaysShowClock)
         mClock.Show();
     else
         mClock.Hide();
@@ -399,7 +414,7 @@ void HUDManager::Update()
 
     mWasWeaponAiming = weaponAiming;
 
-    mClock.Update(!settings.Clock);
+    mClock.Update(!settings.Clock || settings.AlwaysShowClock);
 
     // Disabled CleanHUD elements retain vanilla draw calls.
     // HUDLayout::Add excludes them from CleanHUD's stack.
@@ -425,12 +440,22 @@ void HUDManager::Update()
 
     // Prepare one-way stack displacement from what was already
     // visible in the preceding frame. Order must match layout.
-    mLayout.PrepareStack({
-        &mClock, &mMoney, &mWanted, &mWeaponIcon,
-        &mAmmo, &mArmour, &mBreath, &mHealth
-    });
+    if (settings.Mode == HUDMode::Stack)
+    {
+        mLayout.PrepareStack({
+            &mClock, &mMoney, &mWanted, &mArmour,
+            &mBreath, &mHealth, &mWeaponIcon, &mAmmo
+        });
+        BuildPlayerHUDLayout();
+    }
+    else
+    {
+        // Minimal mode uses the same components and timers,
+        // but does not shift any of GTA's HUD coordinates.
+        mLayout.ResetHistory();
+        BuildMinimalHUDLayout();
+    }
 
-    BuildPlayerHUDLayout();
     HUDRenderer::Get().Build(mLayout);
 
     if (!tabHeld)
@@ -842,8 +867,14 @@ bool HUDManager::IsWeaponAiming() const
         return false;
 
     if (!mPlayer->bInVehicle)
-        return HUDSettings::Get().ShowOnFootAim &&
+    {
+        const auto& settings = HUDSettings::Get();
+
+        return settings.ShowOnFootAim &&
+            (settings.ShowOnThrowableAim ||
+                !IsThrowableWeapon(weapon->m_eWeaponType)) &&
             pad->GetTarget();
+    }
 
     const CVehicle* vehicle = mPlayer->m_pVehicle;
 
@@ -890,6 +921,23 @@ void HUDManager::UpdateWanted()
         mWanted.Hide();
 }
 
+void HUDManager::BuildMinimalHUDLayout()
+{
+    // Keep only visibility/alpha data in HUDRenderer. Hooks
+    // use IsUsingVanillaLayout() to retain original GTA coords.
+    // No stack height or spacing is reserved in this mode.
+    mLayout.Add(mClock, 0.0f, 0.0f, 0.0f);
+    mLayout.Add(mMoney, 0.0f, 0.0f, 0.0f);
+    mLayout.Add(mWanted, 0.0f, 0.0f, 0.0f);
+    mLayout.Add(mArmour, 0.0f, 0.0f, 0.0f);
+    mLayout.Add(mBreath, 0.0f, 0.0f, 0.0f);
+    mLayout.Add(mHealth, 0.0f, 0.0f, 0.0f);
+    mLayout.Add(mWeaponIcon, 0.0f, 0.0f, 0.0f);
+
+    if (ShouldDisplayAmmo())
+        mLayout.Add(mAmmo, 0.0f, 0.0f, 0.0f);
+}
+
 void HUDManager::BuildPlayerHUDLayout()
 {
     constexpr float ClockHeight = 18.0f;
@@ -914,41 +962,34 @@ void HUDManager::BuildPlayerHUDLayout()
     const bool wantedDisplayed =
         settings.Wanted && mWanted.IsVisible();
 
-    const bool weaponDisplayed =
-        (settings.Weapon && mWeaponIcon.IsVisible()) ||
-        (ammoDisplayed && mAmmo.IsVisible());
-
     const bool statusDisplayed =
         (armourDisplayed && mArmour.IsVisible()) ||
         (settings.Breath && mBreath.IsVisible()) ||
         (settings.Health && mHealth.IsVisible());
 
-    // Set each gap to its final size as soon as its next
-    // component is present. A newly shown item below the
-    // current stack should fade at that final position.
+    const bool weaponDisplayed =
+        (settings.Weapon && mWeaponIcon.IsVisible()) ||
+        (ammoDisplayed && mAmmo.IsVisible());
+
+    // Resolve the spacing to whichever group is next
+    // in the visible stack, not the previous Weapon-first order.
     float moneySpacing = 0.0f;
 
     if (wantedDisplayed)
-    {
         moneySpacing = settings.MoneyToWantedSpacing;
-    }
-    else if (weaponDisplayed)
-    {
-        moneySpacing = settings.MoneyToWeaponSpacing;
-    }
     else if (statusDisplayed)
-    {
         moneySpacing = settings.MoneyToStatusBarSpacing;
-    }
+    else if (weaponDisplayed)
+        moneySpacing = settings.MoneyToWeaponSpacing;
 
     float wantedSpacing = 0.0f;
 
     if (wantedDisplayed)
     {
-        if (weaponDisplayed)
-            wantedSpacing = settings.WantedToWeaponSpacing;
-        else if (statusDisplayed)
+        if (statusDisplayed)
             wantedSpacing = settings.WantedToStatusBarSpacing;
+        else if (weaponDisplayed)
+            wantedSpacing = settings.WantedToWeaponSpacing;
     }
 
     if (!settings.Clock)
@@ -978,20 +1019,56 @@ void HUDManager::BuildPlayerHUDLayout()
         0.0f,
         wantedSpacing);
 
+    // Armour, Breath and Health are now above Weapon/Ammo.
+    // The final visible bar owns the bar-to-weapon gap.
+    const bool armourShown =
+        armourDisplayed && mArmour.IsVisible();
+
+    const bool breathShown =
+        settings.Breath && mBreath.IsVisible();
+
+    const bool healthShown =
+        settings.Health && mHealth.IsVisible();
+
+    if (armourDisplayed)
+    {
+        mLayout.Add(
+            mArmour,
+            statusBarHeight,
+            0.0f,
+            weaponDisplayed && armourShown &&
+                !breathShown && !healthShown
+                ? settings.StatusToWeaponSpacing
+                : settings.ArmourSpacing);
+    }
+
+    mLayout.Add(
+        mBreath,
+        statusBarHeight,
+        0.0f,
+        weaponDisplayed && breathShown && !healthShown
+            ? settings.StatusToWeaponSpacing
+            : settings.BreathSpacing);
+
+    mLayout.Add(
+        mHealth,
+        statusBarHeight,
+        0.0f,
+        weaponDisplayed && healthShown
+            ? settings.StatusToWeaponSpacing
+            : settings.HealthSpacing);
+
     mLayout.Add(
         mWeaponIcon,
         WeaponToAmmoOffset - settings.WeaponSpacing,
         WeaponAmmoOffsetY,
         ammoDisplayed
-        ? settings.WeaponSpacing
-        : settings.WeaponToStatusBarSpacingNoAmmo,
+            ? settings.WeaponSpacing
+            : settings.AmmoSpacing,
         WeaponAmmoOffsetX);
 
     if (ammoDisplayed)
     {
-        // When Weapon is inserted above an existing stack,
-        // keep Ammo anchored directly beneath its icon
-        // while elements already below move downward.
         const float weaponReservation =
             settings.Weapon
             ? mLayout.GetStackProgress(HUDComponentType::Weapon)
@@ -1009,32 +1086,6 @@ void HUDManager::BuildPlayerHUDLayout()
             settings.AmmoSpacing,
             WeaponAmmoOffsetX);
     }
-
-    if (armourDisplayed)
-    {
-        mLayout.Add(
-            mArmour,
-            statusBarHeight,
-            0.0f,
-            settings.ArmourSpacing);
-    }
-
-    mLayout.Add(
-        mBreath,
-        statusBarHeight,
-        0.0f,
-        settings.BreathSpacing);
-
-    mLayout.Add(
-        mHealth,
-        statusBarHeight,
-        0.0f,
-        settings.HealthSpacing);
-
-    // TODO:
-    // Status bars currently use vertical stacking.
-    // Future "Compact Status Bars" mode will arrange
-    // Armour, Breath and Health horizontally.
 }
 
 void HUDManager::HideAll()

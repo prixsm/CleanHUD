@@ -11,11 +11,11 @@ namespace
         HUDComponentType::Clock,
         HUDComponentType::Money,
         HUDComponentType::Wanted,
-        HUDComponentType::Weapon,
-        HUDComponentType::Ammo,
         HUDComponentType::Armour,
         HUDComponentType::Breath,
-        HUDComponentType::Health
+        HUDComponentType::Health,
+        HUDComponentType::Weapon,
+        HUDComponentType::Ammo
     };
 
     std::size_t StackIndex(HUDComponentType type)
@@ -80,8 +80,16 @@ void HUDLayout::PrepareStack(
             // only components that were already on screen move.
             mHoldEntrancePosition[i] = true;
 
+            // The permanently displayed Clock is the fixed
+            // anchor above the dynamic stack. Do not count it
+            // as an old stack member blocking new top entries.
+            const auto dynamicStackStart =
+                i > 0 && settings.AlwaysShowClock && settings.Clock
+                ? mPreviouslyPresent.begin() + 1
+                : mPreviouslyPresent.begin();
+
             const bool hasVisibleAbove = std::any_of(
-                mPreviouslyPresent.begin(),
+                dynamicStackStart,
                 mPreviouslyPresent.begin() + i,
                 [](bool visible) { return visible; });
 

@@ -3,6 +3,7 @@
 #include <cmath>
 #include <cctype>
 #include <cstdlib>
+#include <cstring>
 #include <string>
 
 #include <windows.h>
@@ -157,14 +158,32 @@ void HUDSettings::Load()
 
     CreateDefaultIniIfMissing(path.c_str());
 
+    char mode[32] = {};
+    GetPrivateProfileStringA(
+        "General", "HUDMode", "Stack",
+        mode, sizeof(mode), path.c_str());
+
+    Mode = _stricmp(mode, "Minimal") == 0
+        ? HUDMode::Minimal
+        : HUDMode::Stack;
+
+    AlwaysShowClock = ReadBool(
+        path.c_str(), "General", "AlwaysShowClock", true);
+
     SlideStack = ReadBool(
-        path.c_str(), "Animation", "SlideStack", SlideStack);
+        path.c_str(), "Animation", "SlideStack", false);
+
+    // Preserve older user INIs whose fade keys were under Animation.
+    const int oldFadeIn = ReadInt(
+        path.c_str(), "Animation", "FadeInMs", 200, 0, 2000);
+    const int oldFadeOut = ReadInt(
+        path.c_str(), "Animation", "FadeOutMs", 200, 0, 2000);
 
     FadeInMs = ReadInt(
-        path.c_str(), "Animation", "FadeInMs", 200, 0, 2000);
+        path.c_str(), "Visibility", "FadeInMs", oldFadeIn, 0, 2000);
 
     FadeOutMs = ReadInt(
-        path.c_str(), "Animation", "FadeOutMs", 200, 0, 2000);
+        path.c_str(), "Visibility", "FadeOutMs", oldFadeOut, 0, 2000);
 
     VisibilityMs = ReadInt(
         path.c_str(), "Visibility", "DurationMs", 3000, 0, 60000);
@@ -184,6 +203,9 @@ void HUDSettings::Load()
     ShowOnVehicleLook = ReadBool(
         path.c_str(), "WeaponAmmo", "ShowOnVehicleLook", false);
 
+    ShowOnThrowableAim = ReadBool(
+        path.c_str(), "WeaponAmmo", "ShowOnThrowableAim", false);
+
     MoneyToWantedSpacing = ReadFloat(
         path.c_str(), "Spacing", "MoneyToWantedSpacing", 35.0f);
 
@@ -199,8 +221,14 @@ void HUDSettings::Load()
     WantedToStatusBarSpacing = ReadFloat(
         path.c_str(), "Spacing", "WantedToStatusBarSpacing", 25.0f);
 
-    WeaponToStatusBarSpacingNoAmmo = ReadFloat(
-        path.c_str(), "Spacing", "WeaponToStatusBarSpacingNoAmmo", 10.0f);
+    // Read the previous key as a fallback for existing user INIs.
+    const float legacyStatusGap = ReadFloat(
+        path.c_str(), "Spacing",
+        "WeaponToStatusBarSpacingNoAmmo", 10.0f);
+
+    StatusToWeaponSpacing = ReadFloat(
+        path.c_str(), "Spacing",
+        "StatusToWeaponSpacing", legacyStatusGap);
 
     ClockSpacing = ReadFloat(
         path.c_str(), "Spacing", "ClockSpacing", 40.0f);

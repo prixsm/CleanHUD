@@ -56,10 +56,15 @@ namespace
 
         if (!pos.Valid)
         {
-            if (!vanillaLayout)
-            {
+            const bool minimalHidden =
+                HUDSettings::Get().Mode == HUDMode::Minimal &&
+                HUDManager::Get().IsPlayerHUDInitialized();
+
+            // Money has no patched draw call. Skip its original
+            // draw only while CleanHUD owns it and its timer is
+            // hidden; during startup leave vanilla drawing alone.
+            if (!vanillaLayout || minimalHidden)
                 ctx.eip = 0x58F60C;
-            }
 
             return;
         }

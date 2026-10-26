@@ -4,6 +4,12 @@
 
 #include "../Layout/HUDLayout.h"
 
+enum class HUDMode
+{
+    Stack,
+    Minimal
+};
+
 class HUDSettings
 {
 public:
@@ -13,6 +19,9 @@ public:
     void Load();
 
     bool IsElementEnabled(HUDComponentType type) const;
+
+    HUDMode Mode = HUDMode::Stack;
+    bool AlwaysShowClock = true;
 
     bool SlideStack = false;
     std::uint32_t FadeInMs = 200;
@@ -30,13 +39,14 @@ public:
 
     bool ShowOnFootAim = true;
     bool ShowOnVehicleLook = false;
+    bool ShowOnThrowableAim = false;
 
     float MoneyToWantedSpacing = 35.0f;
     float MoneyToWeaponSpacing = 35.0f;
     float MoneyToStatusBarSpacing = 25.0f;
     float WantedToWeaponSpacing = 35.0f;
     float WantedToStatusBarSpacing = 25.0f;
-    float WeaponToStatusBarSpacingNoAmmo = 10.0f;
+    float StatusToWeaponSpacing = 10.0f;
     float ClockSpacing = 40.0f;
     float WeaponSpacing = 4.0f;
     float AmmoSpacing = 4.0f;
