@@ -1,4 +1,7 @@
-#pragma once
+#ifndef CLEANHUD_RESOURCE_IDS_H
+#define CLEANHUD_RESOURCE_IDS_H
 
-// Bundled fallback for the user-editable source/CleanHUD.ini.
+// ID of the checked-in INI embedded into the ASI.
 #define IDR_CLEANHUD_DEFAULT_INI 101
+
+#endif
