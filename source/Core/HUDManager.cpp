@@ -167,6 +167,7 @@ bool HUDManager::IsPlayerHUDInitialized() const
 bool HUDManager::IsUsingVanillaLayout() const
 {
     return
+        !mSessionInitialized ||
         mVanillaLayoutLatched ||
         (GetAsyncKeyState(VK_TAB) & 0x8000);
 }
@@ -233,28 +234,27 @@ bool HUDManager::ShouldDisplayArmour() const
 
 void HUDManager::RestoreVanillaElements()
 {
-    const auto& settings = HUDSettings::Get();
-
-    // Construction initially disables all patched draws.
-    // Restore user-disabled components immediately instead
-    // of waiting for health initialization or the first
-    // update frame.
-    if (!settings.Clock)
-        mClock.Update(true);
-    if (!settings.Health)
-        mHealth.Update(true);
-    if (!settings.Armour)
-        mArmour.Update(true);
-    if (!settings.Breath)
-        mBreath.Update(true);
-    if (!settings.Weapon)
-        mWeaponIcon.Update(true);
-    if (!settings.Ammo)
-        mAmmo.Update(true);
+    // During startup, loading, or an uninitialized session
+    // always allow the game's original draw calls to run.
+    // Restoring the calls does NOT force GTA to draw HUD items
+    // when its own game state would normally hide them.
+    //
+    // CleanHUD takes ownership of the enabled elements once
+    // health/session initialization has completed.
+    mClock.Update(true);
+    mHealth.Update(true);
+    mArmour.Update(true);
+    mBreath.Update(true);
+    mWeaponIcon.Update(true);
+    mAmmo.Update(true);
 }
 
 void HUDManager::OnGameLoaded()
 {
+    // The engine can render before FindPlayerPed() becomes
+    // available, so return control to vanilla immediately.
+    RestoreVanillaElements();
+    HUDRenderer::Get().Reset();
     mSessionInitialized = false;
     mVanillaLayoutLatched = false;
     mWasWeaponAiming = false;
@@ -333,6 +333,19 @@ void HUDManager::Update()
     mWasDead = isDead;
 
     UpdateHealth();
+
+    if (!mSessionInitialized)
+    {
+        // Never black out the entire HUD while CleanHUD
+        // waits for the player/health to stabilize. Other
+        // hooks see an invalid renderer position and use
+        // the game's unmodified drawing path.
+        RestoreVanillaElements();
+        HUDRenderer::Get().Reset();
+        mLayout.ResetHistory();
+        return;
+    }
+
     UpdateArmour();
     UpdateBreath();
     UpdateMoney();
