@@ -84,7 +84,7 @@ void HUDLayout::PrepareStack(
             // anchor above the dynamic stack. Do not count it
             // as an old stack member blocking new top entries.
             const auto dynamicStackStart =
-                settings.AlwaysShowClock && settings.Clock
+                i > 0 && settings.AlwaysShowClock && settings.Clock
                 ? mPreviouslyPresent.begin() + 1
                 : mPreviouslyPresent.begin();
 
