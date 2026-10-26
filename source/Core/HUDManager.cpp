@@ -249,6 +249,26 @@ void HUDManager::RestoreVanillaElements()
     mAmmo.Update(true);
 }
 
+void HUDManager::RestoreDisabledElements()
+{
+    const auto& settings = HUDSettings::Get();
+
+    // During managed gameplay, only elements explicitly disabled
+    // in the INI should remain controlled by vanilla drawing.
+    if (!settings.Clock)
+        mClock.Update(true);
+    if (!settings.Health)
+        mHealth.Update(true);
+    if (!settings.Armour)
+        mArmour.Update(true);
+    if (!settings.Breath)
+        mBreath.Update(true);
+    if (!settings.Weapon)
+        mWeaponIcon.Update(true);
+    if (!settings.Ammo)
+        mAmmo.Update(true);
+}
+
 void HUDManager::OnGameLoaded()
 {
     // The engine can render before FindPlayerPed() becomes
@@ -303,15 +323,6 @@ void HUDManager::Update()
         origin.Y);
     mLayout.Reset();
 
-    if (tabHeld || !settings.Clock)
-    {
-        mClock.Show();
-    }
-    else
-    {
-        mClock.Hide();
-    }
-
     if (mNeedsReset)
     {
         ResetSessionState();
@@ -338,19 +349,38 @@ void HUDManager::Update()
 
     mWasDead = isDead;
 
+    const bool wasSessionInitialized = mSessionInitialized;
     UpdateHealth();
 
     if (!mSessionInitialized)
     {
-        // Never black out the entire HUD while CleanHUD
-        // waits for the player/health to stabilize. Other
-        // hooks see an invalid renderer position and use
-        // the game's unmodified drawing path.
+        // Keep the restored game draw calls available until
+        // the player/health stabilizes. DrawPlayerInfo's
+        // initialization gate prevents the loading HUD flash.
         RestoreVanillaElements();
         HUDRenderer::Get().Reset();
         mLayout.ResetHistory();
         return;
     }
+
+    if (!wasSessionInitialized)
+    {
+        // The startup fallback used Update(true), leaving
+        // components partly/fully visible even though the HUD
+        // draw was suppressed. The earlier working build began
+        // each managed session with HideAll() instead.
+        //
+        // Clear those animation/timer states before constructing
+        // CleanHUD's first visible gameplay layout.
+        HideAll();
+        RestoreDisabledElements();
+        mLayout.ResetHistory();
+    }
+
+    if (tabHeld || !settings.Clock)
+        mClock.Show();
+    else
+        mClock.Hide();
 
     UpdateArmour();
     UpdateBreath();
