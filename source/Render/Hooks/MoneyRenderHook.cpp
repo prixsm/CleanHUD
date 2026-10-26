@@ -116,8 +116,8 @@ void MoneyRenderHook::Install()
                 0x58F607),
             HookedMoneyDraw);
 
-    SafetyHookMid& hook = MoneyRestoreHookStorage();
-    hook =
+    SafetyHookMid& secondHook = MoneyRestoreHookStorage();
+    secondHook =
         safetyhook::create_mid(
             reinterpret_cast<void*>(
                 0x58F60C),
