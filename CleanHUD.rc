@@ -1,0 +1,5 @@
+#include "source/ResourceIds.h"
+
+// Store the checked-in INI byte-for-byte inside the ASI.
+// It is only extracted if the user has no CleanHUD.ini yet.
+IDR_CLEANHUD_DEFAULT_INI RCDATA "source\\CleanHUD.ini"

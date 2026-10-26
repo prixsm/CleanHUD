@@ -1,12 +1,12 @@
 #include <algorithm>
 #include <cmath>
 
-#include "../safetyhook/safetyhook.hpp"
+#include <safetyhook/safetyhook.hpp>
 #include <extensions/Screen.h>
 
 #include "AmmoRenderHook.h"
-#include "HUDManager.h"
-#include "HUDRenderer.h"
+#include "../../Core/HUDManager.h"
+#include "../HUDRenderer.h"
 
 namespace
 {

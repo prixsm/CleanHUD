@@ -1,14 +1,14 @@
 #include <cmath>
 
-#include "../safetyhook/safetyhook.hpp"
+#include <safetyhook/safetyhook.hpp>
 
 #include <CHudColours.h>
 #include <extensions/Screen.h>
 
 #include "BreathRenderHook.h"
-#include "HUDManager.h"
-#include "HUDMetrics.h"
-#include "HUDRenderer.h"
+#include "../../Core/HUDManager.h"
+#include "../HUDMetrics.h"
+#include "../HUDRenderer.h"
 
 namespace
 {

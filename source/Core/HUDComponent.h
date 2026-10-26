@@ -2,9 +2,9 @@
 
 #include <cstdint>
 
-#include "HUDLayout.h"
-#include "HUDPatch.h"
-#include "HUDPatchGroup.h"
+#include "../Layout/HUDLayout.h"
+#include "../Patches/HUDPatch.h"
+#include "../Patches/HUDPatchGroup.h"
 #include "VisibilityTimer.h"
 
 class HUDComponent

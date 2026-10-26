@@ -1,15 +1,15 @@
 #include <cstdint>
 
-#include "../safetyhook/safetyhook.hpp"
+#include <safetyhook/safetyhook.hpp>
 
 #include <CFont.h>
 #include <extensions/Screen.h>
 
 #include "MoneyRenderHook.h"
-#include "HUDManager.h"
-#include "HUDMetrics.h"
-#include "HUDRenderer.h"
-#include "HUDSettings.h"
+#include "../../Core/HUDManager.h"
+#include "../HUDMetrics.h"
+#include "../HUDRenderer.h"
+#include "../../Core/HUDSettings.h"
 
 namespace
 {

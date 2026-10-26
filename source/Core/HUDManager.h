@@ -5,7 +5,7 @@
 #include <CPlayerPed.h>
 
 #include "HUDComponent.h"
-#include "HUDLayout.h"
+#include "../Layout/HUDLayout.h"
 
 class HUDManager
 {

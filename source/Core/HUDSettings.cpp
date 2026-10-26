@@ -9,53 +9,46 @@
 #include <extensions/Paths.h>
 
 #include "HUDSettings.h"
+#include "../ResourceIds.h"
 
 namespace
 {
-    constexpr char DefaultIni[] =
-        "; CleanHUD\r\n"
-        "; Place this file beside CleanHUD.SA.asi. Restart after editing.\r\n"
-        "; 1 = enabled, 0 = disabled.\r\n"
-        "\r\n[Animation]\r\n"
-        "; Sliding is optional and off by default.\r\n"
-        "SlideStack = 0\r\n"
-        "FadeInMs = 200\r\n"
-        "FadeOutMs = 200\r\n"
-        "\r\n[Visibility]\r\n"
-        "DurationMs = 3000\r\n"
-        "\r\n[Elements]\r\n"
-        "; 0 restores vanilla behavior for the selected element.\r\n"
-        "Clock = 1\r\n"
-        "; Clock=0 keeps the vanilla clock visible and reserves its slot.\r\n"
-        "Money = 1\r\n"
-        "Wanted = 1\r\n"
-        "Weapon = 1\r\n"
-        "Ammo = 1\r\n"
-        "Armour = 1\r\n"
-        "Breath = 1\r\n"
-        "Health = 1\r\n"
-        "\r\n[WeaponAmmo]\r\n"
-        "ShowOnFootAim = 1\r\n"
-        "\r\n; Side-looking alone does not reveal weapons.\r\n"
-        "ShowOnVehicleLook = 0\r\n"
-        "\r\n[Spacing]\r\n"
-        "MoneyToWantedSpacing = 35.0\r\n"
-        "MoneyToWeaponSpacing = 35.0\r\n"
-        "MoneyToStatusBarSpacing = 25.0\r\n"
-        "\r\nWantedToWeaponSpacing = 35.0\r\n"
-        "WantedToStatusBarSpacing = 25.0\r\n"
-        "WeaponToStatusBarSpacingNoAmmo = 10.0\r\n"
-        "\r\n; Clock gap also reserves room beneath vanilla clock when Clock=0.\r\n"
-        "ClockSpacing = 40.0\r\n"
-        "WeaponSpacing = 4.0\r\n"
-        "AmmoSpacing = 4.0\r\n"
-        "ArmourSpacing = 4.0\r\n"
-        "BreathSpacing = 4.0\r\n"
-        "HealthSpacing = 4.0";
-
     static void CreateDefaultIniIfMissing(const char* path)
     {
-        // CREATE_NEW never overwrites a user's existing settings.
+        // Keep source/CleanHUD.ini as the only maintained template:
+        // the resource compiler bundles its exact bytes into this ASI.
+        // Fetch the resource from our DLL, not gta_sa.exe.
+        HMODULE module = nullptr;
+
+        if (!GetModuleHandleExA(
+            GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
+                GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+            reinterpret_cast<LPCSTR>(&CreateDefaultIniIfMissing),
+            &module))
+        {
+            return;
+        }
+
+        const HRSRC resource = FindResourceA(
+            module,
+            MAKEINTRESOURCEA(IDR_CLEANHUD_DEFAULT_INI),
+            RT_RCDATA);
+
+        if (!resource)
+            return;
+
+        const DWORD size = SizeofResource(module, resource);
+        const HGLOBAL loaded = LoadResource(module, resource);
+
+        if (!loaded || size == 0)
+            return;
+
+        const void* data = LockResource(loaded);
+
+        if (!data)
+            return;
+
+        // CREATE_NEW never overwrites a user's existing INI.
         HANDLE file = CreateFileA(
             path,
             GENERIC_WRITE,
@@ -69,13 +62,14 @@ namespace
             return;
 
         DWORD written = 0;
-        WriteFile(
-            file,
-            DefaultIni,
-            static_cast<DWORD>(sizeof(DefaultIni) - 1),
-            &written,
-            nullptr);
+        const BOOL saved = WriteFile(
+            file, data, size, &written, nullptr);
+
         CloseHandle(file);
+
+        // Avoid leaving a partial/corrupt configuration behind.
+        if (!saved || written != size)
+            DeleteFileA(path);
     }
 
     static int ReadInt(

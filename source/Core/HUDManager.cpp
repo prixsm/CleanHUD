@@ -17,8 +17,8 @@
 #include <CWorld.h>
 
 #include "HUDManager.h"
-#include "HUDMetrics.h"
-#include "HUDRenderer.h"
+#include "../Render/HUDMetrics.h"
+#include "../Render/HUDRenderer.h"
 #include "HUDSettings.h"
 
 HUDManager::HUDManager() :

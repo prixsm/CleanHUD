@@ -1,8 +1,8 @@
 #include <algorithm>
 
-#include "HUDComponent.h"
+#include "../Core/HUDComponent.h"
 #include "HUDLayout.h"
-#include "HUDSettings.h"
+#include "../Core/HUDSettings.h"
 
 namespace
 {

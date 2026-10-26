@@ -62,7 +62,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>_CRT_NON_CONFORMING_SWPRINTFS;TARGET_NAME=R"($(TargetName))";GTASA;GTAGAME_NAME="San Andreas";GTAGAME_ABBR="SA";GTAGAME_ABBRLOW="sa";GTAGAME_PROTAGONISTNAME="CJ";GTAGAME_CITYNAME="San Andreas";PLUGIN_SGV_10US;RW;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(PLUGIN_SDK_DIR)\Plugin_SA;$(PLUGIN_SDK_DIR)\Plugin_SA\game_sa;$(PLUGIN_SDK_DIR)\Plugin_SA\game_sa\enums;$(PLUGIN_SDK_DIR)\Plugin_SA\game_sa\rw;$(PLUGIN_SDK_DIR)\shared;$(PLUGIN_SDK_DIR)\shared\game;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)source;$(ProjectDir)source\Core;$(ProjectDir)source\Layout;$(ProjectDir)source\Patches;$(ProjectDir)source\Render;$(ProjectDir)source\Render\Hooks;$(PLUGIN_SDK_DIR);$(PLUGIN_SDK_DIR)\Plugin_SA;$(PLUGIN_SDK_DIR)\Plugin_SA\game_sa;$(PLUGIN_SDK_DIR)\Plugin_SA\game_sa\enums;$(PLUGIN_SDK_DIR)\Plugin_SA\game_sa\rw;$(PLUGIN_SDK_DIR)\shared;$(PLUGIN_SDK_DIR)\shared\game;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>None</DebugInformationFormat>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -101,7 +101,7 @@ xcopy /Y "$(TargetPath)" "$(GTA_SA_DIR)\scripts"
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>DEBUG;_CRT_NON_CONFORMING_SWPRINTFS;TARGET_NAME=R"($(TargetName))";GTASA;GTAGAME_NAME="San Andreas";GTAGAME_ABBR="SA";GTAGAME_ABBRLOW="sa";GTAGAME_PROTAGONISTNAME="CJ";GTAGAME_CITYNAME="San Andreas";PLUGIN_SGV_10US;RW;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(PLUGIN_SDK_DIR)\Plugin_SA;$(PLUGIN_SDK_DIR)\Plugin_SA\game_sa;$(PLUGIN_SDK_DIR)\Plugin_SA\game_sa\enums;$(PLUGIN_SDK_DIR)\Plugin_SA\game_sa\rw;$(PLUGIN_SDK_DIR)\shared;$(PLUGIN_SDK_DIR)\shared\game;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)source;$(ProjectDir)source\Core;$(ProjectDir)source\Layout;$(ProjectDir)source\Patches;$(ProjectDir)source\Render;$(ProjectDir)source\Render\Hooks;$(PLUGIN_SDK_DIR);$(PLUGIN_SDK_DIR)\Plugin_SA;$(PLUGIN_SDK_DIR)\Plugin_SA\game_sa;$(PLUGIN_SDK_DIR)\Plugin_SA\game_sa\enums;$(PLUGIN_SDK_DIR)\Plugin_SA\game_sa\rw;$(PLUGIN_SDK_DIR)\shared;$(PLUGIN_SDK_DIR)\shared\game;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
       <MinimalRebuild>false</MinimalRebuild>
@@ -130,7 +130,57 @@ xcopy /Y "$(TargetPath)" "$(GTA_SA_DIR)\scripts"
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="source\Core\HUDComponent.cpp" />
+    <ClCompile Include="source\Core\HUDManager.cpp" />
+    <ClCompile Include="source\Core\HUDSettings.cpp" />
+    <ClCompile Include="source\Core\VisibilityTimer.cpp" />
+    <ClCompile Include="source\Layout\HUDLayout.cpp" />
     <ClCompile Include="source\Main.cpp" />
+    <ClCompile Include="source\Patches\CallPatch.cpp" />
+    <ClCompile Include="source\Patches\HUDPatchGroup.cpp" />
+    <ClCompile Include="source\PlayerHUDHook.cpp" />
+    <ClCompile Include="source\Render\Hooks\AmmoRenderHook.cpp" />
+    <ClCompile Include="source\Render\Hooks\ArmourRenderHook.cpp" />
+    <ClCompile Include="source\Render\Hooks\BreathRenderHook.cpp" />
+    <ClCompile Include="source\Render\Hooks\ClockRenderHook.cpp" />
+    <ClCompile Include="source\Render\Hooks\HealthRenderHook.cpp" />
+    <ClCompile Include="source\Render\Hooks\HUDRenderHooks.cpp" />
+    <ClCompile Include="source\Render\Hooks\MoneyRenderHook.cpp" />
+    <ClCompile Include="source\Render\Hooks\WantedRenderHook.cpp" />
+    <ClCompile Include="source\Render\Hooks\WeaponRenderHook.cpp" />
+    <ClCompile Include="source\Render\HUDMetrics.cpp" />
+    <ClCompile Include="source\Render\HUDRenderer.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="source\Core\HUDComponent.h" />
+    <ClInclude Include="source\Core\HUDManager.h" />
+    <ClInclude Include="source\Core\HUDSettings.h" />
+    <ClInclude Include="source\Core\VisibilityTimer.h" />
+    <ClInclude Include="source\Layout\HUDLayout.h" />
+    <ClInclude Include="source\Patches\CallPatch.h" />
+    <ClInclude Include="source\Patches\HUDPatch.h" />
+    <ClInclude Include="source\Patches\HUDPatchGroup.h" />
+    <ClInclude Include="source\PlayerHUDHook.h" />
+    <ClInclude Include="source\Render\Hooks\AmmoRenderHook.h" />
+    <ClInclude Include="source\Render\Hooks\ArmourRenderHook.h" />
+    <ClInclude Include="source\Render\Hooks\BreathRenderHook.h" />
+    <ClInclude Include="source\Render\Hooks\ClockRenderHook.h" />
+    <ClInclude Include="source\Render\Hooks\HealthRenderHook.h" />
+    <ClInclude Include="source\Render\Hooks\HUDRenderHooks.h" />
+    <ClInclude Include="source\Render\Hooks\MoneyRenderHook.h" />
+    <ClInclude Include="source\Render\Hooks\WantedRenderHook.h" />
+    <ClInclude Include="source\Render\Hooks\WeaponRenderHook.h" />
+    <ClInclude Include="source\Render\HUDMetrics.h" />
+    <ClInclude Include="source\Render\HUDRenderer.h" />
+    <ClInclude Include="source\ResourceIds.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="CleanHUD.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="source\CleanHUD.ini">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

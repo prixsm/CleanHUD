@@ -1,7 +1,7 @@
 #include <../safetyhook/safetyhook.hpp>
 #include "PlayerHUDHook.h"
-#include "HUDManager.h"
-#include "HUDSettings.h"
+#include "Core/HUDManager.h"
+#include "Core/HUDSettings.h"
 
 namespace
 {
