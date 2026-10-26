@@ -10,7 +10,11 @@
 
 namespace
 {
-    SafetyHookInline gAmmoHook;
+    SafetyHookInline& AmmoHookStorage()
+    {
+        static SafetyHookInline hook;
+        return hook;
+    }
 
     static void __cdecl HookedRenderAmmo(int player, int x, int y, float alpha)
     {
@@ -18,7 +22,7 @@ namespace
 
         if (!pos.Valid)
         {
-            gAmmoHook.ccall(player, x, y, alpha);
+            AmmoHookStorage().ccall(player, x, y, alpha);
 
             return;
         }
@@ -70,13 +74,14 @@ namespace
             y = static_cast<int>(std::lround(layoutY));
         }
 
-        gAmmoHook.ccall(player, x, y, alpha);
+        AmmoHookStorage().ccall(player, x, y, alpha);
     }
 }
 
 void AmmoRenderHook::Install()
 {
-    gAmmoHook =
+    SafetyHookInline& hook = AmmoHookStorage();
+    hook =
         safetyhook::create_inline(
             reinterpret_cast<void*>(0x5893B0),
             reinterpret_cast<void*>(HookedRenderAmmo)
@@ -85,5 +90,5 @@ void AmmoRenderHook::Install()
 
 void AmmoRenderHook::Remove()
 {
-    gAmmoHook.reset();
+    AmmoHookStorage().reset();
 }

@@ -10,7 +10,11 @@
 
 namespace
 {
-    SafetyHookInline gClockPrintHook;
+    SafetyHookInline& ClockPrintHookStorage()
+    {
+        static SafetyHookInline hook;
+        return hook;
+    }
 
     constexpr std::uintptr_t ClockPrintReturnAddress =
         0x58EC26;
@@ -38,7 +42,7 @@ namespace
 
         if (returnAddress != ClockPrintReturnAddress)
         {
-            gClockPrintHook.ccall(
+            ClockPrintHookStorage().ccall(
                 x,
                 y,
                 text);
@@ -52,7 +56,7 @@ namespace
         if (!pos.Valid ||
             pos.Alpha == 255)
         {
-            gClockPrintHook.ccall(
+            ClockPrintHookStorage().ccall(
                 x,
                 y,
                 text);
@@ -76,7 +80,7 @@ namespace
                 originalDropColour.a,
                 pos.Alpha);
 
-        gClockPrintHook.ccall(
+        ClockPrintHookStorage().ccall(
             x,
             y,
             text);
@@ -91,7 +95,8 @@ namespace
 
 void ClockRenderHook::Install()
 {
-    gClockPrintHook =
+    SafetyHookInline& hook = ClockPrintHookStorage();
+    hook =
         safetyhook::create_inline(
             reinterpret_cast<void*>(
                 0x71A700),
@@ -101,5 +106,5 @@ void ClockRenderHook::Install()
 
 void ClockRenderHook::Remove()
 {
-    gClockPrintHook.reset();
+    ClockPrintHookStorage().reset();
 }

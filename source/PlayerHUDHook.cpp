@@ -4,7 +4,11 @@
 
 namespace
 {
-    SafetyHookInline gPlayerHUDHook;
+    SafetyHookInline& PlayerHUDHookStorage()
+    {
+        static SafetyHookInline hook;
+        return hook;
+    }
 
     void __cdecl HookedDrawPlayerInfo()
     {
@@ -12,13 +16,14 @@ namespace
         // save has not initialized, the game is loading,
         // or CleanHUD's per-frame update has not yet run.
         // The manager supplies vanilla rendering until ready.
-        gPlayerHUDHook.ccall();
+        PlayerHUDHookStorage().ccall();
     }
 }
 
 void PlayerHUDHook::Install()
 {
-    gPlayerHUDHook = safetyhook::create_inline(
+    SafetyHookInline& hook = PlayerHUDHookStorage();
+    hook = safetyhook::create_inline(
         reinterpret_cast<void*>(0x58EAF0),
         reinterpret_cast<void*>(HookedDrawPlayerInfo)
     );

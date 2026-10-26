@@ -12,7 +12,11 @@
 
 namespace
 {
-    SafetyHookInline gHealthHook;
+    SafetyHookInline& HealthHookStorage()
+    {
+        static SafetyHookInline hook;
+        return hook;
+    }
 
     static void __cdecl HookedRenderHealthBar(int player, int x, int y)
     {
@@ -20,7 +24,7 @@ namespace
 
         if (!pos.Valid)
         {
-            gHealthHook.ccall(player, x, y);
+            HealthHookStorage().ccall(player, x, y);
 
             return;
         }
@@ -59,7 +63,7 @@ namespace
                     pos.Alpha) /
                 255u);
 
-        gHealthHook.ccall(player, x, y);
+        HealthHookStorage().ccall(player, x, y);
 
         colour.alpha = originalAlpha;
     }
@@ -67,7 +71,8 @@ namespace
 
 void HealthRenderHook::Install()
 {
-    gHealthHook =
+    SafetyHookInline& hook = HealthHookStorage();
+    hook =
         safetyhook::create_inline(
             reinterpret_cast<void*>(0x589270),
             HookedRenderHealthBar);
@@ -75,5 +80,5 @@ void HealthRenderHook::Install()
 
 void HealthRenderHook::Remove()
 {
-    gHealthHook.reset();
+    HealthHookStorage().reset();
 }

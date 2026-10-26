@@ -12,7 +12,11 @@
 
 namespace
 {
-    SafetyHookInline gBreathHook;
+    SafetyHookInline& BreathHookStorage()
+    {
+        static SafetyHookInline hook;
+        return hook;
+    }
 
     static void __cdecl HookedRenderBreathBar(int player, int x, int y)
     {
@@ -20,7 +24,7 @@ namespace
 
         if (!pos.Valid)
         {
-            gBreathHook.ccall(player, x, y);
+            BreathHookStorage().ccall(player, x, y);
 
             return;
         }
@@ -61,7 +65,7 @@ namespace
                     pos.Alpha) /
                 255u);
 
-        gBreathHook.ccall(player, x, y);
+        BreathHookStorage().ccall(player, x, y);
 
         colour.alpha =
             originalAlpha;
@@ -70,7 +74,8 @@ namespace
 
 void BreathRenderHook::Install()
 {
-    gBreathHook =
+    SafetyHookInline& hook = BreathHookStorage();
+    hook =
         safetyhook::create_inline(
             reinterpret_cast<void*>(0x589190),
             HookedRenderBreathBar);
@@ -78,5 +83,5 @@ void BreathRenderHook::Install()
 
 void BreathRenderHook::Remove()
 {
-    gBreathHook.reset();
+    BreathHookStorage().reset();
 }
