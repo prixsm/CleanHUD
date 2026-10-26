@@ -58,7 +58,9 @@ private:
     bool mNeedsReset = true;
     bool mVanillaLayoutLatched = false;
     bool mWasDead = false;
-    bool mWasWeaponAiming = false;
+    // One-frame input grace covers game-process/weapon-update ordering.
+    bool mValidVehicleFireInputLastFrame = false;
+    bool mWeaponChangedThisFrame = false;
 
     // HUD components
     HUDComponent mClock;
@@ -127,6 +129,8 @@ private:
     void UpdateMoney();
     void UpdateWeaponIcon();
     void UpdateAmmo();
+    void UpdateVehicleFiring();
+    bool IsValidVehicleFireInput() const;
     bool IsWeaponAiming() const;
     bool HasEmptyVehicleAmmo() const;
     void UpdateWanted();
