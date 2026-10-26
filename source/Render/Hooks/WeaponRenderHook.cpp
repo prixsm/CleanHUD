@@ -11,8 +11,16 @@
 
 namespace
 {
-    SafetyHookMid gWeaponHook;
-    SafetyHookMid gWeaponSpriteAlphaHook;
+    SafetyHookMid& WeaponHookStorage()
+    {
+        static SafetyHookMid hook;
+        return hook;
+    }
+    SafetyHookMid& WeaponSpriteAlphaHookStorage()
+    {
+        static SafetyHookMid hook;
+        return hook;
+    }
 
     constexpr std::uintptr_t WeaponIconStart = 0x58D7D0;
 
@@ -114,13 +122,15 @@ namespace
 
 void WeaponRenderHook::Install()
 {
-    gWeaponHook =
+    SafetyHookMid& hook = WeaponHookStorage();
+    hook =
         safetyhook::create_mid(
             reinterpret_cast<void*>(
                 0x58F93E),
             HookedWeaponPosition);
 
-    gWeaponSpriteAlphaHook =
+    SafetyHookMid& secondHook = WeaponSpriteAlphaHookStorage();
+    secondHook =
         safetyhook::create_mid(
             reinterpret_cast<void*>(
                 0x70D000),
@@ -129,6 +139,6 @@ void WeaponRenderHook::Install()
 
 void WeaponRenderHook::Remove()
 {
-    gWeaponSpriteAlphaHook.reset();
-    gWeaponHook.reset();
+    WeaponSpriteAlphaHookStorage().reset();
+    WeaponHookStorage().reset();
 }

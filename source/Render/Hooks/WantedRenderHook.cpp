@@ -8,8 +8,16 @@
 
 namespace
 {
-    SafetyHookMid gWantedYHook;
-    SafetyHookMid gWantedPositionHook;
+    SafetyHookMid& WantedYHookStorage()
+    {
+        static SafetyHookMid hook;
+        return hook;
+    }
+    SafetyHookMid& WantedPositionHookStorage()
+    {
+        static SafetyHookMid hook;
+        return hook;
+    }
 
     constexpr uintptr_t WantedYAddress = 0x866C5C;
 
@@ -99,12 +107,14 @@ void WantedRenderHook::Install()
         *reinterpret_cast<float*>(
             WantedYAddress);
 
-    gWantedYHook =
+    SafetyHookMid& hook = WantedYHookStorage();
+    hook =
         safetyhook::create_mid(
             reinterpret_cast<void*>(0x58D9A0),
             HookedWantedY);
 
-    gWantedPositionHook =
+    SafetyHookMid& secondHook = WantedPositionHookStorage();
+    secondHook =
         safetyhook::create_mid(
             reinterpret_cast<void*>(0x58DFD3),
             HookedWantedDraw);
@@ -116,6 +126,6 @@ void WantedRenderHook::Remove()
         WantedYAddress) =
         gOriginalWantedY;
 
-    gWantedYHook.reset();
-    gWantedPositionHook.reset();
+    WantedYHookStorage().reset();
+    WantedPositionHookStorage().reset();
 }

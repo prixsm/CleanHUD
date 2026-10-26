@@ -13,8 +13,16 @@
 
 namespace
 {
-    SafetyHookMid gMoneyHook;
-    SafetyHookMid gMoneyRestoreHook;
+    SafetyHookMid& MoneyHookStorage()
+    {
+        static SafetyHookMid hook;
+        return hook;
+    }
+    SafetyHookMid& MoneyRestoreHookStorage()
+    {
+        static SafetyHookMid hook;
+        return hook;
+    }
 
     bool gMoneyAlphaModified = false;
 
@@ -101,13 +109,15 @@ namespace
 
 void MoneyRenderHook::Install()
 {
-    gMoneyHook =
+    SafetyHookMid& hook = MoneyHookStorage();
+    hook =
         safetyhook::create_mid(
             reinterpret_cast<void*>(
                 0x58F607),
             HookedMoneyDraw);
 
-    gMoneyRestoreHook =
+    SafetyHookMid& secondHook = MoneyRestoreHookStorage();
+    secondHook =
         safetyhook::create_mid(
             reinterpret_cast<void*>(
                 0x58F60C),
@@ -116,8 +126,8 @@ void MoneyRenderHook::Install()
 
 void MoneyRenderHook::Remove()
 {
-    gMoneyRestoreHook.reset();
-    gMoneyHook.reset();
+    MoneyRestoreHookStorage().reset();
+    MoneyHookStorage().reset();
 
     if (gMoneyAlphaModified)
     {

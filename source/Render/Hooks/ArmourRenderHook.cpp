@@ -12,7 +12,11 @@
 
 namespace
 {
-    SafetyHookInline gArmourHook;
+    SafetyHookInline& ArmourHookStorage()
+    {
+        static SafetyHookInline hook;
+        return hook;
+    }
 
     static void __cdecl HookedRenderArmourBar(int player, int x, int y)
     {
@@ -20,7 +24,7 @@ namespace
 
         if (!pos.Valid)
         {
-            gArmourHook.ccall(player, x, y);
+            ArmourHookStorage().ccall(player, x, y);
 
             return;
         }
@@ -61,7 +65,7 @@ namespace
                     pos.Alpha) /
                 255u);
 
-        gArmourHook.ccall(player, x, y);
+        ArmourHookStorage().ccall(player, x, y);
 
         colour.alpha = originalAlpha;
     }
@@ -69,7 +73,8 @@ namespace
 
 void ArmourRenderHook::Install()
 {
-    gArmourHook =
+    SafetyHookInline& hook = ArmourHookStorage();
+    hook =
         safetyhook::create_inline(
             reinterpret_cast<void*>(0x5890A0),
             HookedRenderArmourBar);
@@ -77,5 +82,5 @@ void ArmourRenderHook::Install()
 
 void ArmourRenderHook::Remove()
 {
-    gArmourHook.reset();
+    ArmourHookStorage().reset();
 }
