@@ -274,6 +274,12 @@ void HUDManager::Update()
         mSessionInitialized = false;
         mLastPlayer = nullptr;
         mWasWeaponAiming = false;
+
+        // Returning from gameplay to a frontend or loading
+        // screen must not leave our draw-call NOPs in place.
+        RestoreVanillaElements();
+        HUDRenderer::Get().Reset();
+        mLayout.ResetHistory();
         return;
     }
 
