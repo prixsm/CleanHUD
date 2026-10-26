@@ -111,15 +111,16 @@ namespace
     static VehicleFireCapability GetVehicleFireCapability(
         const CVehicle& vehicle)
     {
-        // Emergency and weapon-equipped vehicles use their own
-        // controls, not the driver's handheld drive-by weapon.
+        // Rhino and SWAT van do not use the driver's handheld
+        // weapon. Fire trucks DO allow side drive-by shooting.
         switch (vehicle.m_nModelIndex)
         {
         case MODEL_RHINO:
         case MODEL_SWATVAN:
+            return VehicleFireCapability::None;
         case MODEL_FIRETRUK:
         case MODEL_FIRELA:
-            return VehicleFireCapability::None;
+            return VehicleFireCapability::SideOnly;
         default:
             break;
         }
@@ -154,7 +155,11 @@ namespace
         case VehicleFireCapability::SideOnly:
             return IsLookingToOneSide(pad);
         case VehicleFireCapability::ForwardAndSide:
-            return !pad.GetLookBehindForCar();
+            // Motorcycles can fire their handheld SMG forwards
+            // even when both camera-look buttons are held.
+            // Keep the existing rear-view restriction for quads.
+            return vehicle.m_nVehicleSubClass == VEHICLE_BIKE ||
+                !pad.GetLookBehindForCar();
         default:
             // Pedal-bike HUD remains based on ammo changes only.
             // A bunny-hop/fire button isn't evidence of a shot.
@@ -295,8 +300,6 @@ bool HUDManager::ShouldDisplayAmmo() const
     {
     case WEAPONTYPE_DETONATOR:
     case WEAPONTYPE_PARACHUTE:
-    case WEAPONTYPE_NIGHTVISION:
-    case WEAPONTYPE_INFRARED:
         return false;
 
     default:
@@ -497,19 +500,6 @@ void HUDManager::Update()
         tabHeld || !settings.Ammo || weaponAiming);
 
     mWanted.Update(!settings.Wanted);
-
-    // Goggles are equipment, never a managed weapon display.
-    // Keep the user-disabled elements' vanilla opt-out intact.
-    const auto* currentWeapon = mPlayer->GetWeapon();
-
-    if (currentWeapon &&
-        IsVisionEquipment(currentWeapon->m_eWeaponType))
-    {
-        if (settings.Weapon)
-            mWeaponIcon.Reset();
-        if (settings.Ammo)
-            mAmmo.Reset();
-    }
 
     if (HasEmptyVehicleAmmo())
     {
@@ -913,11 +903,10 @@ void HUDManager::UpdateWeaponIcon()
     {
         mWeaponChangedThisFrame = true;
 
-        if (!IsVisionEquipment(current.WeaponType))
-        {
-            mWeaponIcon.ShowFor(mVisibleTime);
-            mAmmo.ShowFor(mVisibleTime);
-        }
+        // Goggles behave like other equipment on selection:
+        // only their aim-button HUD trigger is suppressed.
+        mWeaponIcon.ShowFor(mVisibleTime);
+        mAmmo.ShowFor(mVisibleTime);
     }
 }
 
@@ -934,7 +923,7 @@ void HUDManager::UpdateAmmo()
 
     const CWeapon* weapon = mPlayer->GetWeapon();
 
-    if (!weapon || IsVisionEquipment(weapon->m_eWeaponType))
+    if (!weapon)
         return;
 
     if (!mPlayer->bInVehicle)
