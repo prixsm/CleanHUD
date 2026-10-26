@@ -118,6 +118,7 @@ private:
     uint32_t mVisibleTime = 4000;
 
     void ResetSessionState();
+    void RestoreDisabledElements();
     void SyncTrackedValues();
 
     void UpdateHealth();
