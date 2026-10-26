@@ -381,7 +381,7 @@ void HUDManager::Update()
         mSessionInitialized = false;
         mLastPlayer = nullptr;
         mValidVehicleFireInputLastFrame = false;
-    mWeaponChangedThisFrame = false;
+        mWeaponChangedThisFrame = false;
 
         // Returning from gameplay to a frontend or loading
         // screen must not leave our draw-call NOPs in place.
@@ -949,8 +949,9 @@ void HUDManager::UpdateAmmo()
     if (!vehicle)
         return;
 
-    if (GetVehicleFireCapability(*vehicle) ==
-        VehicleFireCapability::Bicycle)
+    const auto capability = GetVehicleFireCapability(*vehicle);
+
+    if (capability == VehicleFireCapability::Bicycle)
     {
         // Existing pedal-bike path: no inference from Fire,
         // which also performs bunny hops.
@@ -958,6 +959,9 @@ void HUDManager::UpdateAmmo()
         mWeaponIcon.ShowFor(mVisibleTime);
         return;
     }
+
+    if (capability == VehicleFireCapability::None)
+        return;
 
     const bool consumedAmmo =
         current.AmmoInClip < previous.AmmoInClip ||
