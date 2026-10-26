@@ -1,6 +1,6 @@
 #include <cmath>
 
-#include "../safetyhook/safetyhook.hpp"
+#include <safetyhook/safetyhook.hpp>
 
 #include <CHudColours.h>
 #include <extensions/Screen.h>

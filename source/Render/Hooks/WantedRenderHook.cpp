@@ -1,4 +1,4 @@
-#include "../safetyhook/safetyhook.hpp"
+#include <safetyhook/safetyhook.hpp>
 #include <CWorld.h>
 #include <extensions/Screen.h>
 

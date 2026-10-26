@@ -1,7 +1,7 @@
 #include <cstdint>
 #include <intrin.h>
 
-#include "../safetyhook/safetyhook.hpp"
+#include <safetyhook/safetyhook.hpp>
 
 #include <CFont.h>
 

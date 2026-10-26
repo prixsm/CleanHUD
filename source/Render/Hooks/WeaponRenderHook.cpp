@@ -1,7 +1,7 @@
 #include <cmath>
 #include <cstdint>
 
-#include "../safetyhook/safetyhook.hpp"
+#include <safetyhook/safetyhook.hpp>
 
 #include <extensions/Screen.h>
 

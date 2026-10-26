@@ -1,6 +1,6 @@
 #include <cstdint>
 
-#include "../safetyhook/safetyhook.hpp"
+#include <safetyhook/safetyhook.hpp>
 
 #include <CFont.h>
 #include <extensions/Screen.h>
