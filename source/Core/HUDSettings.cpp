@@ -173,11 +173,17 @@ void HUDSettings::Load()
     SlideStack = ReadBool(
         path.c_str(), "Animation", "SlideStack", false);
 
-    FadeInMs = ReadInt(
+    // Preserve older user INIs whose fade keys were under Animation.
+    const int oldFadeIn = ReadInt(
         path.c_str(), "Animation", "FadeInMs", 200, 0, 2000);
+    const int oldFadeOut = ReadInt(
+        path.c_str(), "Animation", "FadeOutMs", 200, 0, 2000);
+
+    FadeInMs = ReadInt(
+        path.c_str(), "Visibility", "FadeInMs", oldFadeIn, 0, 2000);
 
     FadeOutMs = ReadInt(
-        path.c_str(), "Animation", "FadeOutMs", 200, 0, 2000);
+        path.c_str(), "Visibility", "FadeOutMs", oldFadeOut, 0, 2000);
 
     VisibilityMs = ReadInt(
         path.c_str(), "Visibility", "DurationMs", 3000, 0, 60000);
