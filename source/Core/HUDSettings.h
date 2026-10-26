@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-#include "HUDLayout.h"
+#include "../Layout/HUDLayout.h"
 
 class HUDSettings
 {

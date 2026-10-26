@@ -4,7 +4,7 @@
 #include <CTimer.h>
 
 #include "HUDComponent.h"
-#include "HUDLayout.h"
+#include "../Layout/HUDLayout.h"
 #include "HUDSettings.h"
 
 HUDComponent::HUDComponent(
