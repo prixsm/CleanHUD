@@ -2,8 +2,8 @@
 #include <CWorld.h>
 #include <extensions/Screen.h>
 
-#include "HUDManager.h"
-#include "HUDRenderer.h"
+#include "../../Core/HUDManager.h"
+#include "../HUDRenderer.h"
 #include "WantedRenderHook.h"
 
 namespace

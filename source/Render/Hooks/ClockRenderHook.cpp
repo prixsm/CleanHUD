@@ -6,7 +6,7 @@
 #include <CFont.h>
 
 #include "ClockRenderHook.h"
-#include "HUDRenderer.h"
+#include "../HUDRenderer.h"
 
 namespace
 {

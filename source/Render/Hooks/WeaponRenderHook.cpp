@@ -6,8 +6,8 @@
 #include <extensions/Screen.h>
 
 #include "WeaponRenderHook.h"
-#include "HUDManager.h"
-#include "HUDRenderer.h"
+#include "../../Core/HUDManager.h"
+#include "../HUDRenderer.h"
 
 namespace
 {

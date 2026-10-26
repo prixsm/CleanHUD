@@ -6,9 +6,9 @@
 #include <extensions/Screen.h>
 
 #include "ArmourRenderHook.h"
-#include "HUDManager.h"
-#include "HUDMetrics.h"
-#include "HUDRenderer.h"
+#include "../../Core/HUDManager.h"
+#include "../HUDMetrics.h"
+#include "../HUDRenderer.h"
 
 namespace
 {

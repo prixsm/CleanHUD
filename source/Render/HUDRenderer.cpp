@@ -1,6 +1,6 @@
-#include "HUDComponent.h"
-#include "HUDLayout.h"
-#include "HUDManager.h"
+#include "../Core/HUDComponent.h"
+#include "../Layout/HUDLayout.h"
+#include "../Core/HUDManager.h"
 #include "HUDRenderer.h"
 
 HUDRenderer& HUDRenderer::Get()
