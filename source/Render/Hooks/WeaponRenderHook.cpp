@@ -129,8 +129,8 @@ void WeaponRenderHook::Install()
                 0x58F93E),
             HookedWeaponPosition);
 
-    SafetyHookMid& hook = WeaponSpriteAlphaHookStorage();
-    hook =
+    SafetyHookMid& secondHook = WeaponSpriteAlphaHookStorage();
+    secondHook =
         safetyhook::create_mid(
             reinterpret_cast<void*>(
                 0x70D000),
