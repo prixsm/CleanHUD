@@ -80,8 +80,16 @@ void HUDLayout::PrepareStack(
             // only components that were already on screen move.
             mHoldEntrancePosition[i] = true;
 
+            // The permanently displayed Clock is the fixed
+            // anchor above the dynamic stack. Do not count it
+            // as an old stack member blocking new top entries.
+            const auto dynamicStackStart =
+                settings.AlwaysShowClock && settings.Clock
+                ? mPreviouslyPresent.begin() + 1
+                : mPreviouslyPresent.begin();
+
             const bool hasVisibleAbove = std::any_of(
-                mPreviouslyPresent.begin(),
+                dynamicStackStart,
                 mPreviouslyPresent.begin() + i,
                 [](bool visible) { return visible; });
 
