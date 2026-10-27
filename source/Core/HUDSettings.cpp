@@ -201,24 +201,6 @@ void HUDSettings::Load()
     ShowOnThrowableAim = ReadBool(
         path.c_str(), "WeaponAmmo", "ShowOnThrowableAim", false);
 
-    MoneyToWantedSpacing = ReadFloat(
-        path.c_str(), "Spacing", "MoneyToWantedSpacing", 35.0f);
-
-    MoneyToWeaponSpacing = ReadFloat(
-        path.c_str(), "Spacing", "MoneyToWeaponSpacing", 35.0f);
-
-    MoneyToStatusBarSpacing = ReadFloat(
-        path.c_str(), "Spacing", "MoneyToStatusBarSpacing", 25.0f);
-
-    WantedToWeaponSpacing = ReadFloat(
-        path.c_str(), "Spacing", "WantedToWeaponSpacing", 35.0f);
-
-    WantedToStatusBarSpacing = ReadFloat(
-        path.c_str(), "Spacing", "WantedToStatusBarSpacing", 25.0f);
-
-    StatusBarToWeaponSpacing = ReadFloat(
-        path.c_str(), "Spacing", "StatusBarToWeaponSpacing", 10.0f);
-
     ClockToMoneySpacing = ReadFloat(
         path.c_str(), "Spacing", "ClockToMoneySpacing", 25.0f);
 
@@ -226,10 +208,28 @@ void HUDSettings::Load()
         path.c_str(), "Spacing", "ClockToWantedSpacing", 30.0f);
 
     ClockToStatusBarSpacing = ReadFloat(
-        path.c_str(), "Spacing", "ClockToStatusBarSpacing", 20.0f);
+        path.c_str(), "Spacing", "ClockToStatusBarSpacing", 22.5f);
 
     ClockToWeaponSpacing = ReadFloat(
-        path.c_str(), "Spacing", "ClockToWeaponSpacing", 27.5f);
+        path.c_str(), "Spacing", "ClockToWeaponSpacing", 30.0f);
+
+    MoneyToWantedSpacing = ReadFloat(
+        path.c_str(), "Spacing", "MoneyToWantedSpacing", 35.0f);
+
+    MoneyToStatusBarSpacing = ReadFloat(
+        path.c_str(), "Spacing", "MoneyToStatusBarSpacing", 25.0f);
+
+    MoneyToWeaponSpacing = ReadFloat(
+        path.c_str(), "Spacing", "MoneyToWeaponSpacing", 35.0f);
+
+    WantedToStatusBarSpacing = ReadFloat(
+        path.c_str(), "Spacing", "WantedToStatusBarSpacing", 25.0f);
+
+    WantedToWeaponSpacing = ReadFloat(
+        path.c_str(), "Spacing", "WantedToWeaponSpacing", 35.0f);
+
+    StatusBarToWeaponSpacing = ReadFloat(
+        path.c_str(), "Spacing", "StatusBarToWeaponSpacing", 10.0f);
 
     WeaponSpacing = ReadFloat(
         path.c_str(), "Spacing", "WeaponSpacing", 4.0f);

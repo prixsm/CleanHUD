@@ -44,17 +44,17 @@ public:
     bool ShowOnVehicleLook = false;
     bool ShowOnThrowableAim = false;
 
+    // Gap below the Clock, based on the first visible stack group.
+    float ClockToMoneySpacing = 25.0f;
+    float ClockToWantedSpacing = 30.0f;
+    float ClockToStatusBarSpacing = 22.5f;
+    float ClockToWeaponSpacing = 30.0f;
     float MoneyToWantedSpacing = 35.0f;
     float MoneyToWeaponSpacing = 35.0f;
     float MoneyToStatusBarSpacing = 25.0f;
     float WantedToWeaponSpacing = 35.0f;
     float WantedToStatusBarSpacing = 25.0f;
     float StatusBarToWeaponSpacing = 10.0f;
-    // Gap below the Clock, based on the first visible stack group.
-    float ClockToMoneySpacing = 25.0f;
-    float ClockToWantedSpacing = 30.0f;
-    float ClockToStatusBarSpacing = 20.0f;
-    float ClockToWeaponSpacing = 27.5f;
     float WeaponSpacing = 4.0f;
     float AmmoSpacing = 4.0f;
     float ArmourSpacing = 4.0f;
