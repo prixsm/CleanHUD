@@ -3,7 +3,7 @@
 #include <cmath>
 #include <cctype>
 #include <cstdlib>
-#include <cstdio>
+#include <charconv>
 #include <cstring>
 #include <string>
 
@@ -278,10 +278,16 @@ bool HUDSettings::Save() const
     const auto putFloat = [&put](
         const char* section, const char* key, float value)
     {
-        // INI numbers use a dot independent of Windows locale.
+        // to_chars avoids locale-specific commas in decimal INI values.
         char number[64] = {};
-        std::snprintf(number, sizeof(number), "%.3f",
-            static_cast<double>(value));
+        const auto result = std::to_chars(
+            number, number + sizeof(number) - 1,
+            value, std::chars_format::fixed, 3);
+
+        if (result.ec != std::errc{})
+            return false;
+
+        *result.ptr = '\0';
         return put(section, key, number);
     };
 
