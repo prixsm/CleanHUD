@@ -230,8 +230,27 @@ void HUDSettings::Load()
         path.c_str(), "Spacing",
         "StatusToWeaponSpacing", legacyStatusGap);
 
-    ClockSpacing = ReadFloat(
+    // Older INIs used a single ClockSpacing value. Reuse it
+    // for each new directional gap unless that new key exists.
+    // Existing user-edited INIs are not rewritten.
+    const float legacyClockSpacing = ReadFloat(
         path.c_str(), "Spacing", "ClockSpacing", 40.0f);
+
+    ClockToMoneySpacing = ReadFloat(
+        path.c_str(), "Spacing",
+        "ClockToMoneySpacing", legacyClockSpacing);
+
+    ClockToWantedSpacing = ReadFloat(
+        path.c_str(), "Spacing",
+        "ClockToWantedSpacing", legacyClockSpacing);
+
+    ClockToStatusBarSpacing = ReadFloat(
+        path.c_str(), "Spacing",
+        "ClockToStatusBarSpacing", legacyClockSpacing);
+
+    ClockToWeaponSpacing = ReadFloat(
+        path.c_str(), "Spacing",
+        "ClockToWeaponSpacing", legacyClockSpacing);
 
     WeaponSpacing = ReadFloat(
         path.c_str(), "Spacing", "WeaponSpacing", 4.0f);
