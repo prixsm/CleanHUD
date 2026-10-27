@@ -3,6 +3,7 @@
 #include <cmath>
 #include <cctype>
 #include <cstdlib>
+#include <charconv>
 #include <cstring>
 #include <string>
 
@@ -244,6 +245,90 @@ void HUDSettings::Load()
 
     HealthSpacing = ReadFloat(
         path.c_str(), "Spacing", "HealthSpacing", 4.0f);
+}
+
+
+bool HUDSettings::Save() const
+{
+    const std::string path =
+        plugin::paths::GetPluginDirRelativePathA("CleanHUD.ini");
+
+    CreateDefaultIniIfMissing(path.c_str());
+
+    const auto put = [&path](
+        const char* section, const char* key, const char* value)
+    {
+        return WritePrivateProfileStringA(
+            section, key, value, path.c_str()) != 0;
+    };
+
+    const auto putBool = [&put](
+        const char* section, const char* key, bool value)
+    {
+        return put(section, key, value ? "1" : "0");
+    };
+
+    const auto putInt = [&put](
+        const char* section, const char* key, std::uint32_t value)
+    {
+        const std::string number = std::to_string(value);
+        return put(section, key, number.c_str());
+    };
+
+    const auto putFloat = [&put](
+        const char* section, const char* key, float value)
+    {
+        // to_chars avoids locale-specific commas in decimal INI values.
+        char number[64] = {};
+        const auto result = std::to_chars(
+            number, number + sizeof(number) - 1,
+            value, std::chars_format::fixed, 3);
+
+        if (result.ec != std::errc{})
+            return false;
+
+        *result.ptr = '\0';
+        return put(section, key, number);
+    };
+
+    bool success = true;
+    success = put("General", "HUDMode",
+        Mode == HUDMode::Stack ? "Stack" : "Minimal") && success;
+    success = putBool("General", "AlwaysShowClock", AlwaysShowClock) && success;
+    success = putBool("Animation", "SlideStack", SlideStack) && success;
+    success = putBool("Elements", "Clock", Clock) && success;
+    success = putBool("Elements", "Money", Money) && success;
+    success = putBool("Elements", "Wanted", Wanted) && success;
+    success = putBool("Elements", "Health", Health) && success;
+    success = putBool("Elements", "Armour", Armour) && success;
+    success = putBool("Elements", "Breath", Breath) && success;
+    success = putBool("Elements", "Weapon", Weapon) && success;
+    success = putBool("Elements", "Ammo", Ammo) && success;
+    success = putBool("WeaponAmmo", "ShowOnFootAim", ShowOnFootAim) && success;
+    success = putBool("WeaponAmmo", "ShowOnThrowableAim", ShowOnThrowableAim) && success;
+    success = putBool("WeaponAmmo", "ShowOnVehicleLook", ShowOnVehicleLook) && success;
+    success = putInt("Visibility", "FadeInMs", FadeInMs) && success;
+    success = putInt("Visibility", "FadeOutMs", FadeOutMs) && success;
+    success = putInt("Visibility", "DurationMs", VisibilityMs) && success;
+    success = putFloat("Spacing", "ClockToMoneySpacing", ClockToMoneySpacing) && success;
+    success = putFloat("Spacing", "ClockToWantedSpacing", ClockToWantedSpacing) && success;
+    success = putFloat("Spacing", "ClockToStatusBarSpacing", ClockToStatusBarSpacing) && success;
+    success = putFloat("Spacing", "ClockToWeaponSpacing", ClockToWeaponSpacing) && success;
+    success = putFloat("Spacing", "MoneyToWantedSpacing", MoneyToWantedSpacing) && success;
+    success = putFloat("Spacing", "MoneyToStatusBarSpacing", MoneyToStatusBarSpacing) && success;
+    success = putFloat("Spacing", "MoneyToWeaponSpacing", MoneyToWeaponSpacing) && success;
+    success = putFloat("Spacing", "WantedToStatusBarSpacing", WantedToStatusBarSpacing) && success;
+    success = putFloat("Spacing", "WantedToWeaponSpacing", WantedToWeaponSpacing) && success;
+    success = putFloat("Spacing", "StatusBarToWeaponSpacing", StatusBarToWeaponSpacing) && success;
+    success = putFloat("Spacing", "WeaponSpacing", WeaponSpacing) && success;
+    success = putFloat("Spacing", "AmmoSpacing", AmmoSpacing) && success;
+    success = putFloat("Spacing", "ArmourSpacing", ArmourSpacing) && success;
+    success = putFloat("Spacing", "BreathSpacing", BreathSpacing) && success;
+    success = putFloat("Spacing", "HealthSpacing", HealthSpacing) && success;
+
+    // Flush Win32 profile cache after the explicit Save click.
+    return WritePrivateProfileStringA(
+        nullptr, nullptr, nullptr, path.c_str()) != 0 && success;
 }
 
 bool HUDSettings::IsElementEnabled(HUDComponentType type) const

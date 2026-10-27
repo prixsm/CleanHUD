@@ -18,6 +18,9 @@ public:
     // Loads only at plugin startup. Missing files are created with defaults.
     void Load();
 
+    // Persists live editor settings to the existing INI.
+    bool Save() const;
+
     bool IsElementEnabled(HUDComponentType type) const;
 
     HUDMode Mode = HUDMode::Stack;

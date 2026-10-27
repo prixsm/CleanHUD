@@ -2,6 +2,7 @@
 #include "Core/HUDManager.h"
 #include "Core/HUDSettings.h"
 #include "PlayerHUDHook.h"
+#include "UI/HUDConfigEditor.h"
 #include "Render/Hooks/HUDRenderHooks.h"
 
 using namespace plugin;
@@ -17,6 +18,7 @@ public:
 
         PlayerHUDHook::Install();
         HUDRenderHooks::Install();
+        HUDConfigEditor::Install();
 
         Events::reInitGameEvent += []()
             {
@@ -25,6 +27,7 @@ public:
         
         Events::gameProcessEvent += []()
             {
+                HUDConfigEditor::UpdateInput();
                 HUDManager::Get().Update();
             };
     }

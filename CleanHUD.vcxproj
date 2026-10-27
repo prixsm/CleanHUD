@@ -62,7 +62,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>_CRT_NON_CONFORMING_SWPRINTFS;TARGET_NAME=R"($(TargetName))";GTASA;GTAGAME_NAME="San Andreas";GTAGAME_ABBR="SA";GTAGAME_ABBRLOW="sa";GTAGAME_PROTAGONISTNAME="CJ";GTAGAME_CITYNAME="San Andreas";PLUGIN_SGV_10US;RW;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)source;$(ProjectDir)source\Core;$(ProjectDir)source\Layout;$(ProjectDir)source\Patches;$(ProjectDir)source\Render;$(ProjectDir)source\Render\Hooks;$(PLUGIN_SDK_DIR);$(PLUGIN_SDK_DIR)\Plugin_SA;$(PLUGIN_SDK_DIR)\Plugin_SA\game_sa;$(PLUGIN_SDK_DIR)\Plugin_SA\game_sa\enums;$(PLUGIN_SDK_DIR)\Plugin_SA\game_sa\rw;$(PLUGIN_SDK_DIR)\shared;$(PLUGIN_SDK_DIR)\shared\game;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)source;$(ProjectDir)source\Core;$(ProjectDir)source\Layout;$(ProjectDir)source\Patches;$(ProjectDir)source\Render;$(ProjectDir)source\Render\Hooks;$(ProjectDir)third_party\imgui;$(ProjectDir)third_party\imgui\backends;$(PLUGIN_SDK_DIR);$(PLUGIN_SDK_DIR)\Plugin_SA;$(PLUGIN_SDK_DIR)\Plugin_SA\game_sa;$(PLUGIN_SDK_DIR)\Plugin_SA\game_sa\enums;$(PLUGIN_SDK_DIR)\Plugin_SA\game_sa\rw;$(PLUGIN_SDK_DIR)\shared;$(PLUGIN_SDK_DIR)\shared\game;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>None</DebugInformationFormat>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -101,7 +101,7 @@ xcopy /Y "$(TargetPath)" "$(GTA_SA_DIR)\scripts"
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>DEBUG;_CRT_NON_CONFORMING_SWPRINTFS;TARGET_NAME=R"($(TargetName))";GTASA;GTAGAME_NAME="San Andreas";GTAGAME_ABBR="SA";GTAGAME_ABBRLOW="sa";GTAGAME_PROTAGONISTNAME="CJ";GTAGAME_CITYNAME="San Andreas";PLUGIN_SGV_10US;RW;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)source;$(ProjectDir)source\Core;$(ProjectDir)source\Layout;$(ProjectDir)source\Patches;$(ProjectDir)source\Render;$(ProjectDir)source\Render\Hooks;$(PLUGIN_SDK_DIR);$(PLUGIN_SDK_DIR)\Plugin_SA;$(PLUGIN_SDK_DIR)\Plugin_SA\game_sa;$(PLUGIN_SDK_DIR)\Plugin_SA\game_sa\enums;$(PLUGIN_SDK_DIR)\Plugin_SA\game_sa\rw;$(PLUGIN_SDK_DIR)\shared;$(PLUGIN_SDK_DIR)\shared\game;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)source;$(ProjectDir)source\Core;$(ProjectDir)source\Layout;$(ProjectDir)source\Patches;$(ProjectDir)source\Render;$(ProjectDir)source\Render\Hooks;$(ProjectDir)third_party\imgui;$(ProjectDir)third_party\imgui\backends;$(PLUGIN_SDK_DIR);$(PLUGIN_SDK_DIR)\Plugin_SA;$(PLUGIN_SDK_DIR)\Plugin_SA\game_sa;$(PLUGIN_SDK_DIR)\Plugin_SA\game_sa\enums;$(PLUGIN_SDK_DIR)\Plugin_SA\game_sa\rw;$(PLUGIN_SDK_DIR)\shared;$(PLUGIN_SDK_DIR)\shared\game;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
       <MinimalRebuild>false</MinimalRebuild>
@@ -136,6 +136,13 @@ xcopy /Y "$(TargetPath)" "$(GTA_SA_DIR)\scripts"
     <ClCompile Include="source\Core\VisibilityTimer.cpp" />
     <ClCompile Include="source\Layout\HUDLayout.cpp" />
     <ClCompile Include="source\Main.cpp" />
+    <ClCompile Include="source\UI\HUDConfigEditor.cpp" />
+    <ClCompile Include="third_party\imgui\imgui.cpp" />
+    <ClCompile Include="third_party\imgui\imgui_draw.cpp" />
+    <ClCompile Include="third_party\imgui\imgui_tables.cpp" />
+    <ClCompile Include="third_party\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="third_party\imgui\backends\imgui_impl_dx9.cpp" />
+    <ClCompile Include="third_party\imgui\backends\imgui_impl_win32.cpp" />
     <ClCompile Include="source\Patches\CallPatch.cpp" />
     <ClCompile Include="source\Patches\HUDPatchGroup.cpp" />
     <ClCompile Include="source\PlayerHUDHook.cpp" />
@@ -173,11 +180,21 @@ xcopy /Y "$(TargetPath)" "$(GTA_SA_DIR)\scripts"
     <ClInclude Include="source\Render\HUDMetrics.h" />
     <ClInclude Include="source\Render\HUDRenderer.h" />
     <ClInclude Include="source\ResourceIds.h" />
+    <ClInclude Include="source\UI\HUDConfigEditor.h" />
+    <ClInclude Include="third_party\imgui\imconfig.h" />
+    <ClInclude Include="third_party\imgui\imgui.h" />
+    <ClInclude Include="third_party\imgui\imgui_internal.h" />
+    <ClInclude Include="third_party\imgui\imstb_rectpack.h" />
+    <ClInclude Include="third_party\imgui\imstb_textedit.h" />
+    <ClInclude Include="third_party\imgui\imstb_truetype.h" />
+    <ClInclude Include="third_party\imgui\backends\imgui_impl_dx9.h" />
+    <ClInclude Include="third_party\imgui\backends\imgui_impl_win32.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="CleanHUD.rc" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="third_party\imgui\LICENSE.txt" />
     <None Include="source\CleanHUD.ini">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
