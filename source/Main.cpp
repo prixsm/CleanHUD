@@ -2,7 +2,7 @@
 #include "Core/HUDManager.h"
 #include "Core/HUDSettings.h"
 #include "PlayerHUDHook.h"
-#include "UI/HUDConfigEditor.h"
+#include "UI/SleekConfigIntegration.h"
 #include "Render/Hooks/HUDRenderHooks.h"
 
 using namespace plugin;
@@ -18,16 +18,21 @@ public:
 
         PlayerHUDHook::Install();
         HUDRenderHooks::Install();
-        HUDConfigEditor::Install();
+
 
         Events::reInitGameEvent += []()
             {
                 HUDManager::Get().OnGameLoaded();
             };
         
+        Events::shutdownEngineEvent += []()
+            {
+                SleekConfigIntegration::Detach();
+            };
+
         Events::gameProcessEvent += []()
             {
-                HUDConfigEditor::UpdateInput();
+                SleekConfigIntegration::TryAttach();
                 HUDManager::Get().Update();
             };
     }
