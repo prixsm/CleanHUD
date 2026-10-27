@@ -207,6 +207,7 @@ namespace
     {
         if (ImGui::Checkbox(label, &value))
             gDirty = true;
+            gHasSaveResult = false;
     }
 
     void EditMillis(
@@ -220,6 +221,7 @@ namespace
         {
             value = static_cast<std::uint32_t>(amount);
             gDirty = true;
+            gHasSaveResult = false;
         }
     }
 
@@ -230,6 +232,7 @@ namespace
             "%.2f", ImGuiSliderFlags_AlwaysClamp))
         {
             gDirty = true;
+            gHasSaveResult = false;
         }
     }
 
@@ -256,6 +259,7 @@ namespace
                 settings.Mode =
                     mode == 0 ? HUDMode::Stack : HUDMode::Minimal;
                 gDirty = true;
+            gHasSaveResult = false;
             }
 
             CheckBox("Always show clock", settings.AlwaysShowClock);
