@@ -206,8 +206,10 @@ namespace
     void CheckBox(const char* label, bool& value)
     {
         if (ImGui::Checkbox(label, &value))
+        {
             gDirty = true;
             gHasSaveResult = false;
+        }
     }
 
     void EditMillis(
@@ -259,7 +261,7 @@ namespace
                 settings.Mode =
                     mode == 0 ? HUDMode::Stack : HUDMode::Minimal;
                 gDirty = true;
-            gHasSaveResult = false;
+                gHasSaveResult = false;
             }
 
             CheckBox("Always show clock", settings.AlwaysShowClock);
