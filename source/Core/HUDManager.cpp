@@ -1217,7 +1217,7 @@ void HUDManager::BuildPlayerHUDLayout()
             0.0f,
             weaponDisplayed && armourShown &&
                 !breathShown && !healthShown
-                ? settings.StatusToWeaponSpacing
+                ? settings.StatusBarToWeaponSpacing
                 : settings.ArmourSpacing);
     }
 
@@ -1226,7 +1226,7 @@ void HUDManager::BuildPlayerHUDLayout()
         statusBarHeight,
         0.0f,
         weaponDisplayed && breathShown && !healthShown
-            ? settings.StatusToWeaponSpacing
+            ? settings.StatusBarToWeaponSpacing
             : settings.BreathSpacing);
 
     mLayout.Add(
@@ -1234,7 +1234,7 @@ void HUDManager::BuildPlayerHUDLayout()
         statusBarHeight,
         0.0f,
         weaponDisplayed && healthShown
-            ? settings.StatusToWeaponSpacing
+            ? settings.StatusBarToWeaponSpacing
             : settings.HealthSpacing);
 
     mLayout.Add(
