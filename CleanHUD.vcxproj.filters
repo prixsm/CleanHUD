@@ -22,10 +22,7 @@
     <Filter Include="UI">
       <UniqueIdentifier>{5FB9AB1D-4609-4DC8-8141-8C797328C04D}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Dear ImGui">
-      <UniqueIdentifier>{6DA84B9D-6B38-42D2-B583-E97567B10BFA}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Dear ImGui\Backends">
+    <Filter Include="SleekConfig API">
       <UniqueIdentifier>{F4B93AA0-BDCC-45E6-A8DB-341ED23599C7}</UniqueIdentifier>
     </Filter>
     <Filter Include="Configuration">
@@ -48,26 +45,8 @@
     <ClCompile Include="source\Layout\HUDLayout.cpp">
       <Filter>Layout</Filter>
     </ClCompile>
-    <ClCompile Include="source\UI\HUDConfigEditor.cpp">
+    <ClCompile Include="source\UI\SleekConfigIntegration.cpp">
       <Filter>UI</Filter>
-    </ClCompile>
-    <ClCompile Include="third_party\imgui\imgui.cpp">
-      <Filter>Dear ImGui</Filter>
-    </ClCompile>
-    <ClCompile Include="third_party\imgui\imgui_draw.cpp">
-      <Filter>Dear ImGui</Filter>
-    </ClCompile>
-    <ClCompile Include="third_party\imgui\imgui_tables.cpp">
-      <Filter>Dear ImGui</Filter>
-    </ClCompile>
-    <ClCompile Include="third_party\imgui\imgui_widgets.cpp">
-      <Filter>Dear ImGui</Filter>
-    </ClCompile>
-    <ClCompile Include="third_party\imgui\backends\imgui_impl_dx9.cpp">
-      <Filter>Dear ImGui\Backends</Filter>
-    </ClCompile>
-    <ClCompile Include="third_party\imgui\backends\imgui_impl_win32.cpp">
-      <Filter>Dear ImGui\Backends</Filter>
     </ClCompile>
     <ClCompile Include="source\Main.cpp">
       <Filter>Plugin</Filter>
@@ -176,32 +155,14 @@
     <ClInclude Include="source\Render\HUDRenderer.h">
       <Filter>Render</Filter>
     </ClInclude>
-    <ClInclude Include="source\UI\HUDConfigEditor.h">
+    <ClInclude Include="source\UI\SleekConfigIntegration.h">
       <Filter>UI</Filter>
     </ClInclude>
-    <ClInclude Include="third_party\imgui\imconfig.h">
-      <Filter>Dear ImGui</Filter>
+    <ClInclude Include="third_party\sleekconfig\sleekconfig.h">
+      <Filter>SleekConfig API</Filter>
     </ClInclude>
-    <ClInclude Include="third_party\imgui\imgui.h">
-      <Filter>Dear ImGui</Filter>
-    </ClInclude>
-    <ClInclude Include="third_party\imgui\imgui_internal.h">
-      <Filter>Dear ImGui</Filter>
-    </ClInclude>
-    <ClInclude Include="third_party\imgui\imstb_rectpack.h">
-      <Filter>Dear ImGui</Filter>
-    </ClInclude>
-    <ClInclude Include="third_party\imgui\imstb_textedit.h">
-      <Filter>Dear ImGui</Filter>
-    </ClInclude>
-    <ClInclude Include="third_party\imgui\imstb_truetype.h">
-      <Filter>Dear ImGui</Filter>
-    </ClInclude>
-    <ClInclude Include="third_party\imgui\backends\imgui_impl_dx9.h">
-      <Filter>Dear ImGui\Backends</Filter>
-    </ClInclude>
-    <ClInclude Include="third_party\imgui\backends\imgui_impl_win32.h">
-      <Filter>Dear ImGui\Backends</Filter>
+    <ClInclude Include="third_party\sleekconfig\sleekconfig.hpp">
+      <Filter>SleekConfig API</Filter>
     </ClInclude>
     <ClInclude Include="source\ResourceIds.h">
       <Filter>Plugin</Filter>
@@ -211,8 +172,8 @@
     <ResourceCompile Include="CleanHUD.rc">
       <Filter>Configuration</Filter>
     </ResourceCompile>
-    <None Include="third_party\imgui\LICENSE.txt">
-      <Filter>Dear ImGui</Filter>
+    <None Include="third_party\sleekconfig\LICENSE">
+      <Filter>SleekConfig API</Filter>
     </None>
     <None Include="source\CleanHUD.ini">
       <Filter>Configuration</Filter>
