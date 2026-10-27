@@ -173,17 +173,11 @@ void HUDSettings::Load()
     SlideStack = ReadBool(
         path.c_str(), "Animation", "SlideStack", false);
 
-    // Preserve older user INIs whose fade keys were under Animation.
-    const int oldFadeIn = ReadInt(
-        path.c_str(), "Animation", "FadeInMs", 200, 0, 2000);
-    const int oldFadeOut = ReadInt(
-        path.c_str(), "Animation", "FadeOutMs", 200, 0, 2000);
-
     FadeInMs = ReadInt(
-        path.c_str(), "Visibility", "FadeInMs", oldFadeIn, 0, 2000);
+        path.c_str(), "Visibility", "FadeInMs", 200, 0, 2000);
 
     FadeOutMs = ReadInt(
-        path.c_str(), "Visibility", "FadeOutMs", oldFadeOut, 0, 2000);
+        path.c_str(), "Visibility", "FadeOutMs", 200, 0, 2000);
 
     VisibilityMs = ReadInt(
         path.c_str(), "Visibility", "DurationMs", 3000, 0, 60000);
@@ -221,36 +215,20 @@ void HUDSettings::Load()
     WantedToStatusBarSpacing = ReadFloat(
         path.c_str(), "Spacing", "WantedToStatusBarSpacing", 25.0f);
 
-    // Read the previous key as a fallback for existing user INIs.
-    const float legacyStatusGap = ReadFloat(
-        path.c_str(), "Spacing",
-        "WeaponToStatusBarSpacingNoAmmo", 10.0f);
-
-    StatusToWeaponSpacing = ReadFloat(
-        path.c_str(), "Spacing",
-        "StatusToWeaponSpacing", legacyStatusGap);
-
-    // Older INIs used a single ClockSpacing value. Reuse it
-    // for each new directional gap unless that new key exists.
-    // Existing user-edited INIs are not rewritten.
-    const float legacyClockSpacing = ReadFloat(
-        path.c_str(), "Spacing", "ClockSpacing", 40.0f);
+    StatusBarToWeaponSpacing = ReadFloat(
+        path.c_str(), "Spacing", "StatusBarToWeaponSpacing", 10.0f);
 
     ClockToMoneySpacing = ReadFloat(
-        path.c_str(), "Spacing",
-        "ClockToMoneySpacing", legacyClockSpacing);
+        path.c_str(), "Spacing", "ClockToMoneySpacing", 25.0f);
 
     ClockToWantedSpacing = ReadFloat(
-        path.c_str(), "Spacing",
-        "ClockToWantedSpacing", legacyClockSpacing);
+        path.c_str(), "Spacing", "ClockToWantedSpacing", 30.0f);
 
     ClockToStatusBarSpacing = ReadFloat(
-        path.c_str(), "Spacing",
-        "ClockToStatusBarSpacing", legacyClockSpacing);
+        path.c_str(), "Spacing", "ClockToStatusBarSpacing", 20.0f);
 
     ClockToWeaponSpacing = ReadFloat(
-        path.c_str(), "Spacing",
-        "ClockToWeaponSpacing", legacyClockSpacing);
+        path.c_str(), "Spacing", "ClockToWeaponSpacing", 27.5f);
 
     WeaponSpacing = ReadFloat(
         path.c_str(), "Spacing", "WeaponSpacing", 4.0f);
