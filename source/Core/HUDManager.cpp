@@ -1120,6 +1120,9 @@ void HUDManager::BuildPlayerHUDLayout()
     const bool armourDisplayed =
         settings.Armour && ShouldDisplayArmour();
 
+    const bool moneyDisplayed =
+        settings.Money && mMoney.IsVisible();
+
     const bool wantedDisplayed =
         settings.Wanted && mWanted.IsVisible();
 
@@ -1153,11 +1156,26 @@ void HUDManager::BuildPlayerHUDLayout()
             wantedSpacing = settings.WantedToWeaponSpacing;
     }
 
+    // The Clock is a fixed top-of-stack anchor. Its trailing
+    // gap belongs to whichever group currently sits directly
+    // below it, including when Clock=0 reserves vanilla space.
+    // When no group is visible the gap has no visible effect.
+    float clockSpacing = 0.0f;
+
+    if (moneyDisplayed)
+        clockSpacing = settings.ClockToMoneySpacing;
+    else if (wantedDisplayed)
+        clockSpacing = settings.ClockToWantedSpacing;
+    else if (statusDisplayed)
+        clockSpacing = settings.ClockToStatusBarSpacing;
+    else if (weaponDisplayed)
+        clockSpacing = settings.ClockToWeaponSpacing;
+
     if (!settings.Clock)
     {
         mLayout.ReserveSpace(
             ClockHeight,
-            settings.ClockSpacing);
+            clockSpacing);
     }
     else
     {
@@ -1165,7 +1183,7 @@ void HUDManager::BuildPlayerHUDLayout()
             mClock,
             ClockHeight,
             0.0f,
-            settings.ClockSpacing);
+            clockSpacing);
     }
 
     mLayout.Add(

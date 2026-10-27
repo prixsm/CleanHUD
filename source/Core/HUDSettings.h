@@ -47,7 +47,11 @@ public:
     float WantedToWeaponSpacing = 35.0f;
     float WantedToStatusBarSpacing = 25.0f;
     float StatusToWeaponSpacing = 10.0f;
-    float ClockSpacing = 40.0f;
+    // Gap below the Clock, based on the first visible stack group.
+    float ClockToMoneySpacing = 40.0f;
+    float ClockToWantedSpacing = 40.0f;
+    float ClockToStatusBarSpacing = 40.0f;
+    float ClockToWeaponSpacing = 40.0f;
     float WeaponSpacing = 4.0f;
     float AmmoSpacing = 4.0f;
     float ArmourSpacing = 4.0f;
