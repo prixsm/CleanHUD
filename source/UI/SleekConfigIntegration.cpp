@@ -295,7 +295,15 @@ namespace SleekConfigIntegration
     void TryAttach()
     {
         if (gMod != 0)
-            return;
+        {
+            if (GetModuleHandleA("SleekConfig.asi"))
+                return;
+
+            // A mod loader may unload/reload the shared menu while the game
+            // stays running. Avoid reusing pointers into its old DLL.
+            gApi = nullptr;
+            gMod = 0;
+        }
 
         // Do not load SleekConfig ourselves: independent installation and
         // game startup order must not affect CleanHUD's normal operation.
