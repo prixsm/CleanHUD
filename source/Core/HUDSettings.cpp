@@ -205,7 +205,7 @@ void HUDSettings::Load()
         path.c_str(), "Spacing", "ClockToMoneySpacing", 25.0f);
 
     ClockToWantedSpacing = ReadFloat(
-        path.c_str(), "Spacing", "ClockToWantedSpacing", 30.0f);
+        path.c_str(), "Spacing", "ClockToWantedSpacing", 32.5f);
 
     ClockToStatusBarSpacing = ReadFloat(
         path.c_str(), "Spacing", "ClockToStatusBarSpacing", 22.5f);
@@ -214,7 +214,7 @@ void HUDSettings::Load()
         path.c_str(), "Spacing", "ClockToWeaponSpacing", 30.0f);
 
     MoneyToWantedSpacing = ReadFloat(
-        path.c_str(), "Spacing", "MoneyToWantedSpacing", 35.0f);
+        path.c_str(), "Spacing", "MoneyToWantedSpacing", 32.5f);
 
     MoneyToStatusBarSpacing = ReadFloat(
         path.c_str(), "Spacing", "MoneyToStatusBarSpacing", 25.0f);

@@ -46,10 +46,10 @@ public:
 
     // Gap below the Clock, based on the first visible stack group.
     float ClockToMoneySpacing = 25.0f;
-    float ClockToWantedSpacing = 30.0f;
+    float ClockToWantedSpacing = 32.5f;
     float ClockToStatusBarSpacing = 22.5f;
     float ClockToWeaponSpacing = 30.0f;
-    float MoneyToWantedSpacing = 35.0f;
+    float MoneyToWantedSpacing = 32.5f;
     float MoneyToWeaponSpacing = 35.0f;
     float MoneyToStatusBarSpacing = 25.0f;
     float WantedToWeaponSpacing = 35.0f;
