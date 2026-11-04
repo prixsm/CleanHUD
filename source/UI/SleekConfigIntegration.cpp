@@ -79,7 +79,7 @@ namespace
         { "money_to_weapon", "Money to Weapon", "Money", &HUDSettings::MoneyToWeaponSpacing, 35.0f },
         { "wanted_to_status", "Wanted to Status Bar", "Wanted", &HUDSettings::WantedToStatusBarSpacing, 25.0f },
         { "wanted_to_weapon", "Wanted to Weapon", "Wanted", &HUDSettings::WantedToWeaponSpacing, 35.0f },
-        { "status_to_weapon", "Status Bar to Weapon", "Status Bars", &HUDSettings::StatusBarToWeaponSpacing, 10.0f },
+        { "status_to_weapon", "Status Bar to Weapon", "Status Bars", &HUDSettings::StatusBarToWeaponSpacing, 17.5f },
         { "weapon_spacing", "Weapon spacing", "Individual", &HUDSettings::WeaponSpacing, 4.0f },
         { "ammo_spacing", "Ammo spacing", "Individual", &HUDSettings::AmmoSpacing, 4.0f },
         { "armour_spacing", "Armour spacing", "Individual", &HUDSettings::ArmourSpacing, 4.0f },

@@ -54,7 +54,7 @@ public:
     float MoneyToStatusBarSpacing = 25.0f;
     float WantedToWeaponSpacing = 35.0f;
     float WantedToStatusBarSpacing = 25.0f;
-    float StatusBarToWeaponSpacing = 10.0f;
+    float StatusBarToWeaponSpacing = 17.5f;
     float WeaponSpacing = 4.0f;
     float AmmoSpacing = 4.0f;
     float ArmourSpacing = 4.0f;

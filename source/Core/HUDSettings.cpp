@@ -229,7 +229,7 @@ void HUDSettings::Load()
         path.c_str(), "Spacing", "WantedToWeaponSpacing", 35.0f);
 
     StatusBarToWeaponSpacing = ReadFloat(
-        path.c_str(), "Spacing", "StatusBarToWeaponSpacing", 10.0f);
+        path.c_str(), "Spacing", "StatusBarToWeaponSpacing", 17.5f);
 
     WeaponSpacing = ReadFloat(
         path.c_str(), "Spacing", "WeaponSpacing", 4.0f);
