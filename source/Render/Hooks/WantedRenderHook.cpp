@@ -58,12 +58,12 @@ namespace
         const float anchorY =
             HUDRenderer::Get().GetAnchor().Y;
 
-        const float wantedY =
+        const float layoutWantedY =
             static_cast<float>(pos.Y);
 
         float nativeWantedY =
             anchorY * (480.0f / 1080.0f) +
-            (wantedY - anchorY) * (560.0f / 1080.0f);
+            (layoutWantedY - anchorY) * (560.0f / 1080.0f);
 
         // Retain the game's existing max-health adjustment for
         // wanted stars; unrelated to stack-relative displacement.
