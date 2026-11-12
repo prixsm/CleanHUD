@@ -1,5 +1,4 @@
 #include <safetyhook/safetyhook.hpp>
-#include <CWorld.h>
 #include <extensions/Screen.h>
 
 #include "../../Core/HUDManager.h"
@@ -45,23 +44,16 @@ namespace
             return;
         }
 
-        constexpr float WantedHealthYOffset = 12.0f;
-
-        float nativeWantedY =
+        // CleanHUD already provides the final stacked Y coordinate.
+        // A second adjustment based on the save's max-health stat
+        // moves the wanted stars independently of Clock/Money and the
+        // elements below them, creating inconsistent visual gaps.
+        //
+        // Empty and filled stars use the same game's wanted draw
+        // routine and should share one stable vertical origin.
+        *wantedY =
             static_cast<float>(pos.Y) *
             (480.0f / 1080.0f);
-
-        const auto& playerInfo =
-            CWorld::Players[CWorld::PlayerInFocus];
-
-        if (playerInfo.m_nMaxHealth < 101)
-        {
-            nativeWantedY +=
-                WantedHealthYOffset;
-        }
-
-        *wantedY =
-            nativeWantedY;
     }
 
     static void HookedWantedDraw(
