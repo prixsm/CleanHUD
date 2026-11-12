@@ -31,6 +31,33 @@ SleekConfig owns the F10 hotkey and handles player input, keyboard/mouse,
 Direct3D9 render hooks and graphics-device lifecycle. CleanHUD does not
 register duplicate F10/D3D9 hooks.
 
+## Live spacing previews
+
+Changing any of the 15 Advanced Layout spacing sliders in **Stack mode**
+temporarily reveals its two neighboring HUD groups for the configured
+`[Visibility] DurationMs` interval. Every new slider adjustment refreshes
+that interval. For example, adjusting **Money to Wanted** previews Money
+and the currently visible wanted stars, while **Wanted to Status Bar**
+previews wanted stars plus Health and any currently drawable status bars.
+
+Other examples:
+- Clock-to-X previews Clock even when `AlwaysShowClock=0`. With
+  `Clock=0`, the vanilla Clock is still controlled by GTA.
+- Weapon and Ammo spacing previews the equipped weapon icon and its ammo,
+  when relevant for the currently equipped weapon.
+- Armour and Breath are only previewed if those bars can actually be
+  drawn (existing armour, swimming/depleted breath). Health is the
+  fallback reference bar for status spacing.
+- Wanted stars are previewable **only when the player actually has a
+  wanted level**. CleanHUD does not invent wanted stars or alter gameplay
+  wanted levels when there are none.
+- Disabled `[Elements]` are never forced by the preview; GTA/other mods
+  keep control over them.
+
+The feature is inactive in Minimal mode (which has no stack gaps) and
+during startup/loading, preventing HUD flashes. It doesn't force a Save:
+use **Save Mod** or a SleekConfig preset when satisfied with the layout.
+
 ## SleekConfig 1.1 features
 
 SleekConfig **v1.1.0** (released November 9, 2026) adds a compact menu
