@@ -276,10 +276,12 @@ namespace
                 entry.Id, entry.Label, "Advanced Layout",
                 entry.Group, SC_FLOAT);
 
-            // Matches HUDSettings::ReadFloat; zero step allows decimals.
+            // SleekConfig 1.1 uses the declared step to choose
+            // slider precision and keyboard increments. Centi-unit
+            // steps display 2 decimal places and avoid long fractions.
             setting.minimum = -200.0;
             setting.maximum = 500.0;
-            setting.step = 0;
+            setting.step = 0.01;
             setting.default_value.real = entry.Default;
 
             if (gApi->register_setting(gMod, &setting) != SC_OK)
