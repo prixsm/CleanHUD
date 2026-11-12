@@ -45,23 +45,37 @@ namespace
             return;
         }
 
-        constexpr float WantedHealthYOffset = 12.0f;
+        // GTA's wanted-star font uses a 560-unit vertical basis,
+        // whereas the old hook converted every stacked position using
+        // 480. That compresses Wanted's vertical displacement by 6/7:
+        // Money/Clock and the elements below move farther than the stars.
+        //
+        // Preserve the original top-of-stack placement by keeping the
+        // original 480 conversion at the layout anchor. Scale only the
+        // distance below the anchor using the wanted font's 560 basis.
+        // This makes wanted-to-neighbor gaps independent of how many
+        // elements are stacked above the stars.
+        const float anchorY =
+            HUDRenderer::Get().GetAnchor().Y;
+
+        const float wantedY =
+            static_cast<float>(pos.Y);
 
         float nativeWantedY =
-            static_cast<float>(pos.Y) *
-            (480.0f / 1080.0f);
+            anchorY * (480.0f / 1080.0f) +
+            (wantedY - anchorY) * (560.0f / 1080.0f);
+
+        // Retain the game's existing max-health adjustment for
+        // wanted stars; unrelated to stack-relative displacement.
+        constexpr float WantedHealthYOffset = 12.0f;
 
         const auto& playerInfo =
             CWorld::Players[CWorld::PlayerInFocus];
 
         if (playerInfo.m_nMaxHealth < 101)
-        {
-            nativeWantedY +=
-                WantedHealthYOffset;
-        }
+            nativeWantedY += WantedHealthYOffset;
 
-        *wantedY =
-            nativeWantedY;
+        *wantedY = nativeWantedY;
     }
 
     static void HookedWantedDraw(
