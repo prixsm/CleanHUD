@@ -7,6 +7,7 @@
 #include <sleekconfig.hpp>
 
 #include "../Core/HUDSettings.h"
+#include "../Core/HUDManager.h"
 
 namespace
 {
@@ -45,6 +46,8 @@ namespace
         const char* Group;
         float HUDSettings::* Field;
         float Default;
+        HUDSpacingPreviewGroup First;
+        HUDSpacingPreviewGroup Second;
     };
 
     constexpr BoolSetting BoolSettings[] = {
@@ -70,21 +73,36 @@ namespace
     };
 
     constexpr FloatSetting FloatSettings[] = {
-        { "clock_to_money", "Clock to Money", "Clock", &HUDSettings::ClockToMoneySpacing, 25.0f },
-        { "clock_to_wanted", "Clock to Wanted", "Clock", &HUDSettings::ClockToWantedSpacing, 25.0f },
-        { "clock_to_status", "Clock to Status Bar", "Clock", &HUDSettings::ClockToStatusBarSpacing, 22.5f },
-        { "clock_to_weapon", "Clock to Weapon", "Clock", &HUDSettings::ClockToWeaponSpacing, 30.0f },
-        { "money_to_wanted", "Money to Wanted", "Money", &HUDSettings::MoneyToWantedSpacing, 25.0f },
-        { "money_to_status", "Money to Status Bar", "Money", &HUDSettings::MoneyToStatusBarSpacing, 25.0f },
-        { "money_to_weapon", "Money to Weapon", "Money", &HUDSettings::MoneyToWeaponSpacing, 35.0f },
-        { "wanted_to_status", "Wanted to Status Bar", "Wanted", &HUDSettings::WantedToStatusBarSpacing, 22.5f },
-        { "wanted_to_weapon", "Wanted to Weapon", "Wanted", &HUDSettings::WantedToWeaponSpacing, 32.5f },
-        { "status_to_weapon", "Status Bar to Weapon", "Status Bars", &HUDSettings::StatusBarToWeaponSpacing, 17.5f },
-        { "weapon_spacing", "Weapon spacing", "Individual", &HUDSettings::WeaponSpacing, 4.0f },
-        { "ammo_spacing", "Ammo spacing", "Individual", &HUDSettings::AmmoSpacing, 4.0f },
-        { "armour_spacing", "Armour spacing", "Individual", &HUDSettings::ArmourSpacing, 4.0f },
-        { "breath_spacing", "Breath spacing", "Individual", &HUDSettings::BreathSpacing, 4.0f },
-        { "health_spacing", "Health spacing", "Individual", &HUDSettings::HealthSpacing, 4.0f }
+        { "clock_to_money", "Clock to Money", "Clock", &HUDSettings::ClockToMoneySpacing, 25.0f,
+            HUDSpacingPreviewGroup::Clock, HUDSpacingPreviewGroup::Money },
+        { "clock_to_wanted", "Clock to Wanted", "Clock", &HUDSettings::ClockToWantedSpacing, 25.0f,
+            HUDSpacingPreviewGroup::Clock, HUDSpacingPreviewGroup::Wanted },
+        { "clock_to_status", "Clock to Status Bar", "Clock", &HUDSettings::ClockToStatusBarSpacing, 22.5f,
+            HUDSpacingPreviewGroup::Clock, HUDSpacingPreviewGroup::StatusBars },
+        { "clock_to_weapon", "Clock to Weapon", "Clock", &HUDSettings::ClockToWeaponSpacing, 30.0f,
+            HUDSpacingPreviewGroup::Clock, HUDSpacingPreviewGroup::Weapon },
+        { "money_to_wanted", "Money to Wanted", "Money", &HUDSettings::MoneyToWantedSpacing, 25.0f,
+            HUDSpacingPreviewGroup::Money, HUDSpacingPreviewGroup::Wanted },
+        { "money_to_status", "Money to Status Bar", "Money", &HUDSettings::MoneyToStatusBarSpacing, 25.0f,
+            HUDSpacingPreviewGroup::Money, HUDSpacingPreviewGroup::StatusBars },
+        { "money_to_weapon", "Money to Weapon", "Money", &HUDSettings::MoneyToWeaponSpacing, 35.0f,
+            HUDSpacingPreviewGroup::Money, HUDSpacingPreviewGroup::Weapon },
+        { "wanted_to_status", "Wanted to Status Bar", "Wanted", &HUDSettings::WantedToStatusBarSpacing, 22.5f,
+            HUDSpacingPreviewGroup::Wanted, HUDSpacingPreviewGroup::StatusBars },
+        { "wanted_to_weapon", "Wanted to Weapon", "Wanted", &HUDSettings::WantedToWeaponSpacing, 32.5f,
+            HUDSpacingPreviewGroup::Wanted, HUDSpacingPreviewGroup::Weapon },
+        { "status_to_weapon", "Status Bar to Weapon", "Status Bars", &HUDSettings::StatusBarToWeaponSpacing, 17.5f,
+            HUDSpacingPreviewGroup::StatusBars, HUDSpacingPreviewGroup::Weapon },
+        { "weapon_spacing", "Weapon spacing", "Individual", &HUDSettings::WeaponSpacing, 4.0f,
+            HUDSpacingPreviewGroup::Weapon, HUDSpacingPreviewGroup::Ammo },
+        { "ammo_spacing", "Ammo spacing", "Individual", &HUDSettings::AmmoSpacing, 4.0f,
+            HUDSpacingPreviewGroup::Weapon, HUDSpacingPreviewGroup::Ammo },
+        { "armour_spacing", "Armour spacing", "Individual", &HUDSettings::ArmourSpacing, 4.0f,
+            HUDSpacingPreviewGroup::Armour, HUDSpacingPreviewGroup::StatusBars },
+        { "breath_spacing", "Breath spacing", "Individual", &HUDSettings::BreathSpacing, 4.0f,
+            HUDSpacingPreviewGroup::Breath, HUDSpacingPreviewGroup::Health },
+        { "health_spacing", "Health spacing", "Individual", &HUDSettings::HealthSpacing, 4.0f,
+            HUDSpacingPreviewGroup::Health, HUDSpacingPreviewGroup::Weapon }
     };
 
     ScSettingDesc Describe(
@@ -204,7 +222,16 @@ namespace
             if (proposed->type != SC_FLOAT)
                 return 0;
 
+            const float previous = settings.*(entry.Field);
             settings.*(entry.Field) = proposed->real;
+
+            // Refresh the two adjacent HUD groups while dragging.
+            // SleekConfig callbacks run on GTA's game thread; a
+            // hidden/offline session is ignored by HUDManager.
+            if (previous != proposed->real)
+                HUDManager::Get().PreviewSpacing(
+                    entry.First, entry.Second);
+
             return 1;
         }
 
