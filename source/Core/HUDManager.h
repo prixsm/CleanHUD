@@ -7,6 +7,22 @@
 #include "HUDComponent.h"
 #include "../Layout/HUDLayout.h"
 
+// A preview target describes the two groups bordering one spacing value.
+// The editor names specific targets; HUDManager decides what GTA can
+// actually render without altering weapon, breath, armour or wanted state.
+enum class HUDSpacingPreviewGroup
+{
+    Clock,
+    Money,
+    Wanted,
+    StatusBars,
+    Weapon,
+    Ammo,
+    Armour,
+    Breath,
+    Health
+};
+
 class HUDManager
 {
 public:
@@ -22,6 +38,12 @@ public:
     void OnGameLoaded();
     void RestoreVanillaElements();
     void Update();
+
+    // Called on the main thread by SleekConfig when a spacing value
+    // changes. Refreshes the normal per-element visibility timers.
+    void PreviewSpacing(
+        HUDSpacingPreviewGroup first,
+        HUDSpacingPreviewGroup second);
 
     static HUDManager& Get();
 
@@ -61,6 +83,10 @@ private:
     // One-frame input grace covers game-process/weapon-update ordering.
     bool mValidVehicleFireInputLastFrame = false;
     bool mWeaponChangedThisFrame = false;
+
+    // Only used to stop AlwaysShowClock=0 from hiding a preview
+    // before its ordinary mClock.ShowFor() timer expires.
+    VisibilityTimer mClockSpacingPreview;
 
     // HUD components
     HUDComponent mClock;
@@ -134,6 +160,8 @@ private:
     bool IsWeaponAiming() const;
     bool HasEmptyVehicleAmmo() const;
     void UpdateWanted();
+
+    void PreviewSpacingGroup(HUDSpacingPreviewGroup group);
 
     void BuildPlayerHUDLayout();
     void BuildMinimalHUDLayout();
