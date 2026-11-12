@@ -1332,8 +1332,14 @@ void HUDManager::PreviewSpacingGroup(HUDSpacingPreviewGroup group)
         break;
 
     case HUDSpacingPreviewGroup::Weapon:
-        if (settings.Weapon && !HasEmptyVehicleAmmo())
-            mWeaponIcon.ShowFor(duration);
+        if (!HasEmptyVehicleAmmo())
+        {
+            if (settings.Weapon)
+                mWeaponIcon.ShowFor(duration);
+
+            if (settings.Ammo && ShouldDisplayAmmo())
+                mAmmo.ShowFor(duration);
+        }
         break;
 
     case HUDSpacingPreviewGroup::Ammo:
