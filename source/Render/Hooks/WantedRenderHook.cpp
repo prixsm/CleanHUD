@@ -1,4 +1,5 @@
 #include <safetyhook/safetyhook.hpp>
+#include <CWorld.h>
 #include <extensions/Screen.h>
 
 #include "../../Core/HUDManager.h"
@@ -44,16 +45,37 @@ namespace
             return;
         }
 
-        // CleanHUD already provides the final stacked Y coordinate.
-        // A second adjustment based on the save's max-health stat
-        // moves the wanted stars independently of Clock/Money and the
-        // elements below them, creating inconsistent visual gaps.
+        // GTA's wanted-star font uses a 560-unit vertical basis,
+        // whereas the old hook converted every stacked position using
+        // 480. That compresses Wanted's vertical displacement by 6/7:
+        // Money/Clock and the elements below move farther than the stars.
         //
-        // Empty and filled stars use the same game's wanted draw
-        // routine and should share one stable vertical origin.
-        *wantedY =
-            static_cast<float>(pos.Y) *
-            (480.0f / 1080.0f);
+        // Preserve the original top-of-stack placement by keeping the
+        // original 480 conversion at the layout anchor. Scale only the
+        // distance below the anchor using the wanted font's 560 basis.
+        // This makes wanted-to-neighbor gaps independent of how many
+        // elements are stacked above the stars.
+        const float anchorY =
+            HUDRenderer::Get().GetAnchor().Y;
+
+        const float wantedY =
+            static_cast<float>(pos.Y);
+
+        float nativeWantedY =
+            anchorY * (480.0f / 1080.0f) +
+            (wantedY - anchorY) * (560.0f / 1080.0f);
+
+        // Retain the game's existing max-health adjustment for
+        // wanted stars; unrelated to stack-relative displacement.
+        constexpr float WantedHealthYOffset = 12.0f;
+
+        const auto& playerInfo =
+            CWorld::Players[CWorld::PlayerInFocus];
+
+        if (playerInfo.m_nMaxHealth < 101)
+            nativeWantedY += WantedHealthYOffset;
+
+        *wantedY = nativeWantedY;
     }
 
     static void HookedWantedDraw(
