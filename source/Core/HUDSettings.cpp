@@ -162,6 +162,10 @@ namespace
         if (input.bad())
             return false;
 
+        // The original file must not still be open when MoveFileExA
+        // replaces it on Windows. An open stream can deny FILE_SHARE_DELETE.
+        input.close();
+
         std::string formatted;
         formatted.reserve(original.size() + 128);
 
@@ -448,15 +452,18 @@ bool HUDSettings::Save() const
     success = putFloat("Spacing", "BreathSpacing", BreathSpacing) && success;
     success = putFloat("Spacing", "HealthSpacing", HealthSpacing) && success;
 
-    // Flush Win32's profile cache before reading back the file.
-    // Preserve the original comments and section organization while
-    // restoring "Key = Value" after Windows normalizes edited entries.
-    if (!success || !WritePrivateProfileStringA(
-        nullptr, nullptr, nullptr, path.c_str()))
-    {
+    if (!success)
         return false;
-    }
 
+    // A profile-cache flush can return FALSE (zero) by design even on
+    // success. The individual WritePrivateProfileStringA calls above
+    // already reported whether the settings were saved; do not treat
+    // the flush return value as a failed Save Mod operation.
+    WritePrivateProfileStringA(
+        nullptr, nullptr, nullptr, path.c_str());
+
+    // Restore the readable "Key = Value" style after Win32 normalizes
+    // entries, without discarding the INI's comments and group order.
     return RestoreIniSpacing(path);
 }
 
