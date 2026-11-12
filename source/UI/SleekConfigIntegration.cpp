@@ -83,7 +83,7 @@ namespace
             HUDSpacingPreviewGroup::Clock, HUDSpacingPreviewGroup::Weapon },
         { "money_to_wanted", "Money to Wanted", "Money", &HUDSettings::MoneyToWantedSpacing, 25.0f,
             HUDSpacingPreviewGroup::Money, HUDSpacingPreviewGroup::Wanted },
-        { "money_to_status", "Money to Status Bar", "Money", &HUDSettings::MoneyToStatusBarSpacing, 25.0f,
+        { "money_to_status", "Money to Status Bar", "Money", &HUDSettings::MoneyToStatusBarSpacing, 22.5f,
             HUDSpacingPreviewGroup::Money, HUDSpacingPreviewGroup::StatusBars },
         { "money_to_weapon", "Money to Weapon", "Money", &HUDSettings::MoneyToWeaponSpacing, 35.0f,
             HUDSpacingPreviewGroup::Money, HUDSpacingPreviewGroup::Weapon },

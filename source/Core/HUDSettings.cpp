@@ -343,7 +343,7 @@ void HUDSettings::Load()
         path.c_str(), "Spacing", "MoneyToWantedSpacing", 25.0f);
 
     MoneyToStatusBarSpacing = ReadFloat(
-        path.c_str(), "Spacing", "MoneyToStatusBarSpacing", 25.0f);
+        path.c_str(), "Spacing", "MoneyToStatusBarSpacing", 22.5f);
 
     MoneyToWeaponSpacing = ReadFloat(
         path.c_str(), "Spacing", "MoneyToWeaponSpacing", 35.0f);
