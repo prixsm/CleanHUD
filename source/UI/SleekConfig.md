@@ -31,6 +31,26 @@ SleekConfig owns the F10 hotkey and handles player input, keyboard/mouse,
 Direct3D9 render hooks and graphics-device lifecycle. CleanHUD does not
 register duplicate F10/D3D9 hooks.
 
+## SleekConfig 1.1 features
+
+SleekConfig **v1.1.0** (released November 9, 2026) adds a compact menu
+layout, improved fine-dragging and named presets. These features come from
+the separately installed `SleekConfig.asi`; CleanHUD does not need to
+duplicate their rendering or add its own preset storage.
+
+Update SleekConfig to **1.1.0 or newer** and keep only one copy of its
+ASI active. In F10, choose CleanHUD and use **Presets** to save a named
+configuration or load it during gameplay. Existing registered setting IDs
+are unchanged, so presets can include all 32 CleanHUD controls.
+
+For exact spacing edits: SleekConfig's new sliders follow the mouse,
+Shift offers fine adjustments, and Ctrl+click or double-click lets you
+enter a number. CleanHUD registers each spacing slider with a **0.01**
+step, so the value is displayed and snapped to two decimal places.
+Save Mod records your selection in CleanHUD.ini and in SleekConfig's
+regular DAT settings. Loading a preset changes the live settings; it
+does not automatically overwrite CleanHUD.ini until you save.
+
 ## Persistence and precedence
 
 CleanHUD loads `CleanHUD.ini` on startup, even without SleekConfig.
@@ -45,7 +65,8 @@ That precedence is part of SleekConfig's current upstream design:
 
 Click **Save Mod** in SleekConfig to save **both** the current CleanHUD.ini
 and SleekConfig's DAT snapshot. CleanHUD's existing Win32 `Save()` method
-writes the named INI settings while SleekConfig saves its own .dat file.
+writes the named INI settings using two decimal places for spacing and
+normalizes separators to `Key = Value`, while SleekConfig saves its own .dat file.
 A failed INI write aborts SleekConfig's Save action.
 
 **Manual INI edits made while an older SleekConfig DAT exists may not take
@@ -68,8 +89,8 @@ The `SleekConfig_GetApi` entry point is resolved dynamically from the
 separately installed SleekConfig.asi. Registration retries on the main thread
 if SleekConfig becomes available later.
 
-Integration API tested against the public SleekConfig v1 headers, main branch,
-October 2026. Target: GTA San Andreas PC 1.0 US, Win32.
+The SleekConfig **v1 API** remains unchanged in v1.1.0; the vendored
+headers still match upstream. Target: GTA San Andreas PC 1.0 US, Win32.
 
 ## Regression tests to perform in game
 
