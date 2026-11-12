@@ -368,6 +368,7 @@ void HUDManager::OnGameLoaded()
     mVanillaLayoutLatched = false;
     mValidVehicleFireInputLastFrame = false;
     mWeaponChangedThisFrame = false;
+    mClockSpacingPreview.Reset();
 
     mPlayer = nullptr;
     mLastPlayer = nullptr;
@@ -470,7 +471,7 @@ void HUDManager::Update()
 
     if (tabHeld || !settings.Clock || settings.AlwaysShowClock)
         mClock.Show();
-    else
+    else if (!mClockSpacingPreview.Visible())
         mClock.Hide();
 
     UpdateArmour();
@@ -1267,8 +1268,104 @@ void HUDManager::BuildPlayerHUDLayout()
     }
 }
 
+void HUDManager::PreviewSpacing(
+    HUDSpacingPreviewGroup first,
+    HUDSpacingPreviewGroup second)
+{
+    // SleekConfig callbacks run on the game thread. Never surface HUD
+    // components during new-game/load startup or frontend transitions.
+    if (!mSessionInitialized || !mPlayer || mNeedsReset ||
+        HUDSettings::Get().Mode != HUDMode::Stack)
+    {
+        return;
+    }
+
+    PreviewSpacingGroup(first);
+
+    if (second != first)
+        PreviewSpacingGroup(second);
+}
+
+void HUDManager::PreviewSpacingGroup(HUDSpacingPreviewGroup group)
+{
+    const auto& settings = HUDSettings::Get();
+    const std::uint32_t duration = settings.VisibilityMs;
+
+    // Respect a zero-duration configuration and user-disabled elements.
+    if (duration == 0)
+        return;
+
+    switch (group)
+    {
+    case HUDSpacingPreviewGroup::Clock:
+        if (settings.Clock)
+        {
+            if (!settings.AlwaysShowClock)
+            {
+                mClockSpacingPreview.ShowFor(duration);
+                mClock.ShowFor(duration);
+            }
+            // If AlwaysShowClock is on, the regular update already
+            // keeps the clock in view. Clock=0 uses vanilla drawing.
+        }
+        break;
+
+    case HUDSpacingPreviewGroup::Money:
+        if (settings.Money)
+            mMoney.ShowFor(duration);
+        break;
+
+    case HUDSpacingPreviewGroup::Wanted:
+        // The game only draws real wanted stars for an active wanted
+        // level. Do not fake a wanted level or reserve invisible space
+        // when the player has no stars.
+        if (settings.Wanted && HasWantedLevel())
+            mWanted.Show();
+        break;
+
+    case HUDSpacingPreviewGroup::StatusBars:
+        // Health is the reliable visible reference bar; only include
+        // Armour/Breath when the game can actually display them.
+        PreviewSpacingGroup(HUDSpacingPreviewGroup::Health);
+        PreviewSpacingGroup(HUDSpacingPreviewGroup::Armour);
+        PreviewSpacingGroup(HUDSpacingPreviewGroup::Breath);
+        break;
+
+    case HUDSpacingPreviewGroup::Weapon:
+        if (settings.Weapon && !HasEmptyVehicleAmmo())
+            mWeaponIcon.ShowFor(duration);
+        break;
+
+    case HUDSpacingPreviewGroup::Ammo:
+        if (settings.Ammo && ShouldDisplayAmmo() &&
+            !HasEmptyVehicleAmmo())
+        {
+            mAmmo.ShowFor(duration);
+        }
+        break;
+
+    case HUDSpacingPreviewGroup::Armour:
+        if (settings.Armour && ShouldDisplayArmour())
+            mArmour.ShowFor(duration);
+        break;
+
+    case HUDSpacingPreviewGroup::Breath:
+        // Outside underwater/depleted-air gameplay the vanilla
+        // breath bar is not drawable; do not create an empty slot.
+        if (settings.Breath && mBreath.IsVisible())
+            mBreath.ShowFor(duration);
+        break;
+
+    case HUDSpacingPreviewGroup::Health:
+        if (settings.Health)
+            mHealth.ShowFor(duration);
+        break;
+    }
+}
+
 void HUDManager::HideAll()
 {
+    mClockSpacingPreview.Reset();
     mClock.Reset();
     mHealth.Reset();
     mArmour.Reset();
