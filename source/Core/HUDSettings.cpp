@@ -5,6 +5,8 @@
 #include <cstdlib>
 #include <charconv>
 #include <cstring>
+#include <fstream>
+#include <iterator>
 #include <string>
 
 #include <windows.h>
@@ -140,6 +142,126 @@ namespace
             path, section, key,
             fallback ? 1 : 0,
             0, 1) != 0;
+    }
+
+    // WritePrivateProfileStringA normalizes edited INI entries to
+    // "Key=Value". Restore the template's "Key = Value" style only
+    // after Win32 has completed the actual save. Keep comments,
+    // ordering, unknown keys and line endings otherwise untouched.
+    static bool RestoreIniSpacing(const std::string& path)
+    {
+        std::ifstream input(path, std::ios::binary);
+
+        if (!input)
+            return false;
+
+        const std::string original(
+            (std::istreambuf_iterator<char>(input)),
+            std::istreambuf_iterator<char>());
+
+        if (input.bad())
+            return false;
+
+        std::string formatted;
+        formatted.reserve(original.size() + 128);
+
+        std::size_t start = 0;
+        while (start < original.size())
+        {
+            const std::size_t end = original.find('\n', start);
+            const std::size_t length =
+                (end == std::string::npos ? original.size() : end) -
+                start;
+
+            std::string line = original.substr(start, length);
+            const bool crlf = !line.empty() && line.back() == '\r';
+
+            if (crlf)
+                line.pop_back();
+
+            const std::size_t first = line.find_first_not_of(" \t");
+
+            // Ignore comments, section headers and blank lines.
+            if (first != std::string::npos &&
+                line[first] != ';' && line[first] != '#' &&
+                line[first] != '[')
+            {
+                const std::size_t equals = line.find('=', first);
+
+                if (equals != std::string::npos && equals > first)
+                {
+                    const std::size_t keyEnd =
+                        line.find_last_not_of(" \t", equals - 1);
+                    const std::size_t valueStart =
+                        line.find_first_not_of(" \t", equals + 1);
+
+                    if (keyEnd != std::string::npos &&
+                        keyEnd >= first)
+                    {
+                        const std::string key =
+                            line.substr(first, keyEnd - first + 1);
+
+                        const std::string value =
+                            valueStart == std::string::npos
+                            ? std::string()
+                            : line.substr(valueStart);
+
+                        // Retain any original indentation.
+                        line = line.substr(0, first) + key +
+                            " = " + value;
+                    }
+                }
+            }
+
+            formatted += line;
+
+            if (crlf)
+                formatted += '\r';
+
+            if (end != std::string::npos)
+                formatted += '\n';
+
+            if (end == std::string::npos)
+                break;
+
+            start = end + 1;
+        }
+
+        if (formatted == original)
+            return true;
+
+        // Write a complete temporary file before replacing the original,
+        // so a failed formatting pass cannot truncate the saved INI.
+        const std::string temporary = path + ".cleanhud.tmp";
+        {
+            std::ofstream output(
+                temporary, std::ios::binary | std::ios::trunc);
+
+            if (!output)
+                return false;
+
+            output.write(
+                formatted.data(),
+                static_cast<std::streamsize>(formatted.size()));
+            output.close();
+
+            if (!output)
+            {
+                DeleteFileA(temporary.c_str());
+                return false;
+            }
+        }
+
+        if (!MoveFileExA(
+            temporary.c_str(),
+            path.c_str(),
+            MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH))
+        {
+            DeleteFileA(temporary.c_str());
+            return false;
+        }
+
+        return true;
     }
 }
 
@@ -278,11 +400,11 @@ bool HUDSettings::Save() const
     const auto putFloat = [&put](
         const char* section, const char* key, float value)
     {
-        // to_chars avoids locale-specific commas in decimal INI values.
+        // Decimal precision matches SleekConfig's 0.01 spacing step.
         char number[64] = {};
         const auto result = std::to_chars(
             number, number + sizeof(number) - 1,
-            value, std::chars_format::fixed, 3);
+            value, std::chars_format::fixed, 2);
 
         if (result.ec != std::errc{})
             return false;
@@ -326,9 +448,16 @@ bool HUDSettings::Save() const
     success = putFloat("Spacing", "BreathSpacing", BreathSpacing) && success;
     success = putFloat("Spacing", "HealthSpacing", HealthSpacing) && success;
 
-    // Flush Win32 profile cache after the explicit Save click.
-    return WritePrivateProfileStringA(
-        nullptr, nullptr, nullptr, path.c_str()) != 0 && success;
+    // Flush Win32's profile cache before reading back the file.
+    // Preserve the original comments and section organization while
+    // restoring "Key = Value" after Windows normalizes edited entries.
+    if (!success || !WritePrivateProfileStringA(
+        nullptr, nullptr, nullptr, path.c_str()))
+    {
+        return false;
+    }
+
+    return RestoreIniSpacing(path);
 }
 
 bool HUDSettings::IsElementEnabled(HUDComponentType type) const
