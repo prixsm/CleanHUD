@@ -55,11 +55,14 @@ public:
     float WantedToWeaponSpacing = 32.5f;
     float WantedToStatusBarSpacing = 22.5f;
     float StatusBarToWeaponSpacing = 17.5f;
-    float WeaponSpacing = 4.0f;
-    float AmmoSpacing = 4.0f;
     float ArmourSpacing = 4.0f;
     float BreathSpacing = 4.0f;
-    float HealthSpacing = 4.0f;
+
+    // Stack mode only. Offsets apply to Weapon and Ammo together;
+    // the vertical distance controls the Ammo position beneath Weapon.
+    float WeaponAmmoOffsetX = 12.0f;
+    float WeaponAmmoOffsetY = -16.0f;
+    float WeaponToAmmoVerticalOffset = 87.0f;
 
 private:
     HUDSettings() = default;

@@ -137,3 +137,11 @@ headers still match upstream. Target: GTA San Andreas PC 1.0 US, Win32.
   panel, no duplicate D3D9 hook and no stuck mouse or player controls.
 - Verify New Game/Load Game startup (no HUD flash), main-menu labels,
   existing vehicle drive-by/vision-goggle behavior and TAB preview.
+
+## Weapon/Ammo fine positioning
+
+Stack mode exposes `WeaponAmmoOffsetX`, `WeaponAmmoOffsetY`, and
+`WeaponToAmmoVerticalOffset` in **Advanced Layout → Weapon & Ammo Position**.
+These replace the ineffective `WeaponSpacing`, `AmmoSpacing`, and
+`HealthSpacing` fields. SleekConfig changes preview the currently drawable
+Weapon and Ammo. Minimal mode retains GTA's native positions.

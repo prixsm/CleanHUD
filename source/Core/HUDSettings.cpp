@@ -357,20 +357,21 @@ void HUDSettings::Load()
     StatusBarToWeaponSpacing = ReadFloat(
         path.c_str(), "Spacing", "StatusBarToWeaponSpacing", 17.5f);
 
-    WeaponSpacing = ReadFloat(
-        path.c_str(), "Spacing", "WeaponSpacing", 4.0f);
-
-    AmmoSpacing = ReadFloat(
-        path.c_str(), "Spacing", "AmmoSpacing", 4.0f);
-
     ArmourSpacing = ReadFloat(
         path.c_str(), "Spacing", "ArmourSpacing", 4.0f);
 
     BreathSpacing = ReadFloat(
         path.c_str(), "Spacing", "BreathSpacing", 4.0f);
 
-    HealthSpacing = ReadFloat(
-        path.c_str(), "Spacing", "HealthSpacing", 4.0f);
+    WeaponAmmoOffsetX = ReadFloat(
+        path.c_str(), "WeaponAmmoLayout", "WeaponAmmoOffsetX", 12.0f);
+
+    WeaponAmmoOffsetY = ReadFloat(
+        path.c_str(), "WeaponAmmoLayout", "WeaponAmmoOffsetY", -16.0f);
+
+    WeaponToAmmoVerticalOffset = ReadFloat(
+        path.c_str(), "WeaponAmmoLayout",
+        "WeaponToAmmoVerticalOffset", 87.0f);
 }
 
 
@@ -446,11 +447,11 @@ bool HUDSettings::Save() const
     success = putFloat("Spacing", "WantedToStatusBarSpacing", WantedToStatusBarSpacing) && success;
     success = putFloat("Spacing", "WantedToWeaponSpacing", WantedToWeaponSpacing) && success;
     success = putFloat("Spacing", "StatusBarToWeaponSpacing", StatusBarToWeaponSpacing) && success;
-    success = putFloat("Spacing", "WeaponSpacing", WeaponSpacing) && success;
-    success = putFloat("Spacing", "AmmoSpacing", AmmoSpacing) && success;
     success = putFloat("Spacing", "ArmourSpacing", ArmourSpacing) && success;
     success = putFloat("Spacing", "BreathSpacing", BreathSpacing) && success;
-    success = putFloat("Spacing", "HealthSpacing", HealthSpacing) && success;
+    success = putFloat("WeaponAmmoLayout", "WeaponAmmoOffsetX", WeaponAmmoOffsetX) && success;
+    success = putFloat("WeaponAmmoLayout", "WeaponAmmoOffsetY", WeaponAmmoOffsetY) && success;
+    success = putFloat("WeaponAmmoLayout", "WeaponToAmmoVerticalOffset", WeaponToAmmoVerticalOffset) && success;
 
     if (!success)
         return false;
