@@ -377,6 +377,7 @@ void HUDManager::OnGameLoaded()
     mJetpackIcon.Reset();
     mJetpackWasEquipped = false;
     mJetpackDropped = false;
+    mCellphonePuttingAway = false;
 
     mPlayer = nullptr;
     mLastPlayer = nullptr;
@@ -398,6 +399,7 @@ void HUDManager::Update()
         mJetpackIcon.Reset();
         mJetpackWasEquipped = false;
         mJetpackDropped = false;
+        mCellphonePuttingAway = false;
 
         // Returning from gameplay to a frontend or loading
         // screen must not leave our draw-call NOPs in place.
@@ -1482,6 +1484,7 @@ void HUDManager::UpdateSpecialIcons()
         mJetpackIcon.Reset();
         mJetpackWasEquipped = false;
         mJetpackDropped = false;
+        mCellphonePuttingAway = false;
         return;
     }
 
@@ -1518,10 +1521,20 @@ void HUDManager::UpdateSpecialIcons()
     // usual CleanHUD FadeOutMs instead of resetting its alpha.
     const bool puttingPhoneAway =
         intelligence->FindTaskByType(TASK_SIMPLE_PHONE_OUT) != nullptr;
-    const bool cellphoneEquipped = !puttingPhoneAway &&
-        (intelligence->FindTaskByType(TASK_COMPLEX_USE_MOBILE_PHONE) ||
-         intelligence->FindTaskByType(TASK_SIMPLE_PHONE_TALK) ||
-         intelligence->FindTaskByType(TASK_SIMPLE_PHONE_IN));
+    const bool anyPhoneTask = puttingPhoneAway ||
+        intelligence->FindTaskByType(TASK_COMPLEX_USE_MOBILE_PHONE) ||
+        intelligence->FindTaskByType(TASK_SIMPLE_PHONE_TALK) ||
+        intelligence->FindTaskByType(TASK_SIMPLE_PHONE_IN);
+
+    if (puttingPhoneAway)
+        mCellphonePuttingAway = true;
+    else if (!anyPhoneTask)
+        mCellphonePuttingAway = false;
+
+    // Keep the fade running after PHONE_OUT, even if its parent
+    // complex task remains attached for another few frames.
+    const bool cellphoneEquipped = anyPhoneTask &&
+        !mCellphonePuttingAway;
 
     if (cellphoneEquipped)
     {
@@ -1542,6 +1555,7 @@ void HUDManager::HideAll()
     mJetpackIcon.Reset();
     mJetpackWasEquipped = false;
     mJetpackDropped = false;
+    mCellphonePuttingAway = false;
     mClock.Reset();
     mHealth.Reset();
     mArmour.Reset();
