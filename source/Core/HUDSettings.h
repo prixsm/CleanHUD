@@ -44,6 +44,14 @@ public:
     bool ShowOnVehicleLook = false;
     bool ShowOnThrowableAim = false;
 
+    // Optional game/mod equipment icons. Off for the original HUD.
+    bool ShowCellphoneIcon = false;
+    bool ShowJetpackIcon = false;
+    bool ShowUnusedWeaponIcons = false;
+    // Model supplied by a custom weapon mod (e.g. a skateboard mod).
+    // 0 disables the generic unused-weapon icon fallback.
+    std::uint32_t UnusedWeaponModelId = 0;
+
     // Gap below the Clock, based on the first visible stack group.
     float ClockToMoneySpacing = 25.0f;
     float ClockToWantedSpacing = 25.0f;

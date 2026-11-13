@@ -16,6 +16,7 @@
 #include <CWeaponInfo.h>
 #include <CWorld.h>
 #include <eModelID.h>
+#include <eTaskType.h>
 
 #include "HUDManager.h"
 #include "../Render/HUDMetrics.h"
@@ -369,6 +370,8 @@ void HUDManager::OnGameLoaded()
     mValidVehicleFireInputLastFrame = false;
     mWeaponChangedThisFrame = false;
     mClockSpacingPreview.Reset();
+    mCellphoneIconTimer.Reset();
+    mJetpackIconTimer.Reset();
 
     mPlayer = nullptr;
     mLastPlayer = nullptr;
@@ -480,6 +483,7 @@ void HUDManager::Update()
     mWeaponChangedThisFrame = false;
     UpdateWeaponIcon();
     UpdateAmmo();
+    UpdateSpecialIcons();
     UpdateVehicleFiring();
     UpdateWanted();
 
@@ -1368,9 +1372,84 @@ void HUDManager::PreviewSpacingGroup(HUDSpacingPreviewGroup group)
     }
 }
 
+bool HUDManager::ShouldDrawCellphoneIcon() const
+{
+    return HUDSettings::Get().ShowCellphoneIcon &&
+        mSessionInitialized && mCellphoneIconTimer.Visible();
+}
+
+bool HUDManager::ShouldDrawJetpackIcon() const
+{
+    return HUDSettings::Get().ShowJetpackIcon &&
+        mSessionInitialized && mJetpackIconTimer.Visible();
+}
+
+int HUDManager::GetUnusedWeaponIconModel() const
+{
+    const auto& settings = HUDSettings::Get();
+
+    if (!settings.ShowUnusedWeaponIcons ||
+        !mSessionInitialized || !mPlayer ||
+        !settings.UnusedWeaponModelId)
+    {
+        return 0;
+    }
+
+    const CWeapon* weapon = mPlayer->GetWeapon();
+
+    // SA's slot 47 is unused by vanilla weapons; only custom mods
+    // that equip this slot can provide a corresponding model.
+    return weapon && weapon->m_eWeaponType == WEAPONTYPE_UNUSED
+        ? static_cast<int>(settings.UnusedWeaponModelId)
+        : 0;
+}
+
+void HUDManager::UpdateSpecialIcons()
+{
+    const auto& settings = HUDSettings::Get();
+
+    if (!mPlayer || !mPlayer->m_pIntelligence)
+        return;
+
+    CPedIntelligence* intelligence = mPlayer->m_pIntelligence;
+
+    const bool jetpackActive = settings.ShowJetpackIcon &&
+        intelligence->GetTaskJetPack() != nullptr;
+
+    // The cellphone is a scripted pedestrian task, not a vanilla
+    // active weapon type. A phone icon can be requested independently.
+    const bool cellphoneActive = settings.ShowCellphoneIcon &&
+        (intelligence->FindTaskByType(TASK_COMPLEX_USE_MOBILE_PHONE) ||
+         intelligence->FindTaskByType(TASK_SIMPLE_PHONE_TALK) ||
+         intelligence->FindTaskByType(TASK_SIMPLE_PHONE_IN) ||
+         intelligence->FindTaskByType(TASK_SIMPLE_PHONE_OUT));
+
+    if (jetpackActive)
+    {
+        mJetpackIconTimer.ShowFor(mVisibleTime);
+        mWeaponIcon.ShowFor(mVisibleTime);
+    }
+    else if (!settings.ShowJetpackIcon)
+    {
+        mJetpackIconTimer.Reset();
+    }
+
+    if (cellphoneActive)
+    {
+        mCellphoneIconTimer.ShowFor(mVisibleTime);
+        mWeaponIcon.ShowFor(mVisibleTime);
+    }
+    else if (!settings.ShowCellphoneIcon)
+    {
+        mCellphoneIconTimer.Reset();
+    }
+}
+
 void HUDManager::HideAll()
 {
     mClockSpacingPreview.Reset();
+    mCellphoneIconTimer.Reset();
+    mJetpackIconTimer.Reset();
     mClock.Reset();
     mHealth.Reset();
     mArmour.Reset();

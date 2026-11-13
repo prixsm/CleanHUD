@@ -327,6 +327,18 @@ void HUDSettings::Load()
     ShowOnThrowableAim = ReadBool(
         path.c_str(), "WeaponAmmo", "ShowOnThrowableAim", false);
 
+    ShowCellphoneIcon = ReadBool(
+        path.c_str(), "SpecialIcons", "ShowCellphoneIcon", false);
+
+    ShowJetpackIcon = ReadBool(
+        path.c_str(), "SpecialIcons", "ShowJetpackIcon", false);
+
+    ShowUnusedWeaponIcons = ReadBool(
+        path.c_str(), "SpecialIcons", "ShowUnusedWeaponIcons", false);
+
+    UnusedWeaponModelId = ReadInt(
+        path.c_str(), "SpecialIcons", "UnusedWeaponModelId", 0, 0, 65535);
+
     ClockToMoneySpacing = ReadFloat(
         path.c_str(), "Spacing", "ClockToMoneySpacing", 25.0f);
 
@@ -434,6 +446,10 @@ bool HUDSettings::Save() const
     success = putBool("WeaponAmmo", "ShowOnFootAim", ShowOnFootAim) && success;
     success = putBool("WeaponAmmo", "ShowOnThrowableAim", ShowOnThrowableAim) && success;
     success = putBool("WeaponAmmo", "ShowOnVehicleLook", ShowOnVehicleLook) && success;
+    success = putBool("SpecialIcons", "ShowCellphoneIcon", ShowCellphoneIcon) && success;
+    success = putBool("SpecialIcons", "ShowJetpackIcon", ShowJetpackIcon) && success;
+    success = putBool("SpecialIcons", "ShowUnusedWeaponIcons", ShowUnusedWeaponIcons) && success;
+    success = putInt("SpecialIcons", "UnusedWeaponModelId", UnusedWeaponModelId) && success;
     success = putInt("Visibility", "FadeInMs", FadeInMs) && success;
     success = putInt("Visibility", "FadeOutMs", FadeOutMs) && success;
     success = putInt("Visibility", "DurationMs", VisibilityMs) && success;
