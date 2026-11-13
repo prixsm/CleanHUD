@@ -44,11 +44,21 @@ namespace
     {
         float X = 0.0f;
         float Y = 0.0f;
+        // Retain the last confirmed native sprite dimensions across
+        // frames when a weapon texture isn't drawn. Dimensions are only
+        // valid at the screen resolution at which they were captured.
         float Width = 0.0f;
         float Height = 0.0f;
+        float CapturedScreenWidth = 0.0f;
+        float CapturedScreenHeight = 0.0f;
+        // Native sprite's offset from the weapon slot anchor (which can
+        // differ when an external mod changes the icon's dimensions).
+        float OffsetX = 0.0f;
+        float OffsetY = 0.0f;
+        float AnchorX = 0.0f;
+        float AnchorY = 0.0f;
         std::uint8_t Alpha = 0;
         unsigned int Frame = std::numeric_limits<unsigned int>::max();
-        unsigned int SizeFrame = std::numeric_limits<unsigned int>::max();
     };
 
     // Only POD frame data is cached; RenderWare textures and TXD slots
@@ -131,52 +141,56 @@ namespace
         const float screenWidth = plugin::screen::GetScreenWidth();
         const float screenHeight = plugin::screen::GetScreenHeight();
 
-        // Capture the final native rectangle after any third-party
-        // scaling patches. This naturally includes MixSets, WSF and
-        // even their compounded scaling when both are installed.
-        const bool captured = p.SizeFrame == p.Frame;
-        const float iconWidth = captured
+        // Never fall back to vanilla scale merely because no native
+        // sprite happened to be rendered on this particular frame.
+        // Invalidate cached pixels only after an actual resolution change.
+        const bool haveMeasuredScale =
+            p.Width > 0.0f && p.Height > 0.0f &&
+            p.CapturedScreenWidth == screenWidth &&
+            p.CapturedScreenHeight == screenHeight;
+        const float iconWidth = haveMeasuredScale
             ? p.Width : 47.0f * (screenHeight / 480.0f);
-        const float iconHeight = captured
+        const float iconHeight = haveMeasuredScale
             ? p.Height : 58.0f * (screenHeight / 480.0f);
+        const float iconX = p.AnchorX +
+            (haveMeasuredScale ? p.OffsetX : 0.0f);
+        const float iconY = p.AnchorY +
+            (haveMeasuredScale ? p.OffsetY : 0.0f);
 
         HUDManager& manager = HUDManager::Get();
 
         const int customModel = manager.GetCustomWeaponIconModel();
         if (customModel > 0 && !manager.ShouldDrawCellphoneIcon())
-            DrawModelIcon(customModel, p.X, p.Y,
+            DrawModelIcon(customModel, iconX, iconY,
                 iconWidth, iconHeight, p.Alpha);
 
         if (manager.ShouldDrawCellphoneIcon())
-            DrawModelIcon(MODEL_CELLPHONE, p.X, p.Y,
+            DrawModelIcon(MODEL_CELLPHONE, iconX, iconY,
                 iconWidth, iconHeight, manager.GetCellphoneIconAlpha());
 
-        // Positive X shifts the jetpack to the right of its usual
-        // left edge. Use the same virtual-X scale as the Stack offset.
+        // Independent offsets from the left-side weapon slot. No
+        // mode toggle: players can position the jetpack freely in X/Y.
         const auto& settings = HUDSettings::Get();
-        const float jetpackOffset =
+        const float jetpackX = iconX - iconWidth -
+            8.0f * (iconWidth / 47.0f) +
             settings.JetpackIconOffsetX * (screenWidth / 1920.0f);
+        const float jetpackY = iconY +
+            settings.JetpackIconOffsetY * (screenHeight / 1080.0f);
 
-        if (manager.ShouldDrawJetpackBesideWeapon())
-            DrawModelIcon(MODEL_JETPACK,
-                p.X - iconWidth - 8.0f * (iconWidth / 47.0f) +
-                jetpackOffset, p.Y, iconWidth, iconHeight,
-                manager.GetJetpackIconAlpha());
-        else if (manager.ShouldDrawJetpackAsWeaponIcon())
-            DrawModelIcon(MODEL_JETPACK,
-                p.X + jetpackOffset, p.Y, iconWidth, iconHeight,
-                manager.GetJetpackIconAlpha());
+        if (manager.ShouldDrawJetpackIcon())
+            DrawModelIcon(MODEL_JETPACK, jetpackX, jetpackY,
+                iconWidth, iconHeight, manager.GetJetpackIconAlpha());
     }
 
     void CaptureWeaponPosition(int x, int y, float alpha)
     {
+        gNativeWeaponPosition.AnchorX = static_cast<float>(x);
+        gNativeWeaponPosition.AnchorY = static_cast<float>(y);
         gNativeWeaponPosition.X = static_cast<float>(x);
         gNativeWeaponPosition.Y = static_cast<float>(y);
         gNativeWeaponPosition.Alpha = static_cast<std::uint8_t>(
             std::clamp(static_cast<int>(std::lround(alpha)), 0, 255));
         gNativeWeaponPosition.Frame = CTimer::m_FrameCounter;
-        gNativeWeaponPosition.SizeFrame =
-            std::numeric_limits<unsigned int>::max();
     }
 
     void CaptureWeaponBounds(float left, float top,
@@ -194,7 +208,14 @@ namespace
         gNativeWeaponPosition.Y = top;
         gNativeWeaponPosition.Width = width;
         gNativeWeaponPosition.Height = height;
-        gNativeWeaponPosition.SizeFrame = CTimer::m_FrameCounter;
+        gNativeWeaponPosition.CapturedScreenWidth =
+            plugin::screen::GetScreenWidth();
+        gNativeWeaponPosition.CapturedScreenHeight =
+            plugin::screen::GetScreenHeight();
+        gNativeWeaponPosition.OffsetX =
+            left - gNativeWeaponPosition.AnchorX;
+        gNativeWeaponPosition.OffsetY =
+            top - gNativeWeaponPosition.AnchorY;
     }
 
     constexpr std::uintptr_t WeaponIconStart = 0x58D7D0;
