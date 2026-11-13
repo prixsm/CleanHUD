@@ -36,8 +36,6 @@ public:
     std::uint8_t GetJetpackIconAlpha() const;
     bool ShouldSuppressNativeFist() const;
     bool ShouldDrawJetpackIcon() const;
-    bool ShouldDrawJetpackBesideWeapon() const;
-    bool ShouldDrawJetpackAsWeaponIcon() const;
     int GetCustomWeaponIconModel() const;
     bool IsUsingVanillaLayout() const;
     bool ShouldDisplayAmmo() const;
@@ -98,7 +96,6 @@ private:
     // Jetpack is an on-equip event, unlike the continuously held phone task.
     bool mJetpackWasEquipped = false;
     bool mJetpackDropped = false;
-    std::uint32_t mJetpackEquippedAt = 0;
 
     // HUD components
     HUDComponent mClock;
