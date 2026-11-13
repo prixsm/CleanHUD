@@ -48,10 +48,6 @@ public:
     // A separate jetpack placement option is useful when carrying a gun.
     bool ShowHiddenWeaponIcons = false;
     bool ShowJetpackBesideWeapon = false;
-    // Model supplied by a custom weapon mod (e.g. a skateboard mod).
-    // 0 disables the generic unused-weapon icon fallback.
-    std::uint32_t UnusedWeaponModelId = 0;
-
     // Gap below the Clock, based on the first visible stack group.
     float ClockToMoneySpacing = 25.0f;
     float ClockToWantedSpacing = 25.0f;

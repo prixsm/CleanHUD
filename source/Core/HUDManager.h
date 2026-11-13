@@ -35,7 +35,7 @@ public:
     bool ShouldDrawJetpackIcon() const;
     bool ShouldDrawJetpackBesideWeapon() const;
     bool ShouldDrawJetpackAsWeaponIcon() const;
-    int GetUnusedWeaponIconModel() const;
+    int GetCustomWeaponIconModel() const;
     bool IsUsingVanillaLayout() const;
     bool ShouldDisplayAmmo() const;
     bool ShouldDisplayArmour() const;

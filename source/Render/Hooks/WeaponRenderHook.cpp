@@ -126,12 +126,13 @@ namespace
 
         HUDManager& manager = HUDManager::Get();
 
-        // Custom mods may assign a model to unused weapon slot 47,
-        // including a skateboard. The model ID is user-configured.
-        const int unusedModel = manager.GetUnusedWeaponIconModel();
+        // Only overlay a model if a mod has attached a different
+        // one from GTA's regular weapon metadata. The native weapon
+        // and WeaponIconsTXD draw paths stay untouched.
+        const int customModel = manager.GetCustomWeaponIconModel();
 
-        if (unusedModel > 0)
-            DrawModelIcon(unusedModel,
+        if (customModel > 0)
+            DrawModelIcon(customModel,
                 static_cast<float>(p.X),
                 static_cast<float>(p.Y),
                 iconWidth, iconHeight, p.Alpha);

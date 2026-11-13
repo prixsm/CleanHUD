@@ -71,8 +71,7 @@ namespace
     constexpr IntSetting IntSettings[] = {
         { "fade_in_ms", "Fade in (ms)", "Visibility", "Animation", &HUDSettings::FadeInMs, 200, 2000 },
         { "fade_out_ms", "Fade out (ms)", "Visibility", "Animation", &HUDSettings::FadeOutMs, 200, 2000 },
-        { "duration_ms", "Visibility duration (ms)", "Visibility", "Animation", &HUDSettings::VisibilityMs, 3000, 10000 },
-        { "unused_weapon_model_id", "Unused weapon model ID", "Special Icons", "Mod compatibility", &HUDSettings::UnusedWeaponModelId, 0, 65535 }
+        { "duration_ms", "Visibility duration (ms)", "Visibility", "Animation", &HUDSettings::VisibilityMs, 3000, 10000 }
     };
 
     constexpr FloatSetting FloatSettings[] = {

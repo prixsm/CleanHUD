@@ -3,6 +3,7 @@
 #include <common.h>
 #include <CCamera.h>
 #include <CCutsceneMgr.h>
+#include <CModelInfo.h>
 #include <CDarkel.h>
 #include <CPad.h>
 #include <CPedIntelligence.h>
@@ -1402,24 +1403,53 @@ bool HUDManager::ShouldDrawJetpackAsWeaponIcon() const
     return weapon && weapon->m_eWeaponType == WEAPONTYPE_UNARMED;
 }
 
-int HUDManager::GetUnusedWeaponIconModel() const
+int HUDManager::GetCustomWeaponIconModel() const
 {
-    const auto& settings = HUDSettings::Get();
-
-    if (!settings.ShowHiddenWeaponIcons ||
-        !mSessionInitialized || !mPlayer ||
-        !settings.UnusedWeaponModelId)
+    if (!HUDSettings::Get().ShowHiddenWeaponIcons ||
+        !mSessionInitialized || !mPlayer)
     {
         return 0;
     }
 
     const CWeapon* weapon = mPlayer->GetWeapon();
 
-    // SA's slot 47 is unused by vanilla weapons; only custom mods
-    // that equip this slot can provide a corresponding model.
-    return weapon && weapon->m_eWeaponType == WEAPONTYPE_UNUSED
-        ? static_cast<int>(settings.UnusedWeaponModelId)
-        : 0;
+    if (!weapon || !mPlayer->m_pWeaponObject)
+        return 0;
+
+    const eWeaponType weaponType = weapon->m_eWeaponType;
+
+    // Values above UNUSED are GTA damage/event types, not safe
+    // weapon-info indices. Unarmed has no held weapon icon.
+    if (weaponType <= WEAPONTYPE_UNARMED ||
+        weaponType > WEAPONTYPE_UNUSED)
+    {
+        return 0;
+    }
+
+    // GTA tracks the model actually attached to the player's hand,
+    // including when a weapon mod swaps Cane/Shovel for a skateboard.
+    const int heldModelId = mPlayer->m_nWeaponModelId;
+
+    if (heldModelId <= 0 ||
+        heldModelId >= CModelInfo::ms_modelInfoCount ||
+        !CModelInfo::GetModelInfo(heldModelId))
+    {
+        return 0;
+    }
+
+    // Native CHud and WeaponIconsTXD already draw the regular weapon
+    // model's icon. Only supplement a DIFFERENT held model, so
+    // ordinary weapons are never drawn twice.
+    const CWeaponInfo* info = CWeaponInfo::GetWeaponInfo(
+        weaponType, mPlayer->GetWeaponSkill());
+
+    if (!info || heldModelId == info->m_nModelId ||
+        heldModelId == info->m_nModelId2)
+    {
+        return 0;
+    }
+
+    return heldModelId;
 }
 
 void HUDManager::UpdateSpecialIcons()

@@ -68,7 +68,7 @@ duplicate their rendering or add its own preset storage.
 Update SleekConfig to **1.1.0 or newer** and keep only one copy of its
 ASI active. In F10, choose CleanHUD and use **Presets** to save a named
 configuration or load it during gameplay. Existing registered setting IDs
-are unchanged, so presets can include all 35 CleanHUD controls.
+are unchanged, so presets can include all 34 CleanHUD controls.
 
 For exact spacing edits: SleekConfig's new sliders follow the mouse,
 Shift offers fine adjustments, and Ctrl+click or double-click lets you
@@ -155,11 +155,20 @@ when enabled alongside the master toggle, the jetpack draws **to the
 left of the currently equipped weapon**. With it disabled, the jetpack
 can replace the fist icon while unarmed but never obscures a firearm.
 
-`UnusedWeaponModelId` remains an optional numeric model ID supplied
-by a custom mod that equips GTA's unused weapon type (47). A missing
-model or texture is safely ignored; there is no vanilla skateboard
-weapon/model ID. All toggles default off, and the native game HUD is
-unchanged when they are off.
+The model of a custom equipped weapon is resolved automatically
+using GTA's `CPed::m_nWeaponModelId`, which identifies the model
+currently attached to the player's hand. CleanHUD compares it with
+the active weapon's ordinary model from `CWeaponInfo`. If they
+match, GTA/WeaponIconsTXD already handles its icon and CleanHUD does
+not draw a duplicate. If a compatible mod attaches a different model
+(such as a skateboard using a repurposed Cane/Shovel type or unused
+weapon type 47), CleanHUD looks up that model's `ICON` texture.
+
+No numeric model ID, user-maintained mapping or full model-registry
+scan is needed. This detects weapon-model replacements, but **cannot
+identify standalone CLEO-attached skateboard props or independent
+scripted renderers** that do not update GTA's held weapon model.
+Missing models/textures are ignored. All toggles default off.
 
 The icon renderer checks the `weaponicons` TXD slot used by
 [WeaponIconsTXD](https://github.com/JuniorDjjr/WeaponIconsTXD) first,
