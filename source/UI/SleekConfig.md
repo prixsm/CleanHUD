@@ -184,7 +184,7 @@ jetpack icon immediately, without a fade or residual visibility timer.
 It stays hidden until another actual equip. Phone-use tasks remain
 continuously visible while active and fade normally afterward. When
 the phone or the centered jetpack occupies the fist slot, the native
-fist sprite is suppressed so it does not overlap.
+fist or brass-knuckle weapon icon is suppressed so it does not overlap.
 
 `JetpackIconOffsetX` is an additional horizontal position adjustment
 in virtual HUD units (default 0.00). With `ShowJetpackBesideWeapon=0`,
