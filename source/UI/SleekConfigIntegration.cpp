@@ -135,7 +135,7 @@ namespace
         // register_setting uses its declared default, not the loaded INI.
         // Publish INI values before the first SleekConfig registry tick.
         // Saved SleekConfig DAT overrides are applied after these values.
-        const HUDSettings& settings = HUDSettings::Get();
+        HUDSettings& settings = HUDSettings::Get();
         ScValue value = {};
 
         value.type = SC_ENUM;
@@ -177,6 +177,10 @@ namespace
 
             if (gApi->publish_value(gMod, entry.Id, &value) != SC_OK)
                 return false;
+
+            // Keep the immediately active layout in sync with what
+            // the half-step menu displays, not just its saved values.
+            settings.*(entry.Field) = value.real;
         }
 
         return true;
