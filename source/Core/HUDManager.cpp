@@ -11,6 +11,7 @@
 #include <CPlayerInfo.h>
 #include <CPlayerPed.h>
 #include <CStats.h>
+#include <CTimer.h>
 #include <CVehicle.h>
 #include <CTaskSimpleSwim.h>
 #include <CWanted.h>
@@ -1534,11 +1535,11 @@ void HUDManager::UpdateSpecialIcons()
         mJetpackEquippedAt = CTimer::m_snTimeInMilliseconds;
         mJetpackIcon.ShowFor(mVisibleTime);
 
-        // Keep the native icon draw path available through the extra
-        // icon's full fade-out so we can capture its final dimensions.
+        // Keep the native sprite active for the *same* lifetime as
+        // the extra icon, including its fade. Avoid a brief fist flash.
         const std::uint32_t duration = settings.JetpackLikeVehicleNames
-            ? 4000u : mVisibleTime + settings.FadeOutMs;
-        mWeaponIcon.ShowFor(duration + settings.FadeOutMs);
+            ? 4000u : mVisibleTime;
+        mWeaponIcon.ShowFor(duration);
     }
     mJetpackWasEquipped = jetpackActive;
 
@@ -1553,7 +1554,7 @@ void HUDManager::UpdateSpecialIcons()
     if (cellphoneActive)
     {
         mCellphoneIcon.ShowFor(mVisibleTime);
-        mWeaponIcon.ShowFor(mVisibleTime + settings.FadeOutMs);
+        mWeaponIcon.ShowFor(mVisibleTime);
     }
 }
 
