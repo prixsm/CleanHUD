@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <cstring>
+#include <cmath>
 
 #include <windows.h>
 #include <sleekconfig.hpp>
@@ -64,6 +65,7 @@ namespace
         { "show_on_foot_aim", "Show on foot aim", "Weapon & Ammo", "Aim controls", &HUDSettings::ShowOnFootAim, true },
         { "show_on_throwable_aim", "Show on throwable aim", "Weapon & Ammo", "Aim controls", &HUDSettings::ShowOnThrowableAim, false },
         { "show_on_vehicle_look", "Show on vehicle look", "Weapon & Ammo", "Aim controls", &HUDSettings::ShowOnVehicleLook, false },
+        { "unified_weapon_icon_scale", "Unify weapon icon scale (WSF-style)", "Weapon & Ammo", "Icon scaling", &HUDSettings::UnifiedWeaponIconScale, true },
         { "show_hidden_weapon_icons", "Show hidden/custom weapon icons", "Special Icons", "Equipment", &HUDSettings::ShowHiddenWeaponIcons, false }
     };
 
@@ -167,7 +169,11 @@ namespace
         {
             value = {};
             value.type = SC_FLOAT;
-            value.real = settings.*(entry.Field);
+            // Old INIs/DAT presets may contain hundredth-unit values
+            // from SleekConfig 1.1. Publish the closest valid half-step
+            // so the registry does not reject the entire mod on attach.
+            value.real = std::round((settings.*(entry.Field)) * 2.0f)
+                * 0.5f;
 
             if (gApi->publish_value(gMod, entry.Id, &value) != SC_OK)
                 return false;
@@ -308,15 +314,11 @@ namespace
                 entry.Id, entry.Label, "Advanced Layout",
                 entry.Group, SC_FLOAT);
 
-            // SleekConfig 1.1 uses the declared step to choose
-            // slider precision and keyboard increments. Centi-unit
-            // steps display 2 decimal places and avoid long fractions.
+            // These coordinates effectively move the rendered HUD
+            // at half-unit precision. Match the UI increments to that.
             setting.minimum = -16384.0;
             setting.maximum = 16384.0;
-            // Retain hundredth-unit precision. SleekConfig's current
-            // registry can reject some valid float32 centi-steps:
-            // that is upstream validation, before on_change runs.
-            setting.step = 0.01;
+            setting.step = 0.5;
             setting.default_value.real = entry.Default;
 
             if (gApi->register_setting(gMod, &setting) != SC_OK)
