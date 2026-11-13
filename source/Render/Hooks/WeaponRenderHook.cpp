@@ -354,10 +354,9 @@ namespace
         const std::uint32_t cleanAlpha =
             pos.Alpha;
 
-        // The phone is the on-hand item during phone tasks. This
-        // includes brass knuckles, which use the textured model path
-        // instead of the fist's CSprite2d path.
-        stack[9] = HUDManager::Get().ShouldDrawCellphoneIcon()
+        // The phone suppresses only knuckles on the model-sprite
+        // path, not unrelated firearms that may be in use.
+        stack[9] = HUDManager::Get().ShouldSuppressNativeKnuckles()
             ? 0u : originalAlpha * cleanAlpha / 255u;
     }
 }
