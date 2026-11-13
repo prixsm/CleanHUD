@@ -68,17 +68,22 @@ duplicate their rendering or add its own preset storage.
 Update SleekConfig to **1.1.0 or newer** and keep only one copy of its
 ASI active. In F10, choose CleanHUD and use **Presets** to save a named
 configuration or load it during gameplay. Existing registered setting IDs
-that remain registered are unchanged, and the new icon-scale toggle
-brings the editor to 36 controls.
+that remain registered are unchanged; with the experimental scale toggle
+removed, the editor returns to **35 controls**.
 
-For exact spacing edits: SleekConfig's new sliders follow the mouse,
+For exact spacing edits: SleekConfig's sliders follow the mouse,
 Shift offers fine adjustments, and Ctrl+click or double-click lets you
-enter a number. CleanHUD registers its 17 advanced position/spacing
-sliders with a **0.5** step, matching the practical on-screen movement
-resolution. Older INI values such as 27.25 are rounded to the nearest
-half-step when published to SleekConfig (the INI file is unchanged
-until Save Mod). Older DAT presets with 0.01 increments may need to
-be re-saved at half-step values.
+enter a number. The 17 Advanced Layout sliders use **1.0** steps
+and a more practical **-1500 to +1500** range. Old fractional values
+are rounded to the nearest whole virtual unit on INI load or when
+published to SleekConfig. Older DAT presets with fractional values
+may need to be re-saved.
+
+SleekConfig v1.1 chooses its number of visible decimal places from the
+step. A 1.0 step displays an integer in its own slider; the API does
+not currently offer per-setting formatting. CleanHUD.ini consistently
+saves the same values with **one decimal place** (e.g. `25.0`),
+rather than the earlier two decimals.
 Save Mod records your selection in CleanHUD.ini and in SleekConfig's
 regular DAT settings. Loading a preset changes the live settings; it
 does not automatically overwrite CleanHUD.ini until you save.
@@ -97,7 +102,7 @@ That precedence is part of SleekConfig's current upstream design:
 
 Click **Save Mod** in SleekConfig to save **both** the current CleanHUD.ini
 and SleekConfig's DAT snapshot. CleanHUD's existing Win32 `Save()` method
-writes the named INI settings using two decimal places for spacing and
+writes its named INI settings using one decimal place for spacing and
 normalizes separators to `Key = Value`, while SleekConfig saves its own .dat file.
 A failed INI write aborts SleekConfig's Save action.
 
@@ -129,15 +134,17 @@ headers still match upstream. Target: GTA San Andreas PC 1.0 US, Win32.
 - Start without SleekConfig. Game/menu text, loading, TAB, both HUD modes,
   firing and fading behave as before. CleanHUD.ini is loaded.
 - Start with SleekConfig. F10 opens **only** SleekConfig; CleanHUD is listed
-  under Visuals with 36 controls across its pages.
+  under Visuals with 35 controls across its pages.
 - Change each group of sliders/checkboxes, especially Stack/Minimal, the
   four Clock gaps and Status Bar to Weapon. Layout updates during play.
 - Save Mod, exit/restart, verify the modified CleanHUD.ini and
   SleekConfig/prixsm.cleanhud.dat. Verify saved values on restart.
 - Reload/Restore Saved and Defaults behavior, including the DAT precedence
   documented above.
-- Verify float values such as 27.5 and 0.25 can be edited without rounding
-  to integer values; fade/duration ranges accept 0 to 2000/10000.
+- Verify Advanced Layout slider steps are 1.0 and the range is
+  -1500.0 to +1500.0. Loading a legacy 27.5 INI position rounds to
+  28.0. Save Mod formats values like 25.0 (one decimal).
+- Verify fade/duration ranges still accept 0 to 2000/10000.
 - Test with other SleekConfig-enabled mods: there should be one shared F10
   panel, no duplicate D3D9 hook and no stuck mouse or player controls.
 - Verify New Game/Load Game startup (no HUD flash), main-menu labels,
@@ -203,26 +210,20 @@ Positive X moves right, positive Y moves down. Both use independent
 virtual HUD units (screen-width/1920 and screen-height/1080), and work
 with Stack as well as Minimal HUD mode.
 
-With `UnifiedWeaponIconScale=1` (the default), CleanHUD takes final
-ownership of **both native and supplemental weapon-icon geometry**.
-At the fist and textured-weapon sprite draw calls it replaces their
-dimensions with the same deterministic, resolution-derived size,
-regardless of whether MixSets `WeaponIconScaleFix`, WidescreenFix's
-`ProportionalWeaponIcon`, both, or neither have changed earlier
-calculations. This follows the legacy WidescreenFix correction in
-which the original reference icon height (58 units) is divided by
-1.125; the width stays 47 units. Both use CleanHUD's vertical
-resolution reference of 480 units, matching Weapon/Ammo X placement.
-Consequently MixSets and WSF no longer create different perceived
-weapon-to-ammo gaps.
+CleanHUD no longer has a unified weapon-icon scale feature. Native
+fists and weapons keep their normal render geometry, including changes
+made by MixSets `WeaponIconScaleFix` or WidescreenFix's
+`ProportionalWeaponIcon`. CleanHUD's cellphone, jetpack and custom
+icons use the **most recently measured native sprite bounds**, so they
+follow whichever scaling mod the player uses without injecting another
+scaling correction. Measurements persist across transient missing sprite
+draws and are discarded on resolution changes.
 
-CleanHUD deliberately **does not probe other ASIs' installation state
-or rewrite their injected patches**. Normalizing final draw arguments
-avoids fragile runtime mod detection and wins regardless of load order.
-Switch off `UnifiedWeaponIconScale` to return ownership of native
-weapon-icon dimensions to the game and any other mods. In that
-legacy mode, supplemental icons use the last measured sprite
-rectangle, invalidated on screen-resolution changes.
+Because MixSets and WidescreenFix do not use exactly the same scaling,
+their relative Weapon/Ammo positions can still differ; the existing
+Weapon/Ammo spacing sliders remain the adjustment mechanism. Enabling
+both external scaling fixes may compound their adjustments; CleanHUD
+does not attempt to override or correct either mod.
 
 SleekConfig groups all three Weapon/Ammo offsets together, followed by
 one `Jetpack Position` group containing both X and Y sliders. This
@@ -234,19 +235,21 @@ then the original model TXD. It does not patch WeaponIconsTXD's two
 lookup calls. Icons appear only if their model has an `ICON` texture
 in one of those dictionaries; no new image assets are bundled.
 
-## Expanded layout range and visibility cap
+## Layout range, formatting and visibility cap
 
-All 17 advanced spacing/offset controls accept -1000.00 through
-+1000.00 **virtual layout units**.
-This applies both to SleekConfig and the INI reader. Use Shift or
-direct numeric entry for precise adjustments when the range is large.
+All 17 advanced spacing/offset controls accept **-1500 to +1500**
+virtual layout units in both SleekConfig and the INI reader. Values
+are rounded to whole virtual units and saved with one decimal place.
+These controls include the jetpack's independent X/Y positions.
 
 `DurationMs` is limited to 0..10000 milliseconds (10 seconds) in
 both SleekConfig and INI loading. Existing longer values are clamped
 on load. FadeInMs/FadeOutMs retain their 0..2000 ranges.
 
-SleekConfig registers a **1.0** increment for each of the 17 advanced
-float sliders. This avoids the previous upstream 0.01-step float32
-validation issue. Direct INI parsing and saving still accept two-decimal
-positions, but presets containing values that aren't multiples of 1.0
-may need to be re-saved or cleared.
+SleekConfig registers a **1.0** increment for each of the 17 Advanced
+Layout float sliders, avoiding fractional-step float validation issues.
+Direct INI values are normalized to the same whole-unit increments.
+The editor displays integer values because its current formatting
+follows the step size; INI output retains the requested `.0` suffix.
+Older saved DAT/preset values that aren't multiples of 1.0 may need
+to be re-saved or cleared.
