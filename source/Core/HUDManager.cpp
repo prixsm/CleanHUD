@@ -1105,12 +1105,6 @@ void HUDManager::BuildPlayerHUDLayout()
     constexpr float ClockHeight = 18.0f;
     constexpr float MoneyHeight = 18.0f;
     constexpr float WantedHeight = 18.0f;
-    constexpr float AmmoHeight = 16.0f;
-
-    constexpr float WeaponAmmoOffsetX = 12.0f;
-    constexpr float WeaponAmmoOffsetY = -16.0f;
-    constexpr float WeaponToAmmoOffset = 87.0f;
-
     const auto& settings = HUDSettings::Get();
     const float statusBarHeight =
         HUDMetrics::GetStatusBarSpacing();
@@ -1236,16 +1230,17 @@ void HUDManager::BuildPlayerHUDLayout()
         0.0f,
         weaponDisplayed && healthShown
             ? settings.StatusBarToWeaponSpacing
-            : settings.HealthSpacing);
+            : 0.0f);
 
+    // Weapon and Ammo share a group origin. Weapon reserves the
+    // configured distance to Ammo rather than using a fake height
+    // and cancelling trailing spacing.
     mLayout.Add(
         mWeaponIcon,
-        WeaponToAmmoOffset - settings.WeaponSpacing,
-        WeaponAmmoOffsetY,
-        ammoDisplayed
-            ? settings.WeaponSpacing
-            : settings.AmmoSpacing,
-        WeaponAmmoOffsetX);
+        settings.WeaponToAmmoVerticalOffset,
+        settings.WeaponAmmoOffsetY,
+        0.0f,
+        settings.WeaponAmmoOffsetX);
 
     if (ammoDisplayed)
     {
@@ -1254,17 +1249,21 @@ void HUDManager::BuildPlayerHUDLayout()
             ? mLayout.GetStackProgress(HUDComponentType::Weapon)
             : 1.0f;
 
+        // Preserve the existing one-way slide behavior when Ammo
+        // and Weapon enter the stack at different fade progress.
         const float ammoPositionCorrection =
             mLayout.UsesFinalEntryPosition(HUDComponentType::Ammo)
             ? 0.0f
-            : WeaponToAmmoOffset * (1.0f - weaponReservation);
+            : settings.WeaponToAmmoVerticalOffset *
+                (1.0f - weaponReservation);
 
+        // Ammo is the final item: its trailing reservation is unused.
         mLayout.Add(
             mAmmo,
-            AmmoHeight,
-            WeaponAmmoOffsetY + ammoPositionCorrection,
-            settings.AmmoSpacing,
-            WeaponAmmoOffsetX);
+            0.0f,
+            settings.WeaponAmmoOffsetY + ammoPositionCorrection,
+            0.0f,
+            settings.WeaponAmmoOffsetX);
     }
 }
 

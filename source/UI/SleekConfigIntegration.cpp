@@ -93,16 +93,16 @@ namespace
             HUDSpacingPreviewGroup::Wanted, HUDSpacingPreviewGroup::Weapon },
         { "status_to_weapon", "Status Bar to Weapon", "Status Bars", &HUDSettings::StatusBarToWeaponSpacing, 17.5f,
             HUDSpacingPreviewGroup::StatusBars, HUDSpacingPreviewGroup::Weapon },
-        { "weapon_spacing", "Weapon spacing", "Individual", &HUDSettings::WeaponSpacing, 4.0f,
-            HUDSpacingPreviewGroup::Weapon, HUDSpacingPreviewGroup::Ammo },
-        { "ammo_spacing", "Ammo spacing", "Individual", &HUDSettings::AmmoSpacing, 4.0f,
-            HUDSpacingPreviewGroup::Weapon, HUDSpacingPreviewGroup::Ammo },
         { "armour_spacing", "Armour spacing", "Individual", &HUDSettings::ArmourSpacing, 4.0f,
             HUDSpacingPreviewGroup::Armour, HUDSpacingPreviewGroup::StatusBars },
         { "breath_spacing", "Breath spacing", "Individual", &HUDSettings::BreathSpacing, 4.0f,
             HUDSpacingPreviewGroup::Breath, HUDSpacingPreviewGroup::Health },
-        { "health_spacing", "Health spacing", "Individual", &HUDSettings::HealthSpacing, 4.0f,
-            HUDSpacingPreviewGroup::Health, HUDSpacingPreviewGroup::Weapon }
+        { "weapon_ammo_offset_x", "Weapon/Ammo offset X", "Weapon & Ammo Position", &HUDSettings::WeaponAmmoOffsetX, 12.0f,
+            HUDSpacingPreviewGroup::Weapon, HUDSpacingPreviewGroup::Ammo },
+        { "weapon_ammo_offset_y", "Weapon/Ammo offset Y", "Weapon & Ammo Position", &HUDSettings::WeaponAmmoOffsetY, -16.0f,
+            HUDSpacingPreviewGroup::Weapon, HUDSpacingPreviewGroup::Ammo },
+        { "weapon_to_ammo_vertical_offset", "Weapon to Ammo vertical offset", "Weapon & Ammo Position", &HUDSettings::WeaponToAmmoVerticalOffset, 87.0f,
+            HUDSpacingPreviewGroup::Weapon, HUDSpacingPreviewGroup::Ammo }
     };
 
     ScSettingDesc Describe(
