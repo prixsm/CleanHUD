@@ -329,6 +329,9 @@ void HUDSettings::Load()
     ShowOnThrowableAim = ReadBool(
         path.c_str(), "WeaponAmmo", "ShowOnThrowableAim", false);
 
+    UnifiedWeaponIconScale = ReadBool(
+        path.c_str(), "WeaponAmmo", "UnifiedWeaponIconScale", true);
+
     ShowHiddenWeaponIcons = ReadBool(
         path.c_str(), "SpecialIcons", "ShowHiddenWeaponIcons", false);
 
@@ -445,6 +448,7 @@ bool HUDSettings::Save() const
     success = putBool("WeaponAmmo", "ShowOnFootAim", ShowOnFootAim) && success;
     success = putBool("WeaponAmmo", "ShowOnThrowableAim", ShowOnThrowableAim) && success;
     success = putBool("WeaponAmmo", "ShowOnVehicleLook", ShowOnVehicleLook) && success;
+    success = putBool("WeaponAmmo", "UnifiedWeaponIconScale", UnifiedWeaponIconScale) && success;
     success = putBool("SpecialIcons", "ShowHiddenWeaponIcons", ShowHiddenWeaponIcons) && success;
     success = putFloat("SpecialIcons", "JetpackIconOffsetX", JetpackIconOffsetX) && success;
     success = putFloat("SpecialIcons", "JetpackIconOffsetY", JetpackIconOffsetY) && success;
