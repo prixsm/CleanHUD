@@ -1408,8 +1408,17 @@ bool HUDManager::ShouldDrawJetpackIcon() const
 
 bool HUDManager::ShouldSuppressNativeFist() const
 {
-    // The cellphone replaces the fist icon while it is held.
     return ShouldDrawCellphoneIcon();
+}
+
+bool HUDManager::ShouldSuppressNativeKnuckles() const
+{
+    // Leave ordinary firearm icons alone during a phone task. Only
+    // suppress the unarmed-family knuckle model behind the cellphone.
+    if (!ShouldDrawCellphoneIcon() || !mPlayer)
+        return false;
+    const CWeapon* weapon = mPlayer->GetWeapon();
+    return weapon && weapon->m_eWeaponType == WEAPONTYPE_BRASSKNUCKLE;
 }
 
 int HUDManager::GetCustomWeaponIconModel() const
