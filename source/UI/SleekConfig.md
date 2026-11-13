@@ -68,7 +68,7 @@ duplicate their rendering or add its own preset storage.
 Update SleekConfig to **1.1.0 or newer** and keep only one copy of its
 ASI active. In F10, choose CleanHUD and use **Presets** to save a named
 configuration or load it during gameplay. Existing registered setting IDs
-are unchanged, so presets can include all 34 CleanHUD controls.
+are unchanged, so presets can include all 36 CleanHUD controls.
 
 For exact spacing edits: SleekConfig's new sliders follow the mouse,
 Shift offers fine adjustments, and Ctrl+click or double-click lets you
@@ -170,6 +170,35 @@ identify standalone CLEO-attached skateboard props or independent
 scripted renderers** that do not update GTA's held weapon model.
 Missing models/textures are ignored. All toggles default off.
 
+### Jetpack, phone and scaling follow-up
+
+The jetpack visibility clock now starts **once on equip**. The icon
+shows for `DurationMs` and uses `FadeInMs`/`FadeOutMs` independently
+of the ordinary weapon icon. Selecting `JetpackLikeVehicleNames=1`
+instead follows the native **vehicle-name** timings: fade in for 1000 ms,
+remain until 3000 ms from equip, and fade out for 1000 ms (4000 ms
+total). Neither mode refreshes the clock on each frame of flight.
+
+Pressing **Exit Vehicle** while the jetpack is equipped removes the
+jetpack icon immediately, without a fade or residual visibility timer.
+It stays hidden until another actual equip. Phone-use tasks remain
+continuously visible while active and fade normally afterward. When
+the phone or the centered jetpack occupies the fist slot, the native
+fist sprite is suppressed so it does not overlap.
+
+`JetpackIconOffsetX` is an additional horizontal position adjustment
+in virtual HUD units (default 0.00). With `ShowJetpackBesideWeapon=0`,
+the jetpack's left edge starts at the weapon icon's left edge.
+With side-by-side enabled, it starts to the left of the weapon icon,
+including the original small gap. A positive offset moves it right.
+
+Additional icons now take their **size from the actual native icon
+draw call**, rather than guessing a fixed scaling factor. This follows
+both MixSets `WeaponIconScaleFix` and WidescreenFix's
+`ProportionalWeaponIcon`, including their compounded effect if both
+are installed. Native weapon hooks and WeaponIconsTXD texture lookup
+remain intact.
+
 The icon renderer checks the `weaponicons` TXD slot used by
 [WeaponIconsTXD](https://github.com/JuniorDjjr/WeaponIconsTXD) first,
 then the original model TXD. It does not patch WeaponIconsTXD's two
@@ -178,7 +207,7 @@ in one of those dictionaries; no new image assets are bundled.
 
 ## Expanded layout range and visibility cap
 
-All 15 advanced spacing/offset controls accept -16384.00 through
+All 16 advanced spacing/offset controls accept -16384.00 through
 +16384.00 **virtual layout units**; this is deliberately generous
 for extreme screen resolutions rather than an actual hardware limit.
 This applies both to SleekConfig and the INI reader. Use Shift or
