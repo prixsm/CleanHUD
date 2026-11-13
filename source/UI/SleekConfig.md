@@ -68,12 +68,17 @@ duplicate their rendering or add its own preset storage.
 Update SleekConfig to **1.1.0 or newer** and keep only one copy of its
 ASI active. In F10, choose CleanHUD and use **Presets** to save a named
 configuration or load it during gameplay. Existing registered setting IDs
-that remain registered are unchanged; the editor now exposes 35 controls.
+that remain registered are unchanged, and the new icon-scale toggle
+brings the editor to 36 controls.
 
 For exact spacing edits: SleekConfig's new sliders follow the mouse,
 Shift offers fine adjustments, and Ctrl+click or double-click lets you
-enter a number. CleanHUD registers each spacing slider with a **0.01**
-step, so the value is displayed and snapped to two decimal places.
+enter a number. CleanHUD registers its 17 advanced position/spacing
+sliders with a **0.5** step, matching the practical on-screen movement
+resolution. Older INI values such as 27.25 are rounded to the nearest
+half-step when published to SleekConfig (the INI file is unchanged
+until Save Mod). Older DAT presets with 0.01 increments may need to
+be re-saved at half-step values.
 Save Mod records your selection in CleanHUD.ini and in SleekConfig's
 regular DAT settings. Loading a preset changes the live settings; it
 does not automatically overwrite CleanHUD.ini until you save.
@@ -124,7 +129,7 @@ headers still match upstream. Target: GTA San Andreas PC 1.0 US, Win32.
 - Start without SleekConfig. Game/menu text, loading, TAB, both HUD modes,
   firing and fading behave as before. CleanHUD.ini is loaded.
 - Start with SleekConfig. F10 opens **only** SleekConfig; CleanHUD is listed
-  under Visuals with 35 controls across its pages.
+  under Visuals with 36 controls across its pages.
 - Change each group of sliders/checkboxes, especially Stack/Minimal, the
   four Clock gaps and Status Bar to Weapon. Layout updates during play.
 - Save Mod, exit/restart, verify the modified CleanHUD.ini and
@@ -181,12 +186,16 @@ The jetpack icon starts `DurationMs` once when CJ equips it, using
 `FadeInMs` and `FadeOutMs` as normal. It may fade away even while
 the jetpack remains equipped; equipping it again retriggers the timer.
 Pressing **Exit Vehicle** while jetpacking removes the icon immediately
-and prevents it from reappearing until a new actual equip.
+and prevents the visibility timer from restarting until a new actual
+equip. Its existing alpha fades out for FadeOutMs.
 
 The cellphone icon is held visible during the active phone-use task.
-Once the phone-out/unequip animation begins, its icon is removed
-**immediately**, with no lingering duration or fade. While the phone
-is held, the ordinary fist/knuckle icon is suppressed.
+Once the phone-out/unequip animation begins, CleanHUD ends the
+visibility timer but keeps its icon drawn through **FadeOutMs**.
+The same applies when dropping the jetpack with Exit Vehicle.
+Both stop their visibility lifetime immediately, then fade smoothly.
+The ordinary fist/knuckle icon remains suppressed while the
+cellphone icon has visible alpha.
 
 The jetpack icon is anchored to the left of the weapon slot at
 `JetpackIconOffsetX=0`, `JetpackIconOffsetY=0`, with a small gap.
@@ -194,14 +203,26 @@ Positive X moves right, positive Y moves down. Both use independent
 virtual HUD units (screen-width/1920 and screen-height/1080), and work
 with Stack as well as Minimal HUD mode.
 
-Additional icons take their size from GTA's actual native sprite
-rectangle after MixSets `WeaponIconScaleFix` and/or WidescreenFix's
-`ProportionalWeaponIcon` adjustments. The last validated dimensions
-and anchor correction are retained across frames when GTA doesn't
-issue a normal weapon-icon sprite draw. A change of screen resolution
-invalidates the cached pixel dimensions until another valid draw.
-This deliberately follows even the compounded scaling from both mods
-instead of trying to correct them.
+With `UnifiedWeaponIconScale=1` (the default), CleanHUD takes final
+ownership of **both native and supplemental weapon-icon geometry**.
+At the fist and textured-weapon sprite draw calls it replaces their
+dimensions with the same deterministic, resolution-derived size,
+regardless of whether MixSets `WeaponIconScaleFix`, WidescreenFix's
+`ProportionalWeaponIcon`, both, or neither have changed earlier
+calculations. This follows the legacy WidescreenFix correction in
+which the original reference icon height (58 units) is divided by
+1.125; the width stays 47 units. Both use CleanHUD's vertical
+resolution reference of 480 units, matching Weapon/Ammo X placement.
+Consequently MixSets and WSF no longer create different perceived
+weapon-to-ammo gaps.
+
+CleanHUD deliberately **does not probe other ASIs' installation state
+or rewrite their injected patches**. Normalizing final draw arguments
+avoids fragile runtime mod detection and wins regardless of load order.
+Switch off `UnifiedWeaponIconScale` to return ownership of native
+weapon-icon dimensions to the game and any other mods. In that
+legacy mode, supplemental icons use the last measured sprite
+rectangle, invalidated on screen-resolution changes.
 
 SleekConfig groups all three Weapon/Ammo offsets together, followed by
 one `Jetpack Position` group containing both X and Y sliders. This
@@ -225,12 +246,8 @@ direct numeric entry for precise adjustments when the range is large.
 both SleekConfig and INI loading. Existing longer values are clamped
 on load. FadeInMs/FadeOutMs retain their 0..2000 ranges.
 
-SleekConfig's v1 registry validates `SC_FLOAT` against a 0.01 step
-using a double calculation even though the public `ScValue.real`
-is a float. Some values generated by the slider can therefore fail
-the step check and show "Value does not match this option's limits or
-step." A failed edit does not reach CleanHUD's on_change callback,
-even though preceding accepted edits and saves work. This is an
-**upstream SleekConfig precision issue**. We retain 0.01 precision
-rather than degrading to quarter-unit steps solely to suppress it.
-
+SleekConfig registers a **0.5** increment for each of the 17 advanced
+float sliders. This avoids the previous upstream 0.01-step float32
+validation issue. Direct INI parsing and saving still accept two-decimal
+positions, but presets containing values that aren't multiples of 0.5
+may need to be re-saved or cleared.
