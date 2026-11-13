@@ -127,11 +127,9 @@ namespace
         if (*end)
             return fallback;
 
-        // Allow fine-tuning without accepting pathological
-        // spacings that would send the HUD offscreen.
-        // Generous virtual-layout bound, suitable for extreme
-        // resolutions while preventing pathological arithmetic.
-        return std::clamp(value, -1000.0f, 1000.0f);
+        // Displayed HUD coordinates move at whole virtual units.
+        // Normalize legacy fractions and bound the usable layout range.
+        return std::round(std::clamp(value, -1500.0f, 1500.0f));
     }
 
     static bool ReadBool(
@@ -329,9 +327,6 @@ void HUDSettings::Load()
     ShowOnThrowableAim = ReadBool(
         path.c_str(), "WeaponAmmo", "ShowOnThrowableAim", false);
 
-    UnifiedWeaponIconScale = ReadBool(
-        path.c_str(), "WeaponAmmo", "UnifiedWeaponIconScale", true);
-
     ShowHiddenWeaponIcons = ReadBool(
         path.c_str(), "SpecialIcons", "ShowHiddenWeaponIcons", false);
 
@@ -419,11 +414,13 @@ bool HUDSettings::Save() const
     const auto putFloat = [&put](
         const char* section, const char* key, float value)
     {
-        // Decimal precision matches SleekConfig's 0.01 spacing step.
+        // Always save a single decimal (e.g. 25.0) even though
+        // positions advance in whole virtual layout units.
         char number[64] = {};
         const auto result = std::to_chars(
             number, number + sizeof(number) - 1,
-            value, std::chars_format::fixed, 2);
+            std::round(std::clamp(value, -1500.0f, 1500.0f)),
+            std::chars_format::fixed, 1);
 
         if (result.ec != std::errc{})
             return false;
@@ -448,7 +445,6 @@ bool HUDSettings::Save() const
     success = putBool("WeaponAmmo", "ShowOnFootAim", ShowOnFootAim) && success;
     success = putBool("WeaponAmmo", "ShowOnThrowableAim", ShowOnThrowableAim) && success;
     success = putBool("WeaponAmmo", "ShowOnVehicleLook", ShowOnVehicleLook) && success;
-    success = putBool("WeaponAmmo", "UnifiedWeaponIconScale", UnifiedWeaponIconScale) && success;
     success = putBool("SpecialIcons", "ShowHiddenWeaponIcons", ShowHiddenWeaponIcons) && success;
     success = putFloat("SpecialIcons", "JetpackIconOffsetX", JetpackIconOffsetX) && success;
     success = putFloat("SpecialIcons", "JetpackIconOffsetY", JetpackIconOffsetY) && success;
@@ -472,6 +468,12 @@ bool HUDSettings::Save() const
     success = putFloat("WeaponAmmoLayout", "WeaponToAmmoVerticalOffset", WeaponToAmmoVerticalOffset) && success;
 
     if (!success)
+        return false;
+
+    // Clean up the old setting in existing user INIs on Save Mod.
+    // It no longer controls any native or supplemental icon scaling.
+    if (!WritePrivateProfileStringA(
+        "WeaponAmmo", "UnifiedWeaponIconScale", nullptr, path.c_str()))
         return false;
 
     // A profile-cache flush can return FALSE (zero) by design even on
