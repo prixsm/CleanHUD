@@ -68,7 +68,7 @@ duplicate their rendering or add its own preset storage.
 Update SleekConfig to **1.1.0 or newer** and keep only one copy of its
 ASI active. In F10, choose CleanHUD and use **Presets** to save a named
 configuration or load it during gameplay. Existing registered setting IDs
-are unchanged, so presets can include all 32 CleanHUD controls.
+are unchanged, so presets can include all 35 CleanHUD controls.
 
 For exact spacing edits: SleekConfig's new sliders follow the mouse,
 Shift offers fine adjustments, and Ctrl+click or double-click lets you
@@ -132,7 +132,7 @@ headers still match upstream. Target: GTA San Andreas PC 1.0 US, Win32.
 - Reload/Restore Saved and Defaults behavior, including the DAT precedence
   documented above.
 - Verify float values such as 27.5 and 0.25 can be edited without rounding
-  to integer values; fade/duration ranges accept 0 to 2000/60000.
+  to integer values; fade/duration ranges accept 0 to 2000/10000.
 - Test with other SleekConfig-enabled mods: there should be one shared F10
   panel, no duplicate D3D9 hook and no stuck mouse or player controls.
 - Verify New Game/Load Game startup (no HUD flash), main-menu labels,
@@ -146,36 +146,45 @@ These replace the ineffective `WeaponSpacing`, `AmmoSpacing`, and
 `HealthSpacing` fields. SleekConfig changes preview the currently drawable
 Weapon and Ammo. Minimal mode retains GTA's native positions.
 
-## Optional cellphone, jetpack and modded weapon icons
+## Optional hidden and custom weapon icons
 
-The `[SpecialIcons]` settings are **off by default**. When enabled,
-CleanHUD uses GTA's existing 47x58 weapon-icon geometry and the existing
-Weapon visibility timer/fade. The icon renderer first searches the
-`weaponicons` TXD slot (if installed by
-[WeaponIconsTXD](https://github.com/JuniorDjjr/WeaponIconsTXD)),
-then falls back to the original weapon model's TXD. Missing textures
-are silently ignored.
+The `[SpecialIcons]` section now uses a **single master toggle**:
+`ShowHiddenWeaponIcons=1` enables cellphone, jetpack and custom unused
+weapon icons. `ShowJetpackBesideWeapon=1` is a separate placement option;
+when enabled alongside the master toggle, the jetpack draws **to the
+left of the currently equipped weapon**. With it disabled, the jetpack
+can replace the fist icon while unarmed but never obscures a firearm.
 
-- `ShowCellphoneIcon=1`: during GTA SA's phone-use task, draw the
-  cellphone model's ICON texture over the weapon position. This does
-  not invent a new weapon type or equip the cellphone.
-- `ShowJetpackIcon=1`: while using a jetpack, draw the jetpack model's
-  ICON texture to the **left** of the existing Weapon icon. It can
-  coexist with firearms; the original weapon draw stays untouched.
-- `ShowUnusedWeaponIcons=1`: while a compatible custom mod equips
-  GTA's unused weapon type (47), use `UnusedWeaponModelId` as an
-  extra icon fallback. For skateboard or other mods, enter the
-  **numeric model ID registered by that particular mod**. Vanilla
-  GTA SA does not define a skateboard weapon or skateboard model ID,
-  so a guessed numeric default would be unsafe.
+`UnusedWeaponModelId` remains an optional numeric model ID supplied
+by a custom mod that equips GTA's unused weapon type (47). A missing
+model or texture is safely ignored; there is no vanilla skateboard
+weapon/model ID. All toggles default off, and the native game HUD is
+unchanged when they are off.
 
-All four controls appear under **Special Icons** in SleekConfig. They
-update live and save to `CleanHUD.ini`. Extra icons render only in
-initialized gameplay and use captured native positions for Minimal and
-TAB, or CleanHUD positions for Stack. No new memory patches/hook
-addresses are introduced.
+The icon renderer checks the `weaponicons` TXD slot used by
+[WeaponIconsTXD](https://github.com/JuniorDjjr/WeaponIconsTXD) first,
+then the original model TXD. It does not patch WeaponIconsTXD's two
+lookup calls. Icons appear only if their model has an `ICON` texture
+in one of those dictionaries; no new image assets are bundled.
 
-**Asset requirement:** The selected model must have an `ICON` texture
-in the model TXD or in `weaponicons.txd`. The code does not package
-new copyrighted icon art. If neither dictionary has the texture,
-there is intentionally no extra icon.
+## Expanded layout range and visibility cap
+
+All 15 advanced spacing/offset controls accept -16384.00 through
++16384.00 **virtual layout units**; this is deliberately generous
+for extreme screen resolutions rather than an actual hardware limit.
+This applies both to SleekConfig and the INI reader. Use Shift or
+direct numeric entry for precise adjustments when the range is large.
+
+`DurationMs` is limited to 0..10000 milliseconds (10 seconds) in
+both SleekConfig and INI loading. Existing longer values are clamped
+on load. FadeInMs/FadeOutMs retain their 0..2000 ranges.
+
+SleekConfig's v1 registry validates `SC_FLOAT` against a 0.01 step
+using a double calculation even though the public `ScValue.real`
+is a float. Some values generated by the slider can therefore fail
+the step check and show "Value does not match this option's limits or
+step." A failed edit does not reach CleanHUD's on_change callback,
+even though preceding accepted edits and saves work. This is an
+**upstream SleekConfig precision issue**. We retain 0.01 precision
+rather than degrading to quarter-unit steps solely to suppress it.
+

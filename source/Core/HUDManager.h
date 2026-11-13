@@ -33,6 +33,8 @@ public:
     bool IsPlayerHUDInitialized() const;
     bool ShouldDrawCellphoneIcon() const;
     bool ShouldDrawJetpackIcon() const;
+    bool ShouldDrawJetpackBesideWeapon() const;
+    bool ShouldDrawJetpackAsWeaponIcon() const;
     int GetUnusedWeaponIconModel() const;
     bool IsUsingVanillaLayout() const;
     bool ShouldDisplayAmmo() const;

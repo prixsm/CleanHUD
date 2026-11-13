@@ -144,11 +144,17 @@ namespace
                 static_cast<float>(p.Y),
                 iconWidth, iconHeight, p.Alpha);
 
-        // Jetpack can coexist with any gun. Keep the gun's original
-        // icon untouched and draw the jetpack on its left.
-        if (manager.ShouldDrawJetpackIcon())
+        // Jetpack can coexist with a firearm, but its icon is shown
+        // beside the gun only when explicitly requested. Otherwise,
+        // restore it in the usual icon slot when the player is unarmed.
+        if (manager.ShouldDrawJetpackBesideWeapon())
             DrawModelIcon(MODEL_JETPACK,
                 static_cast<float>(p.X) - iconWidth - 8.0f * scale,
+                static_cast<float>(p.Y),
+                iconWidth, iconHeight, p.Alpha);
+        else if (manager.ShouldDrawJetpackAsWeaponIcon())
+            DrawModelIcon(MODEL_JETPACK,
+                static_cast<float>(p.X),
                 static_cast<float>(p.Y),
                 iconWidth, iconHeight, p.Alpha);
     }

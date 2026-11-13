@@ -1374,21 +1374,39 @@ void HUDManager::PreviewSpacingGroup(HUDSpacingPreviewGroup group)
 
 bool HUDManager::ShouldDrawCellphoneIcon() const
 {
-    return HUDSettings::Get().ShowCellphoneIcon &&
+    return HUDSettings::Get().ShowHiddenWeaponIcons &&
         mSessionInitialized && mCellphoneIconTimer.Visible();
 }
 
 bool HUDManager::ShouldDrawJetpackIcon() const
 {
-    return HUDSettings::Get().ShowJetpackIcon &&
+    return HUDSettings::Get().ShowHiddenWeaponIcons &&
         mSessionInitialized && mJetpackIconTimer.Visible();
+}
+
+bool HUDManager::ShouldDrawJetpackBesideWeapon() const
+{
+    return ShouldDrawJetpackIcon() &&
+        HUDSettings::Get().ShowJetpackBesideWeapon;
+}
+
+bool HUDManager::ShouldDrawJetpackAsWeaponIcon() const
+{
+    // Never cover an equipped firearm with the jetpack icon.
+    // Side-by-side rendering is separately opt-in.
+    if (!ShouldDrawJetpackIcon() ||
+        HUDSettings::Get().ShowJetpackBesideWeapon || !mPlayer)
+        return false;
+
+    const CWeapon* weapon = mPlayer->GetWeapon();
+    return weapon && weapon->m_eWeaponType == WEAPONTYPE_UNARMED;
 }
 
 int HUDManager::GetUnusedWeaponIconModel() const
 {
     const auto& settings = HUDSettings::Get();
 
-    if (!settings.ShowUnusedWeaponIcons ||
+    if (!settings.ShowHiddenWeaponIcons ||
         !mSessionInitialized || !mPlayer ||
         !settings.UnusedWeaponModelId)
     {
@@ -1413,12 +1431,12 @@ void HUDManager::UpdateSpecialIcons()
 
     CPedIntelligence* intelligence = mPlayer->m_pIntelligence;
 
-    const bool jetpackActive = settings.ShowJetpackIcon &&
+    const bool jetpackActive = settings.ShowHiddenWeaponIcons &&
         intelligence->GetTaskJetPack() != nullptr;
 
     // The cellphone is a scripted pedestrian task, not a vanilla
     // active weapon type. A phone icon can be requested independently.
-    const bool cellphoneActive = settings.ShowCellphoneIcon &&
+    const bool cellphoneActive = settings.ShowHiddenWeaponIcons &&
         (intelligence->FindTaskByType(TASK_COMPLEX_USE_MOBILE_PHONE) ||
          intelligence->FindTaskByType(TASK_SIMPLE_PHONE_TALK) ||
          intelligence->FindTaskByType(TASK_SIMPLE_PHONE_IN) ||
@@ -1429,7 +1447,7 @@ void HUDManager::UpdateSpecialIcons()
         mJetpackIconTimer.ShowFor(mVisibleTime);
         mWeaponIcon.ShowFor(mVisibleTime);
     }
-    else if (!settings.ShowJetpackIcon)
+    else if (!settings.ShowHiddenWeaponIcons)
     {
         mJetpackIconTimer.Reset();
     }
@@ -1439,7 +1457,7 @@ void HUDManager::UpdateSpecialIcons()
         mCellphoneIconTimer.ShowFor(mVisibleTime);
         mWeaponIcon.ShowFor(mVisibleTime);
     }
-    else if (!settings.ShowCellphoneIcon)
+    else if (!settings.ShowHiddenWeaponIcons)
     {
         mCellphoneIconTimer.Reset();
     }

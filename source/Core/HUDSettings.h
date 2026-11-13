@@ -44,10 +44,10 @@ public:
     bool ShowOnVehicleLook = false;
     bool ShowOnThrowableAim = false;
 
-    // Optional game/mod equipment icons. Off for the original HUD.
-    bool ShowCellphoneIcon = false;
-    bool ShowJetpackIcon = false;
-    bool ShowUnusedWeaponIcons = false;
+    // One switch restores normally hidden equipment/model icons.
+    // A separate jetpack placement option is useful when carrying a gun.
+    bool ShowHiddenWeaponIcons = false;
+    bool ShowJetpackBesideWeapon = false;
     // Model supplied by a custom weapon mod (e.g. a skateboard mod).
     // 0 disables the generic unused-weapon icon fallback.
     std::uint32_t UnusedWeaponModelId = 0;
