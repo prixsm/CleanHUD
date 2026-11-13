@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <cstring>
 #include <limits>
 
 #include <plugin.h>
@@ -18,6 +19,7 @@
 
 #include "WeaponRenderHook.h"
 #include "../../Core/HUDManager.h"
+#include "../../Core/HUDSettings.h"
 #include "../HUDRenderer.h"
 
 namespace
@@ -32,13 +34,21 @@ namespace
         static SafetyHookMid hook;
         return hook;
     }
+    SafetyHookMid& WeaponFistSpriteHookStorage()
+    {
+        static SafetyHookMid hook;
+        return hook;
+    }
 
     struct NativeWeaponPosition
     {
-        int X = 0;
-        int Y = 0;
+        float X = 0.0f;
+        float Y = 0.0f;
+        float Width = 0.0f;
+        float Height = 0.0f;
         std::uint8_t Alpha = 0;
         unsigned int Frame = std::numeric_limits<unsigned int>::max();
+        unsigned int SizeFrame = std::numeric_limits<unsigned int>::max();
     };
 
     // Only POD frame data is cached; RenderWare textures and TXD slots
@@ -118,55 +128,73 @@ namespace
         }
 
         const auto& p = gNativeWeaponPosition;
-
+        const float screenWidth = plugin::screen::GetScreenWidth();
         const float screenHeight = plugin::screen::GetScreenHeight();
-        const float scale = screenHeight / 480.0f;
-        const float iconWidth = 47.0f * scale;
-        const float iconHeight = 58.0f * scale;
+
+        // Capture the final native rectangle after any third-party
+        // scaling patches. This naturally includes MixSets, WSF and
+        // even their compounded scaling when both are installed.
+        const bool captured = p.SizeFrame == p.Frame;
+        const float iconWidth = captured
+            ? p.Width : 47.0f * (screenHeight / 480.0f);
+        const float iconHeight = captured
+            ? p.Height : 58.0f * (screenHeight / 480.0f);
 
         HUDManager& manager = HUDManager::Get();
 
-        // Only overlay a model if a mod has attached a different
-        // one from GTA's regular weapon metadata. The native weapon
-        // and WeaponIconsTXD draw paths stay untouched.
         const int customModel = manager.GetCustomWeaponIconModel();
-
         if (customModel > 0)
-            DrawModelIcon(customModel,
-                static_cast<float>(p.X),
-                static_cast<float>(p.Y),
+            DrawModelIcon(customModel, p.X, p.Y,
                 iconWidth, iconHeight, p.Alpha);
 
-        // The cellphone is a scripted task, so render its model
-        // in the weapon position when a phone-use task is active.
         if (manager.ShouldDrawCellphoneIcon())
-            DrawModelIcon(MODEL_CELLPHONE,
-                static_cast<float>(p.X),
-                static_cast<float>(p.Y),
-                iconWidth, iconHeight, p.Alpha);
+            DrawModelIcon(MODEL_CELLPHONE, p.X, p.Y,
+                iconWidth, iconHeight, manager.GetCellphoneIconAlpha());
 
-        // Jetpack can coexist with a firearm, but its icon is shown
-        // beside the gun only when explicitly requested. Otherwise,
-        // restore it in the usual icon slot when the player is unarmed.
+        // Positive X shifts the jetpack to the right of its usual
+        // left edge. Use the same virtual-X scale as the Stack offset.
+        const auto& settings = HUDSettings::Get();
+        const float jetpackOffset =
+            settings.JetpackIconOffsetX * (screenWidth / 1920.0f);
+
         if (manager.ShouldDrawJetpackBesideWeapon())
             DrawModelIcon(MODEL_JETPACK,
-                static_cast<float>(p.X) - iconWidth - 8.0f * scale,
-                static_cast<float>(p.Y),
-                iconWidth, iconHeight, p.Alpha);
+                p.X - iconWidth - 8.0f * (iconWidth / 47.0f) +
+                jetpackOffset, p.Y, iconWidth, iconHeight,
+                manager.GetJetpackIconAlpha());
         else if (manager.ShouldDrawJetpackAsWeaponIcon())
             DrawModelIcon(MODEL_JETPACK,
-                static_cast<float>(p.X),
-                static_cast<float>(p.Y),
-                iconWidth, iconHeight, p.Alpha);
+                p.X + jetpackOffset, p.Y, iconWidth, iconHeight,
+                manager.GetJetpackIconAlpha());
     }
 
     void CaptureWeaponPosition(int x, int y, float alpha)
     {
-        gNativeWeaponPosition.X = x;
-        gNativeWeaponPosition.Y = y;
+        gNativeWeaponPosition.X = static_cast<float>(x);
+        gNativeWeaponPosition.Y = static_cast<float>(y);
         gNativeWeaponPosition.Alpha = static_cast<std::uint8_t>(
             std::clamp(static_cast<int>(std::lround(alpha)), 0, 255));
         gNativeWeaponPosition.Frame = CTimer::m_FrameCounter;
+        gNativeWeaponPosition.SizeFrame =
+            std::numeric_limits<unsigned int>::max();
+    }
+
+    void CaptureWeaponBounds(float left, float top,
+        float width, float height)
+    {
+        if (gNativeWeaponPosition.Frame != CTimer::m_FrameCounter ||
+            !std::isfinite(left) || !std::isfinite(top) ||
+            !std::isfinite(width) || !std::isfinite(height) ||
+            width <= 0.0f || height <= 0.0f)
+        {
+            return;
+        }
+
+        gNativeWeaponPosition.X = left;
+        gNativeWeaponPosition.Y = top;
+        gNativeWeaponPosition.Width = width;
+        gNativeWeaponPosition.Height = height;
+        gNativeWeaponPosition.SizeFrame = CTimer::m_FrameCounter;
     }
 
     constexpr std::uintptr_t WeaponIconStart = 0x58D7D0;
@@ -242,6 +270,28 @@ namespace
         CaptureWeaponPosition(layoutX, layoutY, *alpha);
     }
 
+    static void HookedWeaponFistSprite(SafetyHookContext& ctx)
+    {
+        // Fist uses CSprite2d::Draw(CRect, CRGBA), whereas normal
+        // weapons use CSprite::RenderOneXLUSprite. Capture both paths.
+        auto* stack = reinterpret_cast<std::uintptr_t*>(ctx.esp);
+        if (stack[0] < WeaponIconStart || stack[0] >= WeaponIconEnd)
+            return;
+
+        const auto* rect = reinterpret_cast<const CRect*>(stack[1]);
+        if (rect)
+            CaptureWeaponBounds(rect->left, rect->top,
+                rect->right - rect->left, rect->bottom - rect->top);
+
+        if (HUDManager::Get().ShouldSuppressNativeFist())
+        {
+            // Substitute a transparent color only for the native fist
+            // call; never mutate the game's original color storage.
+            static const CRGBA transparent(255, 255, 255, 0);
+            stack[2] = reinterpret_cast<std::uintptr_t>(&transparent);
+        }
+    }
+
     static void HookedWeaponSpriteAlpha(SafetyHookContext& ctx)
     {
         auto* stack =
@@ -261,6 +311,21 @@ namespace
 
         if (!pos.Valid)
             return;
+
+        // The native weapon sprite supplies its final half-sizes and
+        // center as float arguments. Capture before adjusting alpha.
+        const auto readFloat = [stack](int index)
+        {
+            float value = 0.0f;
+            std::memcpy(&value, &stack[index], sizeof(value));
+            return value;
+        };
+        const float halfWidth = readFloat(4);
+        const float halfHeight = readFloat(5);
+        CaptureWeaponBounds(
+            readFloat(1) - halfWidth,
+            readFloat(2) - halfHeight,
+            2.0f * halfWidth, 2.0f * halfHeight);
 
         const std::uint32_t originalAlpha =
             stack[9];
@@ -291,6 +356,13 @@ void WeaponRenderHook::Install()
                 0x70D000),
             HookedWeaponSpriteAlpha);
 
+    // The unarmed icon uses a different sprite path from normal
+    // weapons. Tap its final rectangle to match WSF/MixSets scaling.
+    SafetyHookMid& fistHook = WeaponFistSpriteHookStorage();
+    fistHook = safetyhook::create_mid(
+        reinterpret_cast<void*>(0x728350),
+        HookedWeaponFistSprite);
+
     // Draw after the game's HUD but before the screen-fade stage.
     // No interception of WeaponIconsTXD's calls at
     // 0x58D84B / 0x58E895, or of its TXD loading.
@@ -302,6 +374,7 @@ void WeaponRenderHook::Install()
 
 void WeaponRenderHook::Remove()
 {
+    WeaponFistSpriteHookStorage().reset();
     WeaponSpriteAlphaHookStorage().reset();
     WeaponHookStorage().reset();
 }
