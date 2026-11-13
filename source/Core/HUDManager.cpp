@@ -1302,6 +1302,32 @@ void HUDManager::PreviewSpacing(
         PreviewSpacingGroup(second);
 }
 
+void HUDManager::PreviewJetpackPosition()
+{
+    const auto& settings = HUDSettings::Get();
+
+    // Do not invent an equipped jetpack or revive one being dropped.
+    // Unlike Stack spacing previews, this also works in Minimal mode.
+    if (!mSessionInitialized || !mPlayer || mNeedsReset ||
+        !settings.ShowHiddenWeaponIcons ||
+        !mPlayer->m_pIntelligence || mJetpackDropped ||
+        !mPlayer->m_pIntelligence->GetTaskJetPack() ||
+        settings.VisibilityMs == 0)
+    {
+        return;
+    }
+
+    // Its normal one-time equip timer may already have elapsed.
+    // An actual X/Y edit temporarily reveals it for positioning;
+    // stopping the edits lets the normal fade-out resume.
+    mJetpackIcon.ShowFor(settings.VisibilityMs);
+
+    // Supplemental icons use the native weapon slot's draw position.
+    // Keep that reference drawable during the preview as well.
+    if (settings.Weapon)
+        mWeaponIcon.ShowFor(settings.VisibilityMs);
+}
+
 void HUDManager::PreviewSpacingGroup(HUDSpacingPreviewGroup group)
 {
     const auto& settings = HUDSettings::Get();
