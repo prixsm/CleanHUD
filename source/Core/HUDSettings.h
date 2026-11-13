@@ -43,9 +43,6 @@ public:
     bool ShowOnFootAim = true;
     bool ShowOnVehicleLook = false;
     bool ShowOnThrowableAim = false;
-    // Default-on deterministic WSF-style geometry for all native and
-    // supplemental weapon icons, independent of other ASI patch order.
-    bool UnifiedWeaponIconScale = true;
 
     // Restores normally hidden equipment/model icons.
     bool ShowHiddenWeaponIcons = false;

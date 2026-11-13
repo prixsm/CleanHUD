@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <cstring>
 #include <cmath>
+#include <algorithm>
 
 #include <windows.h>
 #include <sleekconfig.hpp>
@@ -65,7 +66,6 @@ namespace
         { "show_on_foot_aim", "Show on foot aim", "Weapon & Ammo", "Aim controls", &HUDSettings::ShowOnFootAim, true },
         { "show_on_throwable_aim", "Show on throwable aim", "Weapon & Ammo", "Aim controls", &HUDSettings::ShowOnThrowableAim, false },
         { "show_on_vehicle_look", "Show on vehicle look", "Weapon & Ammo", "Aim controls", &HUDSettings::ShowOnVehicleLook, false },
-        { "unified_weapon_icon_scale", "Unify weapon icon scale (WSF-style)", "Weapon & Ammo", "Icon scaling", &HUDSettings::UnifiedWeaponIconScale, true },
         { "show_hidden_weapon_icons", "Show hidden/custom weapon icons", "Special Icons", "Equipment", &HUDSettings::ShowHiddenWeaponIcons, false }
     };
 
@@ -169,11 +169,10 @@ namespace
         {
             value = {};
             value.type = SC_FLOAT;
-            // Old INIs/DAT presets may contain hundredth-unit values
-            // from SleekConfig 1.1. Publish the closest valid half-step
-            // so the registry does not reject the entire mod on attach.
-            value.real = std::round((settings.*(entry.Field)) * 2.0f)
-                * 0.5f;
+            // INI values from older releases may use fractional steps.
+            // Publish whole units so the registry accepts step=1.0.
+            value.real = std::round(std::clamp(
+                settings.*(entry.Field), -1500.0f, 1500.0f));
 
             if (gApi->publish_value(gMod, entry.Id, &value) != SC_OK)
                 return false;
@@ -318,10 +317,11 @@ namespace
                 entry.Id, entry.Label, "Advanced Layout",
                 entry.Group, SC_FLOAT);
 
-            // These coordinates effectively move the rendered HUD
-            // at half-unit precision. Match the UI increments to that.
-            setting.minimum = -1000.0;
-            setting.maximum = 1000.0;
+            // The rendered layout moves at whole-unit increments.
+            // SleekConfig 1.1 determines numeric formatting from
+            // step (1.0 is displayed as an integer in its UI).
+            setting.minimum = -1500.0;
+            setting.maximum = 1500.0;
             setting.step = 1.0;
             setting.default_value.real = entry.Default;
 
