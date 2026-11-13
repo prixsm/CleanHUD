@@ -332,14 +332,11 @@ void HUDSettings::Load()
     ShowHiddenWeaponIcons = ReadBool(
         path.c_str(), "SpecialIcons", "ShowHiddenWeaponIcons", false);
 
-    ShowJetpackBesideWeapon = ReadBool(
-        path.c_str(), "SpecialIcons", "ShowJetpackBesideWeapon", false);
-
-    JetpackLikeVehicleNames = ReadBool(
-        path.c_str(), "SpecialIcons", "JetpackLikeVehicleNames", false);
-
     JetpackIconOffsetX = ReadFloat(
         path.c_str(), "SpecialIcons", "JetpackIconOffsetX", 0.0f);
+
+    JetpackIconOffsetY = ReadFloat(
+        path.c_str(), "SpecialIcons", "JetpackIconOffsetY", 0.0f);
 
     ClockToMoneySpacing = ReadFloat(
         path.c_str(), "Spacing", "ClockToMoneySpacing", 25.0f);
@@ -449,9 +446,8 @@ bool HUDSettings::Save() const
     success = putBool("WeaponAmmo", "ShowOnThrowableAim", ShowOnThrowableAim) && success;
     success = putBool("WeaponAmmo", "ShowOnVehicleLook", ShowOnVehicleLook) && success;
     success = putBool("SpecialIcons", "ShowHiddenWeaponIcons", ShowHiddenWeaponIcons) && success;
-    success = putBool("SpecialIcons", "ShowJetpackBesideWeapon", ShowJetpackBesideWeapon) && success;
-    success = putBool("SpecialIcons", "JetpackLikeVehicleNames", JetpackLikeVehicleNames) && success;
     success = putFloat("SpecialIcons", "JetpackIconOffsetX", JetpackIconOffsetX) && success;
+    success = putFloat("SpecialIcons", "JetpackIconOffsetY", JetpackIconOffsetY) && success;
     success = putInt("Visibility", "FadeInMs", FadeInMs) && success;
     success = putInt("Visibility", "FadeOutMs", FadeOutMs) && success;
     success = putInt("Visibility", "DurationMs", VisibilityMs) && success;
