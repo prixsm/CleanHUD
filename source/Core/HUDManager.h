@@ -32,6 +32,9 @@ public:
     bool IsInitialHealthTrackingBlocked() const;
     bool IsPlayerHUDInitialized() const;
     bool ShouldDrawCellphoneIcon() const;
+    std::uint8_t GetCellphoneIconAlpha() const;
+    std::uint8_t GetJetpackIconAlpha() const;
+    bool ShouldSuppressNativeFist() const;
     bool ShouldDrawJetpackIcon() const;
     bool ShouldDrawJetpackBesideWeapon() const;
     bool ShouldDrawJetpackAsWeaponIcon() const;
@@ -92,8 +95,10 @@ private:
     // Only used to stop AlwaysShowClock=0 from hiding a preview
     // before its ordinary mClock.ShowFor() timer expires.
     VisibilityTimer mClockSpacingPreview;
-    VisibilityTimer mCellphoneIconTimer;
-    VisibilityTimer mJetpackIconTimer;
+    // Jetpack is an on-equip event, unlike the continuously held phone task.
+    bool mJetpackWasEquipped = false;
+    bool mJetpackDropped = false;
+    std::uint32_t mJetpackEquippedAt = 0;
 
     // HUD components
     HUDComponent mClock;
@@ -104,6 +109,9 @@ private:
     HUDComponent mWeaponIcon;
     HUDComponent mAmmo;
     HUDComponent mWanted;
+    // Independent alphas; no native draw-call patches for supplemental icons.
+    HUDComponent mCellphoneIcon;
+    HUDComponent mJetpackIcon;
 
     HUDLayout mLayout;
 
