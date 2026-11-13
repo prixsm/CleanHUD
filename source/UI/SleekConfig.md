@@ -24,8 +24,9 @@ Wanted, Status Bars and Individual spacing groups.
 Edits run on the game main thread through SleekConfig's change callback.
 CleanHUD's HUDSettings instance is changed directly, so ordinary HUD updates
 apply the value immediately; **no ASI/game restart** is needed. Editing a
-spacing value does not force hidden HUD elements to be visible: trigger the
-relevant Money/Wanted/status/Weapon/Ammo event to preview placement.
+spacing value does not invent game state; ordinary Stack spacing sliders
+preview their actual neighboring HUD groups. Jetpack position edits preview
+the icon only if CJ has a jetpack equipped.
 
 SleekConfig owns the F10 hotkey and handles player input, keyboard/mouse,
 Direct3D9 render hooks and graphics-device lifecycle. CleanHUD does not
@@ -54,8 +55,10 @@ Other examples:
 - Disabled `[Elements]` are never forced by the preview; GTA/other mods
   keep control over them.
 
-The feature is inactive in Minimal mode (which has no stack gaps) and
-during startup/loading, preventing HUD flashes. It doesn't force a Save:
+Stack spacing previews are inactive in Minimal mode (which has no stack
+gaps). Jetpack X/Y edits are the exception: they preview the equipped
+jetpack in both Stack and Minimal. All previews are disabled during
+startup/loading, preventing HUD flashes. They don't force a Save:
 use **Save Mod** or a SleekConfig preset when satisfied with the layout.
 
 ## SleekConfig 1.1 features
@@ -158,11 +161,19 @@ These replace the ineffective `WeaponSpacing`, `AmmoSpacing`, and
 `HealthSpacing` fields. SleekConfig changes preview the currently drawable
 Weapon and Ammo. Minimal mode retains GTA's native positions.
 
+For `WeaponToAmmoVerticalOffset`, the suggested values are **79.0**
+when using MixSets `WeaponIconScaleFix`, or **87.0** when using
+WidescreenFix `ProportionalWeaponIcon` (the default). These are
+user-tested starting points, not automatic scale-fix detection.
+SleekConfig shows this recommendation in the setting's hover description.
+
 ## Optional hidden and custom weapon icons
 
-The `[SpecialIcons]` section has one master toggle:
-`ShowHiddenWeaponIcons=1` enables cellphone, jetpack and custom/unused
-weapon icons. Both special equipment icons use the same visibility
+The `[SpecialIcons]` section has one master toggle, now **on by
+default**: `ShowHiddenWeaponIcons=1` enables cellphone, jetpack and
+custom/unused weapon icons. Existing saved INI/DAT settings that
+explicitly disabled it remain respected. Both special equipment icons
+use the same visibility
 fading settings as the rest of CleanHUD; jetpack visibility is triggered
 once on equip and is not extended indefinitely while flying.
 
@@ -185,16 +196,17 @@ No numeric model ID, user-maintained mapping or full model-registry
 scan is needed. This detects weapon-model replacements, but **cannot
 identify standalone CLEO-attached skateboard props or independent
 scripted renderers** that do not update GTA's held weapon model.
-Missing models/textures are ignored. All toggles default off.
+Missing models/textures are ignored. Hidden weapon icons default on,
+but can still be disabled in the INI or SleekConfig.
 
 ### Jetpack, phone and scaling behavior
 
 The jetpack icon starts `DurationMs` once when CJ equips it, using
 `FadeInMs` and `FadeOutMs` as normal. It may fade away even while
 the jetpack remains equipped; equipping it again retriggers the timer.
-Pressing **Exit Vehicle** while jetpacking removes the icon immediately
-and prevents the visibility timer from restarting until a new actual
-equip. Its existing alpha fades out for FadeOutMs.
+Pressing **Exit Vehicle** while jetpacking starts the icon's fade-out
+immediately and prevents its visibility timer from restarting until
+a new equip. Its existing alpha fades out for `FadeOutMs`.
 
 The cellphone icon is held visible during the active phone-use task.
 Once the phone-out/unequip animation begins, CleanHUD ends the
@@ -208,7 +220,11 @@ The jetpack icon is anchored to the left of the weapon slot at
 `JetpackIconOffsetX=0`, `JetpackIconOffsetY=0`, with a small gap.
 Positive X moves right, positive Y moves down. Both use independent
 virtual HUD units (screen-width/1920 and screen-height/1080), and work
-with Stack as well as Minimal HUD mode.
+with Stack as well as Minimal HUD mode. Changing either jetpack
+position slider temporarily re-shows the jetpack icon for `DurationMs`
+when the jetpack is actually equipped, even if its original on-equip
+visibility timer expired. No preview occurs when the jetpack has
+been dropped or the icon option is disabled.
 
 CleanHUD no longer has a unified weapon-icon scale feature. Native
 fists and weapons keep their normal render geometry, including changes

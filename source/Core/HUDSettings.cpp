@@ -328,7 +328,7 @@ void HUDSettings::Load()
         path.c_str(), "WeaponAmmo", "ShowOnThrowableAim", false);
 
     ShowHiddenWeaponIcons = ReadBool(
-        path.c_str(), "SpecialIcons", "ShowHiddenWeaponIcons", false);
+        path.c_str(), "SpecialIcons", "ShowHiddenWeaponIcons", true);
 
     JetpackIconOffsetX = ReadFloat(
         path.c_str(), "SpecialIcons", "JetpackIconOffsetX", 0.0f);

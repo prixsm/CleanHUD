@@ -66,7 +66,7 @@ namespace
         { "show_on_foot_aim", "Show on foot aim", "Weapon & Ammo", "Aim controls", &HUDSettings::ShowOnFootAim, true },
         { "show_on_throwable_aim", "Show on throwable aim", "Weapon & Ammo", "Aim controls", &HUDSettings::ShowOnThrowableAim, false },
         { "show_on_vehicle_look", "Show on vehicle look", "Weapon & Ammo", "Aim controls", &HUDSettings::ShowOnVehicleLook, false },
-        { "show_hidden_weapon_icons", "Show hidden/custom weapon icons", "Special Icons", "Equipment", &HUDSettings::ShowHiddenWeaponIcons, false }
+        { "show_hidden_weapon_icons", "Show hidden/custom weapon icons", "Special Icons", "Equipment", &HUDSettings::ShowHiddenWeaponIcons, true }
     };
 
     constexpr IntSetting IntSettings[] = {
@@ -239,12 +239,23 @@ namespace
             const float previous = settings.*(entry.Field);
             settings.*(entry.Field) = proposed->real;
 
-            // Refresh the two adjacent HUD groups while dragging.
-            // SleekConfig callbacks run on GTA's game thread; a
-            // hidden/offline session is ignored by HUDManager.
+            // Special jetpack X/Y preview requires a real equipped
+            // jetpack; unlike stack-spacing previews, it must also
+            // work in Minimal mode. Other sliders keep their normal
+            // adjacent-group previews.
             if (previous != proposed->real)
-                HUDManager::Get().PreviewSpacing(
-                    entry.First, entry.Second);
+            {
+                if (entry.Field == &HUDSettings::JetpackIconOffsetX ||
+                    entry.Field == &HUDSettings::JetpackIconOffsetY)
+                {
+                    HUDManager::Get().PreviewJetpackPosition();
+                }
+                else
+                {
+                    HUDManager::Get().PreviewSpacing(
+                        entry.First, entry.Second);
+                }
+            }
 
             return 1;
         }
@@ -324,6 +335,13 @@ namespace
             setting.maximum = 1500.0;
             setting.step = 1.0;
             setting.default_value.real = entry.Default;
+
+            if (std::strcmp(entry.Id, "weapon_to_ammo_vertical_offset") == 0)
+            {
+                setting.description =
+                    "Recommended: 79.0 for MixSets WeaponIconScaleFix; "
+                    "87.0 for WidescreenFix ProportionalWeaponIcon (default).";
+            }
 
             if (gApi->register_setting(gMod, &setting) != SC_OK)
                 return false;

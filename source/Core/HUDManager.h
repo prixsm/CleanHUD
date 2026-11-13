@@ -52,6 +52,10 @@ public:
         HUDSpacingPreviewGroup first,
         HUDSpacingPreviewGroup second);
 
+    // Preview the currently equipped jetpack during X/Y slider edits,
+    // including Minimal mode where stack spacing previews do not run.
+    void PreviewJetpackPosition();
+
     static HUDManager& Get();
 
 private:
