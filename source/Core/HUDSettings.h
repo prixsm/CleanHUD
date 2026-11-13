@@ -44,8 +44,8 @@ public:
     bool ShowOnVehicleLook = false;
     bool ShowOnThrowableAim = false;
 
-    // Restores normally hidden equipment/model icons.
-    bool ShowHiddenWeaponIcons = false;
+    // Restore normally hidden equipment/model icons by default.
+    bool ShowHiddenWeaponIcons = true;
     // Jetpack is anchored to the left of the weapon icon by default.
     // These two independent virtual-layout offsets allow free placement.
     float JetpackIconOffsetX = 0.0f;
