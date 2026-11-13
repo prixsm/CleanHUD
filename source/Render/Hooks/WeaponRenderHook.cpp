@@ -143,7 +143,7 @@ namespace
         HUDManager& manager = HUDManager::Get();
 
         const int customModel = manager.GetCustomWeaponIconModel();
-        if (customModel > 0)
+        if (customModel > 0 && !manager.ShouldDrawCellphoneIcon())
             DrawModelIcon(customModel, p.X, p.Y,
                 iconWidth, iconHeight, p.Alpha);
 
@@ -333,10 +333,11 @@ namespace
         const std::uint32_t cleanAlpha =
             pos.Alpha;
 
-        stack[9] =
-            originalAlpha *
-            cleanAlpha /
-            255u;
+        // The phone is the on-hand item during phone tasks. This
+        // includes brass knuckles, which use the textured model path
+        // instead of the fist's CSprite2d path.
+        stack[9] = HUDManager::Get().ShouldDrawCellphoneIcon()
+            ? 0u : originalAlpha * cleanAlpha / 255u;
     }
 }
 
