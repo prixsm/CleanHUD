@@ -35,9 +35,8 @@ public:
     std::uint8_t GetCellphoneIconAlpha() const;
     std::uint8_t GetJetpackIconAlpha() const;
     bool ShouldSuppressNativeFist() const;
+    bool ShouldSuppressNativeKnuckles() const;
     bool ShouldDrawJetpackIcon() const;
-    bool ShouldDrawJetpackBesideWeapon() const;
-    bool ShouldDrawJetpackAsWeaponIcon() const;
     int GetCustomWeaponIconModel() const;
     bool IsUsingVanillaLayout() const;
     bool ShouldDisplayAmmo() const;
@@ -98,7 +97,8 @@ private:
     // Jetpack is an on-equip event, unlike the continuously held phone task.
     bool mJetpackWasEquipped = false;
     bool mJetpackDropped = false;
-    std::uint32_t mJetpackEquippedAt = 0;
+    // PHONE_OUT may end before its parent phone task is removed.
+    bool mCellphonePuttingAway = false;
 
     // HUD components
     HUDComponent mClock;

@@ -33,7 +33,7 @@ register duplicate F10/D3D9 hooks.
 
 ## Live spacing previews
 
-Changing any of the 15 Advanced Layout spacing sliders in **Stack mode**
+Changing any of the 15 stack-spacing/Weapon/Ammo layout sliders in **Stack mode**
 temporarily reveals its two neighboring HUD groups for the configured
 `[Visibility] DurationMs` interval. Every new slider adjustment refreshes
 that interval. For example, adjusting **Money to Wanted** previews Money
@@ -68,12 +68,17 @@ duplicate their rendering or add its own preset storage.
 Update SleekConfig to **1.1.0 or newer** and keep only one copy of its
 ASI active. In F10, choose CleanHUD and use **Presets** to save a named
 configuration or load it during gameplay. Existing registered setting IDs
-are unchanged, so presets can include all 36 CleanHUD controls.
+that remain registered are unchanged, and the new icon-scale toggle
+brings the editor to 36 controls.
 
 For exact spacing edits: SleekConfig's new sliders follow the mouse,
 Shift offers fine adjustments, and Ctrl+click or double-click lets you
-enter a number. CleanHUD registers each spacing slider with a **0.01**
-step, so the value is displayed and snapped to two decimal places.
+enter a number. CleanHUD registers its 17 advanced position/spacing
+sliders with a **0.5** step, matching the practical on-screen movement
+resolution. Older INI values such as 27.25 are rounded to the nearest
+half-step when published to SleekConfig (the INI file is unchanged
+until Save Mod). Older DAT presets with 0.01 increments may need to
+be re-saved at half-step values.
 Save Mod records your selection in CleanHUD.ini and in SleekConfig's
 regular DAT settings. Loading a preset changes the live settings; it
 does not automatically overwrite CleanHUD.ini until you save.
@@ -124,7 +129,7 @@ headers still match upstream. Target: GTA San Andreas PC 1.0 US, Win32.
 - Start without SleekConfig. Game/menu text, loading, TAB, both HUD modes,
   firing and fading behave as before. CleanHUD.ini is loaded.
 - Start with SleekConfig. F10 opens **only** SleekConfig; CleanHUD is listed
-  under Visuals with 32 controls across five pages.
+  under Visuals with 36 controls across its pages.
 - Change each group of sliders/checkboxes, especially Stack/Minimal, the
   four Clock gaps and Status Bar to Weapon. Layout updates during play.
 - Save Mod, exit/restart, verify the modified CleanHUD.ini and
@@ -148,12 +153,17 @@ Weapon and Ammo. Minimal mode retains GTA's native positions.
 
 ## Optional hidden and custom weapon icons
 
-The `[SpecialIcons]` section now uses a **single master toggle**:
-`ShowHiddenWeaponIcons=1` enables cellphone, jetpack and custom unused
-weapon icons. `ShowJetpackBesideWeapon=1` is a separate placement option;
-when enabled alongside the master toggle, the jetpack draws **to the
-left of the currently equipped weapon**. With it disabled, the jetpack
-can replace the fist icon while unarmed but never obscures a firearm.
+The `[SpecialIcons]` section has one master toggle:
+`ShowHiddenWeaponIcons=1` enables cellphone, jetpack and custom/unused
+weapon icons. Both special equipment icons use the same visibility
+fading settings as the rest of CleanHUD; jetpack visibility is triggered
+once on equip and is not extended indefinitely while flying.
+
+The jetpack now defaults to a slot left of the weapon icon, regardless
+of which weapon CJ is holding. Its X/Y position can be freely adjusted
+using `JetpackIconOffsetX` and `JetpackIconOffsetY`, rather than a
+side-by-side mode toggle. The former mode and vehicle-name timing
+settings have been retired and are ignored if left in an older INI.
 
 The model of a custom equipped weapon is resolved automatically
 using GTA's `CPed::m_nWeaponModelId`, which identifies the model
@@ -170,34 +180,53 @@ identify standalone CLEO-attached skateboard props or independent
 scripted renderers** that do not update GTA's held weapon model.
 Missing models/textures are ignored. All toggles default off.
 
-### Jetpack, phone and scaling follow-up
+### Jetpack, phone and scaling behavior
 
-The jetpack visibility clock now starts **once on equip**. The icon
-shows for `DurationMs` and uses `FadeInMs`/`FadeOutMs` independently
-of the ordinary weapon icon. Selecting `JetpackLikeVehicleNames=1`
-instead follows the native **vehicle-name** timings: fade in for 1000 ms,
-remain until 3000 ms from equip, and fade out for 1000 ms (4000 ms
-total). Neither mode refreshes the clock on each frame of flight.
+The jetpack icon starts `DurationMs` once when CJ equips it, using
+`FadeInMs` and `FadeOutMs` as normal. It may fade away even while
+the jetpack remains equipped; equipping it again retriggers the timer.
+Pressing **Exit Vehicle** while jetpacking removes the icon immediately
+and prevents the visibility timer from restarting until a new actual
+equip. Its existing alpha fades out for FadeOutMs.
 
-Pressing **Exit Vehicle** while the jetpack is equipped removes the
-jetpack icon immediately, without a fade or residual visibility timer.
-It stays hidden until another actual equip. Phone-use tasks remain
-continuously visible while active and fade normally afterward. When
-the phone or the centered jetpack occupies the fist slot, the native
-fist or brass-knuckle weapon icon is suppressed so it does not overlap.
+The cellphone icon is held visible during the active phone-use task.
+Once the phone-out/unequip animation begins, CleanHUD ends the
+visibility timer but keeps its icon drawn through **FadeOutMs**.
+The same applies when dropping the jetpack with Exit Vehicle.
+Both stop their visibility lifetime immediately, then fade smoothly.
+The ordinary fist/knuckle icon remains suppressed while the
+cellphone icon has visible alpha.
 
-`JetpackIconOffsetX` is an additional horizontal position adjustment
-in virtual HUD units (default 0.00). With `ShowJetpackBesideWeapon=0`,
-the jetpack's left edge starts at the weapon icon's left edge.
-With side-by-side enabled, it starts to the left of the weapon icon,
-including the original small gap. A positive offset moves it right.
+The jetpack icon is anchored to the left of the weapon slot at
+`JetpackIconOffsetX=0`, `JetpackIconOffsetY=0`, with a small gap.
+Positive X moves right, positive Y moves down. Both use independent
+virtual HUD units (screen-width/1920 and screen-height/1080), and work
+with Stack as well as Minimal HUD mode.
 
-Additional icons now take their **size from the actual native icon
-draw call**, rather than guessing a fixed scaling factor. This follows
-both MixSets `WeaponIconScaleFix` and WidescreenFix's
-`ProportionalWeaponIcon`, including their compounded effect if both
-are installed. Native weapon hooks and WeaponIconsTXD texture lookup
-remain intact.
+With `UnifiedWeaponIconScale=1` (the default), CleanHUD takes final
+ownership of **both native and supplemental weapon-icon geometry**.
+At the fist and textured-weapon sprite draw calls it replaces their
+dimensions with the same deterministic, resolution-derived size,
+regardless of whether MixSets `WeaponIconScaleFix`, WidescreenFix's
+`ProportionalWeaponIcon`, both, or neither have changed earlier
+calculations. This follows the legacy WidescreenFix correction in
+which the original reference icon height (58 units) is divided by
+1.125; the width stays 47 units. Both use CleanHUD's vertical
+resolution reference of 480 units, matching Weapon/Ammo X placement.
+Consequently MixSets and WSF no longer create different perceived
+weapon-to-ammo gaps.
+
+CleanHUD deliberately **does not probe other ASIs' installation state
+or rewrite their injected patches**. Normalizing final draw arguments
+avoids fragile runtime mod detection and wins regardless of load order.
+Switch off `UnifiedWeaponIconScale` to return ownership of native
+weapon-icon dimensions to the game and any other mods. In that
+legacy mode, supplemental icons use the last measured sprite
+rectangle, invalidated on screen-resolution changes.
+
+SleekConfig groups all three Weapon/Ammo offsets together, followed by
+one `Jetpack Position` group containing both X and Y sliders. This
+avoids the duplicate Weapon/Ammo heading/ImGui ID collision.
 
 The icon renderer checks the `weaponicons` TXD slot used by
 [WeaponIconsTXD](https://github.com/JuniorDjjr/WeaponIconsTXD) first,
@@ -207,7 +236,7 @@ in one of those dictionaries; no new image assets are bundled.
 
 ## Expanded layout range and visibility cap
 
-All 16 advanced spacing/offset controls accept -16384.00 through
+All 17 advanced spacing/offset controls accept -16384.00 through
 +16384.00 **virtual layout units**; this is deliberately generous
 for extreme screen resolutions rather than an actual hardware limit.
 This applies both to SleekConfig and the INI reader. Use Shift or
@@ -217,12 +246,8 @@ direct numeric entry for precise adjustments when the range is large.
 both SleekConfig and INI loading. Existing longer values are clamped
 on load. FadeInMs/FadeOutMs retain their 0..2000 ranges.
 
-SleekConfig's v1 registry validates `SC_FLOAT` against a 0.01 step
-using a double calculation even though the public `ScValue.real`
-is a float. Some values generated by the slider can therefore fail
-the step check and show "Value does not match this option's limits or
-step." A failed edit does not reach CleanHUD's on_change callback,
-even though preceding accepted edits and saves work. This is an
-**upstream SleekConfig precision issue**. We retain 0.01 precision
-rather than degrading to quarter-unit steps solely to suppress it.
-
+SleekConfig registers a **0.5** increment for each of the 17 advanced
+float sliders. This avoids the previous upstream 0.01-step float32
+validation issue. Direct INI parsing and saving still accept two-decimal
+positions, but presets containing values that aren't multiples of 0.5
+may need to be re-saved or cleared.

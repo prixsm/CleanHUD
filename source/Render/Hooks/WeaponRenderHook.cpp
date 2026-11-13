@@ -44,16 +44,48 @@ namespace
     {
         float X = 0.0f;
         float Y = 0.0f;
+        // Retain the last confirmed native sprite dimensions across
+        // frames when a weapon texture isn't drawn. Dimensions are only
+        // valid at the screen resolution at which they were captured.
         float Width = 0.0f;
         float Height = 0.0f;
+        float CapturedScreenWidth = 0.0f;
+        float CapturedScreenHeight = 0.0f;
+        // Native sprite's offset from the weapon slot anchor (which can
+        // differ when an external mod changes the icon's dimensions).
+        float OffsetX = 0.0f;
+        float OffsetY = 0.0f;
+        float AnchorX = 0.0f;
+        float AnchorY = 0.0f;
         std::uint8_t Alpha = 0;
         unsigned int Frame = std::numeric_limits<unsigned int>::max();
-        unsigned int SizeFrame = std::numeric_limits<unsigned int>::max();
     };
 
     // Only POD frame data is cached; RenderWare textures and TXD slots
     // are resolved afresh to survive game/texture reloads.
     NativeWeaponPosition gNativeWeaponPosition;
+
+    // WSF makes weapon icons proportional by shortening their height
+    // (the three weapon HUD height factors are divided by 1.125).
+    // Apply a deterministic resolution-derived size at the *last*
+    // native sprite draw hook instead of fighting third-party patches.
+    // No ASI load-order probing or executable pointer replacement.
+    struct IconSize
+    {
+        float Width;
+        float Height;
+    };
+
+    IconSize GetUnifiedIconSize()
+    {
+        const float scale = plugin::screen::GetScreenHeight() / 480.0f;
+        return { 47.0f * scale, (58.0f / 1.125f) * scale };
+    }
+
+    void WriteFloatArgument(std::uint32_t* stack, int index, float value)
+    {
+        std::memcpy(&stack[index], &value, sizeof(value));
+    }
 
     RwTexture* FindIconTexture(int modelId)
     {
@@ -131,52 +163,61 @@ namespace
         const float screenWidth = plugin::screen::GetScreenWidth();
         const float screenHeight = plugin::screen::GetScreenHeight();
 
-        // Capture the final native rectangle after any third-party
-        // scaling patches. This naturally includes MixSets, WSF and
-        // even their compounded scaling when both are installed.
-        const bool captured = p.SizeFrame == p.Frame;
-        const float iconWidth = captured
-            ? p.Width : 47.0f * (screenHeight / 480.0f);
-        const float iconHeight = captured
-            ? p.Height : 58.0f * (screenHeight / 480.0f);
+        // Never fall back to vanilla scale merely because no native
+        // sprite happened to be rendered on this particular frame.
+        // Invalidate cached pixels only after an actual resolution change.
+        const bool haveMeasuredScale =
+            p.Width > 0.0f && p.Height > 0.0f &&
+            p.CapturedScreenWidth == screenWidth &&
+            p.CapturedScreenHeight == screenHeight;
+        const bool unified = HUDSettings::Get().UnifiedWeaponIconScale;
+        const IconSize normalized = GetUnifiedIconSize();
+
+        const float iconWidth = unified ? normalized.Width :
+            (haveMeasuredScale ? p.Width :
+                47.0f * (screenHeight / 480.0f));
+        const float iconHeight = unified ? normalized.Height :
+            (haveMeasuredScale ? p.Height :
+                58.0f * (screenHeight / 480.0f));
+        const float iconX = p.AnchorX +
+            ((!unified && haveMeasuredScale) ? p.OffsetX : 0.0f);
+        const float iconY = p.AnchorY +
+            ((!unified && haveMeasuredScale) ? p.OffsetY : 0.0f);
 
         HUDManager& manager = HUDManager::Get();
 
         const int customModel = manager.GetCustomWeaponIconModel();
         if (customModel > 0 && !manager.ShouldDrawCellphoneIcon())
-            DrawModelIcon(customModel, p.X, p.Y,
+            DrawModelIcon(customModel, iconX, iconY,
                 iconWidth, iconHeight, p.Alpha);
 
         if (manager.ShouldDrawCellphoneIcon())
-            DrawModelIcon(MODEL_CELLPHONE, p.X, p.Y,
+            DrawModelIcon(MODEL_CELLPHONE, iconX, iconY,
                 iconWidth, iconHeight, manager.GetCellphoneIconAlpha());
 
-        // Positive X shifts the jetpack to the right of its usual
-        // left edge. Use the same virtual-X scale as the Stack offset.
+        // Independent offsets from the left-side weapon slot. No
+        // mode toggle: players can position the jetpack freely in X/Y.
         const auto& settings = HUDSettings::Get();
-        const float jetpackOffset =
+        const float jetpackX = iconX - iconWidth -
+            8.0f * (iconWidth / 47.0f) +
             settings.JetpackIconOffsetX * (screenWidth / 1920.0f);
+        const float jetpackY = iconY +
+            settings.JetpackIconOffsetY * (screenHeight / 1080.0f);
 
-        if (manager.ShouldDrawJetpackBesideWeapon())
-            DrawModelIcon(MODEL_JETPACK,
-                p.X - iconWidth - 8.0f * (iconWidth / 47.0f) +
-                jetpackOffset, p.Y, iconWidth, iconHeight,
-                manager.GetJetpackIconAlpha());
-        else if (manager.ShouldDrawJetpackAsWeaponIcon())
-            DrawModelIcon(MODEL_JETPACK,
-                p.X + jetpackOffset, p.Y, iconWidth, iconHeight,
-                manager.GetJetpackIconAlpha());
+        if (manager.ShouldDrawJetpackIcon())
+            DrawModelIcon(MODEL_JETPACK, jetpackX, jetpackY,
+                iconWidth, iconHeight, manager.GetJetpackIconAlpha());
     }
 
     void CaptureWeaponPosition(int x, int y, float alpha)
     {
+        gNativeWeaponPosition.AnchorX = static_cast<float>(x);
+        gNativeWeaponPosition.AnchorY = static_cast<float>(y);
         gNativeWeaponPosition.X = static_cast<float>(x);
         gNativeWeaponPosition.Y = static_cast<float>(y);
         gNativeWeaponPosition.Alpha = static_cast<std::uint8_t>(
             std::clamp(static_cast<int>(std::lround(alpha)), 0, 255));
         gNativeWeaponPosition.Frame = CTimer::m_FrameCounter;
-        gNativeWeaponPosition.SizeFrame =
-            std::numeric_limits<unsigned int>::max();
     }
 
     void CaptureWeaponBounds(float left, float top,
@@ -194,7 +235,14 @@ namespace
         gNativeWeaponPosition.Y = top;
         gNativeWeaponPosition.Width = width;
         gNativeWeaponPosition.Height = height;
-        gNativeWeaponPosition.SizeFrame = CTimer::m_FrameCounter;
+        gNativeWeaponPosition.CapturedScreenWidth =
+            plugin::screen::GetScreenWidth();
+        gNativeWeaponPosition.CapturedScreenHeight =
+            plugin::screen::GetScreenHeight();
+        gNativeWeaponPosition.OffsetX =
+            left - gNativeWeaponPosition.AnchorX;
+        gNativeWeaponPosition.OffsetY =
+            top - gNativeWeaponPosition.AnchorY;
     }
 
     constexpr std::uintptr_t WeaponIconStart = 0x58D7D0;
@@ -280,8 +328,28 @@ namespace
 
         const auto* rect = reinterpret_cast<const CRect*>(stack[1]);
         if (rect)
-            CaptureWeaponBounds(rect->left, rect->top,
-                rect->right - rect->left, rect->bottom - rect->top);
+        {
+            if (HUDSettings::Get().UnifiedWeaponIconScale &&
+                gNativeWeaponPosition.Frame == CTimer::m_FrameCounter)
+            {
+                // Replace the argument pointer, never the game's
+                // existing HUD sprite rectangle or texture.
+                static CRect correctedRect;
+                const IconSize unified = GetUnifiedIconSize();
+                const float x = gNativeWeaponPosition.AnchorX;
+                const float y = gNativeWeaponPosition.AnchorY;
+                correctedRect = CRect(x, y,
+                    x + unified.Width, y + unified.Height);
+                stack[1] = reinterpret_cast<std::uintptr_t>(&correctedRect);
+                CaptureWeaponBounds(x, y,
+                    unified.Width, unified.Height);
+            }
+            else
+            {
+                CaptureWeaponBounds(rect->left, rect->top,
+                    rect->right - rect->left, rect->bottom - rect->top);
+            }
+        }
 
         if (HUDManager::Get().ShouldSuppressNativeFist())
         {
@@ -320,11 +388,28 @@ namespace
             std::memcpy(&value, &stack[index], sizeof(value));
             return value;
         };
-        const float halfWidth = readFloat(4);
-        const float halfHeight = readFloat(5);
+        float halfWidth = readFloat(4);
+        float halfHeight = readFloat(5);
+        float centerX = readFloat(1);
+        float centerY = readFloat(2);
+
+        if (HUDSettings::Get().UnifiedWeaponIconScale &&
+            gNativeWeaponPosition.Frame == CTimer::m_FrameCounter)
+        {
+            const IconSize unified = GetUnifiedIconSize();
+            halfWidth = unified.Width * 0.5f;
+            halfHeight = unified.Height * 0.5f;
+            centerX = gNativeWeaponPosition.AnchorX + halfWidth;
+            centerY = gNativeWeaponPosition.AnchorY + halfHeight;
+            WriteFloatArgument(stack, 1, centerX);
+            WriteFloatArgument(stack, 2, centerY);
+            WriteFloatArgument(stack, 4, halfWidth);
+            WriteFloatArgument(stack, 5, halfHeight);
+        }
+
         CaptureWeaponBounds(
-            readFloat(1) - halfWidth,
-            readFloat(2) - halfHeight,
+            centerX - halfWidth,
+            centerY - halfHeight,
             2.0f * halfWidth, 2.0f * halfHeight);
 
         const std::uint32_t originalAlpha =
@@ -333,10 +418,9 @@ namespace
         const std::uint32_t cleanAlpha =
             pos.Alpha;
 
-        // The phone is the on-hand item during phone tasks. This
-        // includes brass knuckles, which use the textured model path
-        // instead of the fist's CSprite2d path.
-        stack[9] = HUDManager::Get().ShouldDrawCellphoneIcon()
+        // The phone suppresses only knuckles on the model-sprite
+        // path, not unrelated firearms that may be in use.
+        stack[9] = HUDManager::Get().ShouldSuppressNativeKnuckles()
             ? 0u : originalAlpha * cleanAlpha / 255u;
     }
 }

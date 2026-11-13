@@ -43,15 +43,16 @@ public:
     bool ShowOnFootAim = true;
     bool ShowOnVehicleLook = false;
     bool ShowOnThrowableAim = false;
+    // Default-on deterministic WSF-style geometry for all native and
+    // supplemental weapon icons, independent of other ASI patch order.
+    bool UnifiedWeaponIconScale = true;
 
-    // One switch restores normally hidden equipment/model icons.
-    // A separate jetpack placement option is useful when carrying a gun.
+    // Restores normally hidden equipment/model icons.
     bool ShowHiddenWeaponIcons = false;
-    bool ShowJetpackBesideWeapon = false;
-    // Emulate GTA's vehicle-name 1s in / 3s total / 1s out cycle.
-    bool JetpackLikeVehicleNames = false;
-    // Extra horizontal shift from the selected jetpack slot's left edge.
+    // Jetpack is anchored to the left of the weapon icon by default.
+    // These two independent virtual-layout offsets allow free placement.
     float JetpackIconOffsetX = 0.0f;
+    float JetpackIconOffsetY = 0.0f;
     // Gap below the Clock, based on the first visible stack group.
     float ClockToMoneySpacing = 25.0f;
     float ClockToWantedSpacing = 25.0f;
