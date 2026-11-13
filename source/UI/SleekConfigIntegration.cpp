@@ -80,21 +80,21 @@ namespace
             HUDSpacingPreviewGroup::Clock, HUDSpacingPreviewGroup::Money },
         { "clock_to_wanted", "Clock to Wanted", "Clock", &HUDSettings::ClockToWantedSpacing, 25.0f,
             HUDSpacingPreviewGroup::Clock, HUDSpacingPreviewGroup::Wanted },
-        { "clock_to_status", "Clock to Status Bar", "Clock", &HUDSettings::ClockToStatusBarSpacing, 22.5f,
+        { "clock_to_status", "Clock to Status Bar", "Clock", &HUDSettings::ClockToStatusBarSpacing, 22.0f,
             HUDSpacingPreviewGroup::Clock, HUDSpacingPreviewGroup::StatusBars },
         { "clock_to_weapon", "Clock to Weapon", "Clock", &HUDSettings::ClockToWeaponSpacing, 30.0f,
             HUDSpacingPreviewGroup::Clock, HUDSpacingPreviewGroup::Weapon },
         { "money_to_wanted", "Money to Wanted", "Money", &HUDSettings::MoneyToWantedSpacing, 25.0f,
             HUDSpacingPreviewGroup::Money, HUDSpacingPreviewGroup::Wanted },
-        { "money_to_status", "Money to Status Bar", "Money", &HUDSettings::MoneyToStatusBarSpacing, 22.5f,
+        { "money_to_status", "Money to Status Bar", "Money", &HUDSettings::MoneyToStatusBarSpacing, 22.0f,
             HUDSpacingPreviewGroup::Money, HUDSpacingPreviewGroup::StatusBars },
         { "money_to_weapon", "Money to Weapon", "Money", &HUDSettings::MoneyToWeaponSpacing, 35.0f,
             HUDSpacingPreviewGroup::Money, HUDSpacingPreviewGroup::Weapon },
-        { "wanted_to_status", "Wanted to Status Bar", "Wanted", &HUDSettings::WantedToStatusBarSpacing, 22.5f,
+        { "wanted_to_status", "Wanted to Status Bar", "Wanted", &HUDSettings::WantedToStatusBarSpacing, 22.0f,
             HUDSpacingPreviewGroup::Wanted, HUDSpacingPreviewGroup::StatusBars },
-        { "wanted_to_weapon", "Wanted to Weapon", "Wanted", &HUDSettings::WantedToWeaponSpacing, 32.5f,
+        { "wanted_to_weapon", "Wanted to Weapon", "Wanted", &HUDSettings::WantedToWeaponSpacing, 32.0f,
             HUDSpacingPreviewGroup::Wanted, HUDSpacingPreviewGroup::Weapon },
-        { "status_to_weapon", "Status Bar to Weapon", "Status Bars", &HUDSettings::StatusBarToWeaponSpacing, 17.5f,
+        { "status_to_weapon", "Status Bar to Weapon", "Status Bars", &HUDSettings::StatusBarToWeaponSpacing, 17.0f,
             HUDSpacingPreviewGroup::StatusBars, HUDSpacingPreviewGroup::Weapon },
         { "armour_spacing", "Armour spacing", "Individual", &HUDSettings::ArmourSpacing, 4.0f,
             HUDSpacingPreviewGroup::Armour, HUDSpacingPreviewGroup::StatusBars },
@@ -320,9 +320,9 @@ namespace
 
             // These coordinates effectively move the rendered HUD
             // at half-unit precision. Match the UI increments to that.
-            setting.minimum = -16384.0;
-            setting.maximum = 16384.0;
-            setting.step = 0.5;
+            setting.minimum = -1000.0;
+            setting.maximum = 1000.0;
+            setting.step = 1.0;
             setting.default_value.real = entry.Default;
 
             if (gApi->register_setting(gMod, &setting) != SC_OK)

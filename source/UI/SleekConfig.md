@@ -236,9 +236,8 @@ in one of those dictionaries; no new image assets are bundled.
 
 ## Expanded layout range and visibility cap
 
-All 17 advanced spacing/offset controls accept -16384.00 through
-+16384.00 **virtual layout units**; this is deliberately generous
-for extreme screen resolutions rather than an actual hardware limit.
+All 17 advanced spacing/offset controls accept -1000.00 through
++1000.00 **virtual layout units**.
 This applies both to SleekConfig and the INI reader. Use Shift or
 direct numeric entry for precise adjustments when the range is large.
 
@@ -246,8 +245,8 @@ direct numeric entry for precise adjustments when the range is large.
 both SleekConfig and INI loading. Existing longer values are clamped
 on load. FadeInMs/FadeOutMs retain their 0..2000 ranges.
 
-SleekConfig registers a **0.5** increment for each of the 17 advanced
+SleekConfig registers a **1.0** increment for each of the 17 advanced
 float sliders. This avoids the previous upstream 0.01-step float32
 validation issue. Direct INI parsing and saving still accept two-decimal
-positions, but presets containing values that aren't multiples of 0.5
+positions, but presets containing values that aren't multiples of 1.0
 may need to be re-saved or cleared.

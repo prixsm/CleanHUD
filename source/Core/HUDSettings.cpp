@@ -131,7 +131,7 @@ namespace
         // spacings that would send the HUD offscreen.
         // Generous virtual-layout bound, suitable for extreme
         // resolutions while preventing pathological arithmetic.
-        return std::clamp(value, -16384.0f, 16384.0f);
+        return std::clamp(value, -1000.0f, 1000.0f);
     }
 
     static bool ReadBool(
@@ -348,7 +348,7 @@ void HUDSettings::Load()
         path.c_str(), "Spacing", "ClockToWantedSpacing", 25.0f);
 
     ClockToStatusBarSpacing = ReadFloat(
-        path.c_str(), "Spacing", "ClockToStatusBarSpacing", 22.5f);
+        path.c_str(), "Spacing", "ClockToStatusBarSpacing", 22.0f);
 
     ClockToWeaponSpacing = ReadFloat(
         path.c_str(), "Spacing", "ClockToWeaponSpacing", 30.0f);
@@ -357,19 +357,19 @@ void HUDSettings::Load()
         path.c_str(), "Spacing", "MoneyToWantedSpacing", 25.0f);
 
     MoneyToStatusBarSpacing = ReadFloat(
-        path.c_str(), "Spacing", "MoneyToStatusBarSpacing", 22.5f);
+        path.c_str(), "Spacing", "MoneyToStatusBarSpacing", 22.0f);
 
     MoneyToWeaponSpacing = ReadFloat(
         path.c_str(), "Spacing", "MoneyToWeaponSpacing", 35.0f);
 
     WantedToStatusBarSpacing = ReadFloat(
-        path.c_str(), "Spacing", "WantedToStatusBarSpacing", 22.5f);
+        path.c_str(), "Spacing", "WantedToStatusBarSpacing", 22.0f);
 
     WantedToWeaponSpacing = ReadFloat(
-        path.c_str(), "Spacing", "WantedToWeaponSpacing", 32.5f);
+        path.c_str(), "Spacing", "WantedToWeaponSpacing", 32.0f);
 
     StatusBarToWeaponSpacing = ReadFloat(
-        path.c_str(), "Spacing", "StatusBarToWeaponSpacing", 17.5f);
+        path.c_str(), "Spacing", "StatusBarToWeaponSpacing", 17.0f);
 
     ArmourSpacing = ReadFloat(
         path.c_str(), "Spacing", "ArmourSpacing", 4.0f);
