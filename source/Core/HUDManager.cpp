@@ -62,7 +62,9 @@ HUDManager::HUDManager() :
     mWanted(
         HUDComponentType::Wanted,
         {},
-        false)
+        false),
+    mCellphoneIcon(HUDComponentType::Weapon, {}),
+    mJetpackIcon(HUDComponentType::Weapon, {})
 {
 }
 
@@ -371,8 +373,10 @@ void HUDManager::OnGameLoaded()
     mValidVehicleFireInputLastFrame = false;
     mWeaponChangedThisFrame = false;
     mClockSpacingPreview.Reset();
-    mCellphoneIconTimer.Reset();
-    mJetpackIconTimer.Reset();
+    mCellphoneIcon.Reset();
+    mJetpackIcon.Reset();
+    mJetpackWasEquipped = false;
+    mJetpackDropped = false;
 
     mPlayer = nullptr;
     mLastPlayer = nullptr;
@@ -390,6 +394,10 @@ void HUDManager::Update()
         mLastPlayer = nullptr;
         mValidVehicleFireInputLastFrame = false;
         mWeaponChangedThisFrame = false;
+        mCellphoneIcon.Reset();
+        mJetpackIcon.Reset();
+        mJetpackWasEquipped = false;
+        mJetpackDropped = false;
 
         // Returning from gameplay to a frontend or loading
         // screen must not leave our draw-call NOPs in place.
@@ -485,6 +493,8 @@ void HUDManager::Update()
     UpdateWeaponIcon();
     UpdateAmmo();
     UpdateSpecialIcons();
+    mCellphoneIcon.Update();
+    mJetpackIcon.Update();
     UpdateVehicleFiring();
     UpdateWanted();
 
@@ -1373,16 +1383,51 @@ void HUDManager::PreviewSpacingGroup(HUDSpacingPreviewGroup group)
     }
 }
 
+std::uint8_t HUDManager::GetCellphoneIconAlpha() const
+{
+    return HUDSettings::Get().ShowHiddenWeaponIcons && mSessionInitialized
+        ? mCellphoneIcon.GetAlpha() : 0;
+}
+
+std::uint8_t HUDManager::GetJetpackIconAlpha() const
+{
+    const auto& settings = HUDSettings::Get();
+    if (!settings.ShowHiddenWeaponIcons || !mSessionInitialized ||
+        !mJetpackWasEquipped || mJetpackDropped)
+    {
+        return 0;
+    }
+
+    if (!settings.JetpackLikeVehicleNames)
+        return mJetpackIcon.GetAlpha();
+
+    // Vanilla vehicle names fade in for 1s, show until 3s from entry,
+    // then fade out for 1s. The jetpack has no native vehicle-name state.
+    const std::uint32_t elapsed =
+        CTimer::m_snTimeInMilliseconds - mJetpackEquippedAt;
+    if (elapsed < 1000)
+        return static_cast<std::uint8_t>(elapsed * 255u / 1000u);
+    if (elapsed < 3000)
+        return 255;
+    if (elapsed < 4000)
+        return static_cast<std::uint8_t>((4000u - elapsed) * 255u / 1000u);
+    return 0;
+}
+
 bool HUDManager::ShouldDrawCellphoneIcon() const
 {
-    return HUDSettings::Get().ShowHiddenWeaponIcons &&
-        mSessionInitialized && mCellphoneIconTimer.Visible();
+    return GetCellphoneIconAlpha() != 0;
 }
 
 bool HUDManager::ShouldDrawJetpackIcon() const
 {
-    return HUDSettings::Get().ShowHiddenWeaponIcons &&
-        mSessionInitialized && mJetpackIconTimer.Visible();
+    return GetJetpackIconAlpha() != 0;
+}
+
+bool HUDManager::ShouldSuppressNativeFist() const
+{
+    // Prevent two icons occupying one weapon slot, including fade-out.
+    return ShouldDrawCellphoneIcon() || ShouldDrawJetpackAsWeaponIcon();
 }
 
 bool HUDManager::ShouldDrawJetpackBesideWeapon() const
@@ -1393,8 +1438,6 @@ bool HUDManager::ShouldDrawJetpackBesideWeapon() const
 
 bool HUDManager::ShouldDrawJetpackAsWeaponIcon() const
 {
-    // Never cover an equipped firearm with the jetpack icon.
-    // Side-by-side rendering is separately opt-in.
     if (!ShouldDrawJetpackIcon() ||
         HUDSettings::Get().ShowJetpackBesideWeapon || !mPlayer)
         return false;
@@ -1456,48 +1499,71 @@ void HUDManager::UpdateSpecialIcons()
 {
     const auto& settings = HUDSettings::Get();
 
-    if (!mPlayer || !mPlayer->m_pIntelligence)
+    if (!settings.ShowHiddenWeaponIcons || !mPlayer ||
+        !mPlayer->m_pIntelligence)
+    {
+        mCellphoneIcon.Reset();
+        mJetpackIcon.Reset();
+        mJetpackWasEquipped = false;
+        mJetpackDropped = false;
         return;
+    }
 
     CPedIntelligence* intelligence = mPlayer->m_pIntelligence;
+    const bool jetpackActive = intelligence->GetTaskJetPack() != nullptr;
 
-    const bool jetpackActive = settings.ShowHiddenWeaponIcons &&
-        intelligence->GetTaskJetPack() != nullptr;
+    // An exit-button edge must hide the icon immediately, even if the
+    // task is not detached until a later game tick. No fade or timer.
+    CPad* pad = mPlayer->GetPadFromPlayer();
+    const bool droppingJetpack = jetpackActive && pad &&
+        !pad->DisablePlayerControls && pad->ExitVehicleJustDown();
 
-    // The cellphone is a scripted pedestrian task, not a vanilla
-    // active weapon type. A phone icon can be requested independently.
-    const bool cellphoneActive = settings.ShowHiddenWeaponIcons &&
-        (intelligence->FindTaskByType(TASK_COMPLEX_USE_MOBILE_PHONE) ||
-         intelligence->FindTaskByType(TASK_SIMPLE_PHONE_TALK) ||
-         intelligence->FindTaskByType(TASK_SIMPLE_PHONE_IN) ||
-         intelligence->FindTaskByType(TASK_SIMPLE_PHONE_OUT));
-
-    if (jetpackActive)
+    if (!jetpackActive)
     {
-        mJetpackIconTimer.ShowFor(mVisibleTime);
-        mWeaponIcon.ShowFor(mVisibleTime);
+        mJetpackIcon.Reset();
+        mJetpackDropped = false;
     }
-    else if (!settings.ShowHiddenWeaponIcons)
+    else if (droppingJetpack)
     {
-        mJetpackIconTimer.Reset();
+        mJetpackIcon.Reset();
+        mJetpackDropped = true;
     }
+    else if (!mJetpackWasEquipped && !mJetpackDropped)
+    {
+        // Start the jetpack timer ONLY when equipped, not every frame.
+        mJetpackEquippedAt = CTimer::m_snTimeInMilliseconds;
+        mJetpackIcon.ShowFor(mVisibleTime);
+
+        // Keep the native icon draw path available through the extra
+        // icon's full fade-out so we can capture its final dimensions.
+        const std::uint32_t duration = settings.JetpackLikeVehicleNames
+            ? 4000u : mVisibleTime + settings.FadeOutMs;
+        mWeaponIcon.ShowFor(duration + settings.FadeOutMs);
+    }
+    mJetpackWasEquipped = jetpackActive;
+
+    // Phone tasks stay active for variable lengths; continue holding
+    // their icon while equipped, then let it fade on the normal timer.
+    const bool cellphoneActive =
+        intelligence->FindTaskByType(TASK_COMPLEX_USE_MOBILE_PHONE) ||
+        intelligence->FindTaskByType(TASK_SIMPLE_PHONE_TALK) ||
+        intelligence->FindTaskByType(TASK_SIMPLE_PHONE_IN) ||
+        intelligence->FindTaskByType(TASK_SIMPLE_PHONE_OUT);
 
     if (cellphoneActive)
     {
-        mCellphoneIconTimer.ShowFor(mVisibleTime);
-        mWeaponIcon.ShowFor(mVisibleTime);
-    }
-    else if (!settings.ShowHiddenWeaponIcons)
-    {
-        mCellphoneIconTimer.Reset();
+        mCellphoneIcon.ShowFor(mVisibleTime);
+        mWeaponIcon.ShowFor(mVisibleTime + settings.FadeOutMs);
     }
 }
 
 void HUDManager::HideAll()
 {
     mClockSpacingPreview.Reset();
-    mCellphoneIconTimer.Reset();
-    mJetpackIconTimer.Reset();
+    mCellphoneIcon.Reset();
+    mJetpackIcon.Reset();
+    mJetpackWasEquipped = false;
+    mJetpackDropped = false;
     mClock.Reset();
     mHealth.Reset();
     mArmour.Reset();
