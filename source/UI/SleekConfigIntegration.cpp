@@ -64,9 +64,7 @@ namespace
         { "show_on_foot_aim", "Show on foot aim", "Weapon & Ammo", "Aim controls", &HUDSettings::ShowOnFootAim, true },
         { "show_on_throwable_aim", "Show on throwable aim", "Weapon & Ammo", "Aim controls", &HUDSettings::ShowOnThrowableAim, false },
         { "show_on_vehicle_look", "Show on vehicle look", "Weapon & Ammo", "Aim controls", &HUDSettings::ShowOnVehicleLook, false },
-        { "show_hidden_weapon_icons", "Show hidden/custom weapon icons", "Special Icons", "Equipment", &HUDSettings::ShowHiddenWeaponIcons, false },
-        { "show_jetpack_beside_weapon", "Show jetpack beside weapon", "Special Icons", "Equipment", &HUDSettings::ShowJetpackBesideWeapon, false },
-        { "jetpack_like_vehicle_names", "Vehicle-name jetpack fade", "Special Icons", "Equipment", &HUDSettings::JetpackLikeVehicleNames, false }
+        { "show_hidden_weapon_icons", "Show hidden/custom weapon icons", "Special Icons", "Equipment", &HUDSettings::ShowHiddenWeaponIcons, false }
     };
 
     constexpr IntSetting IntSettings[] = {
@@ -104,10 +102,12 @@ namespace
             HUDSpacingPreviewGroup::Weapon, HUDSpacingPreviewGroup::Ammo },
         { "weapon_ammo_offset_y", "Weapon/Ammo offset Y", "Weapon & Ammo Position", &HUDSettings::WeaponAmmoOffsetY, -16.0f,
             HUDSpacingPreviewGroup::Weapon, HUDSpacingPreviewGroup::Ammo },
-        { "jetpack_icon_offset_x", "Jetpack icon X offset", "Special Icons", &HUDSettings::JetpackIconOffsetX, 0.0f,
-            HUDSpacingPreviewGroup::Weapon, HUDSpacingPreviewGroup::Weapon },
         { "weapon_to_ammo_vertical_offset", "Weapon to Ammo vertical offset", "Weapon & Ammo Position", &HUDSettings::WeaponToAmmoVerticalOffset, 87.0f,
-            HUDSpacingPreviewGroup::Weapon, HUDSpacingPreviewGroup::Ammo }
+            HUDSpacingPreviewGroup::Weapon, HUDSpacingPreviewGroup::Ammo },
+        { "jetpack_icon_offset_x", "Jetpack icon offset X", "Jetpack Position", &HUDSettings::JetpackIconOffsetX, 0.0f,
+            HUDSpacingPreviewGroup::Weapon, HUDSpacingPreviewGroup::Weapon },
+        { "jetpack_icon_offset_y", "Jetpack icon offset Y", "Jetpack Position", &HUDSettings::JetpackIconOffsetY, 0.0f,
+            HUDSpacingPreviewGroup::Weapon, HUDSpacingPreviewGroup::Weapon }
     };
 
     ScSettingDesc Describe(
