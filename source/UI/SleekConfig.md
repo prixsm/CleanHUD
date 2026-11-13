@@ -145,3 +145,37 @@ Stack mode exposes `WeaponAmmoOffsetX`, `WeaponAmmoOffsetY`, and
 These replace the ineffective `WeaponSpacing`, `AmmoSpacing`, and
 `HealthSpacing` fields. SleekConfig changes preview the currently drawable
 Weapon and Ammo. Minimal mode retains GTA's native positions.
+
+## Optional cellphone, jetpack and modded weapon icons
+
+The `[SpecialIcons]` settings are **off by default**. When enabled,
+CleanHUD uses GTA's existing 47x58 weapon-icon geometry and the existing
+Weapon visibility timer/fade. The icon renderer first searches the
+`weaponicons` TXD slot (if installed by
+[WeaponIconsTXD](https://github.com/JuniorDjjr/WeaponIconsTXD)),
+then falls back to the original weapon model's TXD. Missing textures
+are silently ignored.
+
+- `ShowCellphoneIcon=1`: during GTA SA's phone-use task, draw the
+  cellphone model's ICON texture over the weapon position. This does
+  not invent a new weapon type or equip the cellphone.
+- `ShowJetpackIcon=1`: while using a jetpack, draw the jetpack model's
+  ICON texture to the **left** of the existing Weapon icon. It can
+  coexist with firearms; the original weapon draw stays untouched.
+- `ShowUnusedWeaponIcons=1`: while a compatible custom mod equips
+  GTA's unused weapon type (47), use `UnusedWeaponModelId` as an
+  extra icon fallback. For skateboard or other mods, enter the
+  **numeric model ID registered by that particular mod**. Vanilla
+  GTA SA does not define a skateboard weapon or skateboard model ID,
+  so a guessed numeric default would be unsafe.
+
+All four controls appear under **Special Icons** in SleekConfig. They
+update live and save to `CleanHUD.ini`. Extra icons render only in
+initialized gameplay and use captured native positions for Minimal and
+TAB, or CleanHUD positions for Stack. No new memory patches/hook
+addresses are introduced.
+
+**Asset requirement:** The selected model must have an `ICON` texture
+in the model TXD or in `weaponicons.txd`. The code does not package
+new copyrighted icon art. If neither dictionary has the texture,
+there is intentionally no extra icon.
