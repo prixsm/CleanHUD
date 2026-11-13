@@ -65,6 +65,28 @@ namespace
     // are resolved afresh to survive game/texture reloads.
     NativeWeaponPosition gNativeWeaponPosition;
 
+    // WSF makes weapon icons proportional by shortening their height
+    // (the three weapon HUD height factors are divided by 1.125).
+    // Apply a deterministic resolution-derived size at the *last*
+    // native sprite draw hook instead of fighting third-party patches.
+    // No ASI load-order probing or executable pointer replacement.
+    struct IconSize
+    {
+        float Width;
+        float Height;
+    };
+
+    IconSize GetUnifiedIconSize()
+    {
+        const float scale = plugin::screen::GetScreenHeight() / 480.0f;
+        return { 47.0f * scale, (58.0f / 1.125f) * scale };
+    }
+
+    void WriteFloatArgument(std::uint32_t* stack, int index, float value)
+    {
+        std::memcpy(&stack[index], &value, sizeof(value));
+    }
+
     RwTexture* FindIconTexture(int modelId)
     {
         if (modelId <= 0 || modelId >= CModelInfo::ms_modelInfoCount ||
@@ -148,14 +170,19 @@ namespace
             p.Width > 0.0f && p.Height > 0.0f &&
             p.CapturedScreenWidth == screenWidth &&
             p.CapturedScreenHeight == screenHeight;
-        const float iconWidth = haveMeasuredScale
-            ? p.Width : 47.0f * (screenHeight / 480.0f);
-        const float iconHeight = haveMeasuredScale
-            ? p.Height : 58.0f * (screenHeight / 480.0f);
+        const bool unified = HUDSettings::Get().UnifiedWeaponIconScale;
+        const IconSize normalized = GetUnifiedIconSize();
+
+        const float iconWidth = unified ? normalized.Width :
+            (haveMeasuredScale ? p.Width :
+                47.0f * (screenHeight / 480.0f));
+        const float iconHeight = unified ? normalized.Height :
+            (haveMeasuredScale ? p.Height :
+                58.0f * (screenHeight / 480.0f));
         const float iconX = p.AnchorX +
-            (haveMeasuredScale ? p.OffsetX : 0.0f);
+            ((!unified && haveMeasuredScale) ? p.OffsetX : 0.0f);
         const float iconY = p.AnchorY +
-            (haveMeasuredScale ? p.OffsetY : 0.0f);
+            ((!unified && haveMeasuredScale) ? p.OffsetY : 0.0f);
 
         HUDManager& manager = HUDManager::Get();
 
@@ -301,8 +328,28 @@ namespace
 
         const auto* rect = reinterpret_cast<const CRect*>(stack[1]);
         if (rect)
-            CaptureWeaponBounds(rect->left, rect->top,
-                rect->right - rect->left, rect->bottom - rect->top);
+        {
+            if (HUDSettings::Get().UnifiedWeaponIconScale &&
+                gNativeWeaponPosition.Frame == CTimer::m_FrameCounter)
+            {
+                // Replace the argument pointer, never the game's
+                // existing HUD sprite rectangle or texture.
+                static CRect correctedRect;
+                const IconSize unified = GetUnifiedIconSize();
+                const float x = gNativeWeaponPosition.AnchorX;
+                const float y = gNativeWeaponPosition.AnchorY;
+                correctedRect = CRect(x, y,
+                    x + unified.Width, y + unified.Height);
+                stack[1] = reinterpret_cast<std::uintptr_t>(&correctedRect);
+                CaptureWeaponBounds(x, y,
+                    unified.Width, unified.Height);
+            }
+            else
+            {
+                CaptureWeaponBounds(rect->left, rect->top,
+                    rect->right - rect->left, rect->bottom - rect->top);
+            }
+        }
 
         if (HUDManager::Get().ShouldSuppressNativeFist())
         {
@@ -341,11 +388,28 @@ namespace
             std::memcpy(&value, &stack[index], sizeof(value));
             return value;
         };
-        const float halfWidth = readFloat(4);
-        const float halfHeight = readFloat(5);
+        float halfWidth = readFloat(4);
+        float halfHeight = readFloat(5);
+        float centerX = readFloat(1);
+        float centerY = readFloat(2);
+
+        if (HUDSettings::Get().UnifiedWeaponIconScale &&
+            gNativeWeaponPosition.Frame == CTimer::m_FrameCounter)
+        {
+            const IconSize unified = GetUnifiedIconSize();
+            halfWidth = unified.Width * 0.5f;
+            halfHeight = unified.Height * 0.5f;
+            centerX = gNativeWeaponPosition.AnchorX + halfWidth;
+            centerY = gNativeWeaponPosition.AnchorY + halfHeight;
+            WriteFloatArgument(stack, 1, centerX);
+            WriteFloatArgument(stack, 2, centerY);
+            WriteFloatArgument(stack, 4, halfWidth);
+            WriteFloatArgument(stack, 5, halfHeight);
+        }
+
         CaptureWeaponBounds(
-            readFloat(1) - halfWidth,
-            readFloat(2) - halfHeight,
+            centerX - halfWidth,
+            centerY - halfHeight,
             2.0f * halfWidth, 2.0f * halfHeight);
 
         const std::uint32_t originalAlpha =
