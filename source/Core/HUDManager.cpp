@@ -11,7 +11,6 @@
 #include <CPlayerInfo.h>
 #include <CPlayerPed.h>
 #include <CStats.h>
-#include <CTimer.h>
 #include <CVehicle.h>
 #include <CTaskSimpleSwim.h>
 #include <CWanted.h>
@@ -1392,27 +1391,9 @@ std::uint8_t HUDManager::GetCellphoneIconAlpha() const
 
 std::uint8_t HUDManager::GetJetpackIconAlpha() const
 {
-    const auto& settings = HUDSettings::Get();
-    if (!settings.ShowHiddenWeaponIcons || !mSessionInitialized ||
-        !mJetpackWasEquipped || mJetpackDropped)
-    {
-        return 0;
-    }
-
-    if (!settings.JetpackLikeVehicleNames)
-        return mJetpackIcon.GetAlpha();
-
-    // Vanilla vehicle names fade in for 1s, show until 3s from entry,
-    // then fade out for 1s. The jetpack has no native vehicle-name state.
-    const std::uint32_t elapsed =
-        CTimer::m_snTimeInMilliseconds - mJetpackEquippedAt;
-    if (elapsed < 1000)
-        return static_cast<std::uint8_t>(elapsed * 255u / 1000u);
-    if (elapsed < 3000)
-        return 255;
-    if (elapsed < 4000)
-        return static_cast<std::uint8_t>((4000u - elapsed) * 255u / 1000u);
-    return 0;
+    return HUDSettings::Get().ShowHiddenWeaponIcons &&
+        mSessionInitialized && mJetpackWasEquipped && !mJetpackDropped
+        ? mJetpackIcon.GetAlpha() : 0;
 }
 
 bool HUDManager::ShouldDrawCellphoneIcon() const
@@ -1427,24 +1408,8 @@ bool HUDManager::ShouldDrawJetpackIcon() const
 
 bool HUDManager::ShouldSuppressNativeFist() const
 {
-    // Prevent two icons occupying one weapon slot, including fade-out.
-    return ShouldDrawCellphoneIcon() || ShouldDrawJetpackAsWeaponIcon();
-}
-
-bool HUDManager::ShouldDrawJetpackBesideWeapon() const
-{
-    return ShouldDrawJetpackIcon() &&
-        HUDSettings::Get().ShowJetpackBesideWeapon;
-}
-
-bool HUDManager::ShouldDrawJetpackAsWeaponIcon() const
-{
-    if (!ShouldDrawJetpackIcon() ||
-        HUDSettings::Get().ShowJetpackBesideWeapon || !mPlayer)
-        return false;
-
-    const CWeapon* weapon = mPlayer->GetWeapon();
-    return weapon && weapon->m_eWeaponType == WEAPONTYPE_UNARMED;
+    // The cellphone replaces the fist icon while it is held.
+    return ShouldDrawCellphoneIcon();
 }
 
 int HUDManager::GetCustomWeaponIconModel() const
@@ -1531,30 +1496,32 @@ void HUDManager::UpdateSpecialIcons()
     }
     else if (!mJetpackWasEquipped && !mJetpackDropped)
     {
-        // Start the jetpack timer ONLY when equipped, not every frame.
-        mJetpackEquippedAt = CTimer::m_snTimeInMilliseconds;
+        // A single equip event starts the normal CleanHUD visibility
+        // timer; continued flight must not refresh it every frame.
         mJetpackIcon.ShowFor(mVisibleTime);
-
-        // Keep the native sprite active for the *same* lifetime as
-        // the extra icon, including its fade. Avoid a brief fist flash.
-        const std::uint32_t duration = settings.JetpackLikeVehicleNames
-            ? 4000u : mVisibleTime;
-        mWeaponIcon.ShowFor(duration);
+        mWeaponIcon.ShowFor(mVisibleTime);
     }
     mJetpackWasEquipped = jetpackActive;
 
-    // Phone tasks stay active for variable lengths; continue holding
-    // their icon while equipped, then let it fade on the normal timer.
-    const bool cellphoneActive =
-        intelligence->FindTaskByType(TASK_COMPLEX_USE_MOBILE_PHONE) ||
-        intelligence->FindTaskByType(TASK_SIMPLE_PHONE_TALK) ||
-        intelligence->FindTaskByType(TASK_SIMPLE_PHONE_IN) ||
-        intelligence->FindTaskByType(TASK_SIMPLE_PHONE_OUT);
+    // PHONE_OUT still belongs to the parent phone-use task after the
+    // game has started unequipping the phone. Hide it instantly there
+    // instead of leaving a ghost icon for DurationMs + FadeOutMs.
+    const bool puttingPhoneAway =
+        intelligence->FindTaskByType(TASK_SIMPLE_PHONE_OUT) != nullptr;
+    const bool cellphoneEquipped = !puttingPhoneAway &&
+        (intelligence->FindTaskByType(TASK_COMPLEX_USE_MOBILE_PHONE) ||
+         intelligence->FindTaskByType(TASK_SIMPLE_PHONE_TALK) ||
+         intelligence->FindTaskByType(TASK_SIMPLE_PHONE_IN));
 
-    if (cellphoneActive)
+    if (cellphoneEquipped)
     {
+        // Hold the phone visible during the active task, not afterward.
         mCellphoneIcon.ShowFor(mVisibleTime);
         mWeaponIcon.ShowFor(mVisibleTime);
+    }
+    else
+    {
+        mCellphoneIcon.Reset();
     }
 }
 
