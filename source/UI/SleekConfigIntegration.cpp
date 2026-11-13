@@ -239,12 +239,23 @@ namespace
             const float previous = settings.*(entry.Field);
             settings.*(entry.Field) = proposed->real;
 
-            // Refresh the two adjacent HUD groups while dragging.
-            // SleekConfig callbacks run on GTA's game thread; a
-            // hidden/offline session is ignored by HUDManager.
+            // Special jetpack X/Y preview requires a real equipped
+            // jetpack; unlike stack-spacing previews, it must also
+            // work in Minimal mode. Other sliders keep their normal
+            // adjacent-group previews.
             if (previous != proposed->real)
-                HUDManager::Get().PreviewSpacing(
-                    entry.First, entry.Second);
+            {
+                if (entry.Field == &HUDSettings::JetpackIconOffsetX ||
+                    entry.Field == &HUDSettings::JetpackIconOffsetY)
+                {
+                    HUDManager::Get().PreviewJetpackPosition();
+                }
+                else
+                {
+                    HUDManager::Get().PreviewSpacing(
+                        entry.First, entry.Second);
+                }
+            }
 
             return 1;
         }
