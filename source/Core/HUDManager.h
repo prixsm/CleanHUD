@@ -35,6 +35,7 @@ public:
     std::uint8_t GetCellphoneIconAlpha() const;
     std::uint8_t GetJetpackIconAlpha() const;
     bool ShouldSuppressNativeFist() const;
+    bool ShouldSuppressNativeKnuckles() const;
     bool ShouldDrawJetpackIcon() const;
     int GetCustomWeaponIconModel() const;
     bool IsUsingVanillaLayout() const;
