@@ -48,6 +48,10 @@ public:
     // A separate jetpack placement option is useful when carrying a gun.
     bool ShowHiddenWeaponIcons = false;
     bool ShowJetpackBesideWeapon = false;
+    // Emulate GTA's vehicle-name 1s in / 3s total / 1s out cycle.
+    bool JetpackLikeVehicleNames = false;
+    // Extra horizontal shift from the selected jetpack slot's left edge.
+    float JetpackIconOffsetX = 0.0f;
     // Gap below the Clock, based on the first visible stack group.
     float ClockToMoneySpacing = 25.0f;
     float ClockToWantedSpacing = 25.0f;
