@@ -63,13 +63,15 @@ namespace
         { "ammo", "Ammo", "Elements", "Managed elements", &HUDSettings::Ammo, true },
         { "show_on_foot_aim", "Show on foot aim", "Weapon & Ammo", "Aim controls", &HUDSettings::ShowOnFootAim, true },
         { "show_on_throwable_aim", "Show on throwable aim", "Weapon & Ammo", "Aim controls", &HUDSettings::ShowOnThrowableAim, false },
-        { "show_on_vehicle_look", "Show on vehicle look", "Weapon & Ammo", "Aim controls", &HUDSettings::ShowOnVehicleLook, false }
+        { "show_on_vehicle_look", "Show on vehicle look", "Weapon & Ammo", "Aim controls", &HUDSettings::ShowOnVehicleLook, false },
+        { "show_hidden_weapon_icons", "Show hidden/custom weapon icons", "Special Icons", "Equipment", &HUDSettings::ShowHiddenWeaponIcons, false },
+        { "show_jetpack_beside_weapon", "Show jetpack beside weapon", "Special Icons", "Equipment", &HUDSettings::ShowJetpackBesideWeapon, false }
     };
 
     constexpr IntSetting IntSettings[] = {
         { "fade_in_ms", "Fade in (ms)", "Visibility", "Animation", &HUDSettings::FadeInMs, 200, 2000 },
         { "fade_out_ms", "Fade out (ms)", "Visibility", "Animation", &HUDSettings::FadeOutMs, 200, 2000 },
-        { "duration_ms", "Visibility duration (ms)", "Visibility", "Animation", &HUDSettings::VisibilityMs, 3000, 60000 }
+        { "duration_ms", "Visibility duration (ms)", "Visibility", "Animation", &HUDSettings::VisibilityMs, 3000, 10000 }
     };
 
     constexpr FloatSetting FloatSettings[] = {
@@ -306,8 +308,11 @@ namespace
             // SleekConfig 1.1 uses the declared step to choose
             // slider precision and keyboard increments. Centi-unit
             // steps display 2 decimal places and avoid long fractions.
-            setting.minimum = -200.0;
-            setting.maximum = 500.0;
+            setting.minimum = -16384.0;
+            setting.maximum = 16384.0;
+            // Retain hundredth-unit precision. SleekConfig's current
+            // registry can reject some valid float32 centi-steps:
+            // that is upstream validation, before on_change runs.
             setting.step = 0.01;
             setting.default_value.real = entry.Default;
 

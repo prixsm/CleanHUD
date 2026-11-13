@@ -44,6 +44,10 @@ public:
     bool ShowOnVehicleLook = false;
     bool ShowOnThrowableAim = false;
 
+    // One switch restores normally hidden equipment/model icons.
+    // A separate jetpack placement option is useful when carrying a gun.
+    bool ShowHiddenWeaponIcons = false;
+    bool ShowJetpackBesideWeapon = false;
     // Gap below the Clock, based on the first visible stack group.
     float ClockToMoneySpacing = 25.0f;
     float ClockToWantedSpacing = 25.0f;

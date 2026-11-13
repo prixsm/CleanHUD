@@ -31,6 +31,11 @@ public:
     bool HasWantedLevel() const;
     bool IsInitialHealthTrackingBlocked() const;
     bool IsPlayerHUDInitialized() const;
+    bool ShouldDrawCellphoneIcon() const;
+    bool ShouldDrawJetpackIcon() const;
+    bool ShouldDrawJetpackBesideWeapon() const;
+    bool ShouldDrawJetpackAsWeaponIcon() const;
+    int GetCustomWeaponIconModel() const;
     bool IsUsingVanillaLayout() const;
     bool ShouldDisplayAmmo() const;
     bool ShouldDisplayArmour() const;
@@ -87,6 +92,8 @@ private:
     // Only used to stop AlwaysShowClock=0 from hiding a preview
     // before its ordinary mClock.ShowFor() timer expires.
     VisibilityTimer mClockSpacingPreview;
+    VisibilityTimer mCellphoneIconTimer;
+    VisibilityTimer mJetpackIconTimer;
 
     // HUD components
     HUDComponent mClock;
@@ -154,6 +161,7 @@ private:
     void UpdateBreath();
     void UpdateMoney();
     void UpdateWeaponIcon();
+    void UpdateSpecialIcons();
     void UpdateAmmo();
     void UpdateVehicleFiring();
     bool IsValidVehicleFireInput() const;

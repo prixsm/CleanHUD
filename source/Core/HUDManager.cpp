@@ -3,6 +3,7 @@
 #include <common.h>
 #include <CCamera.h>
 #include <CCutsceneMgr.h>
+#include <CModelInfo.h>
 #include <CDarkel.h>
 #include <CPad.h>
 #include <CPedIntelligence.h>
@@ -16,6 +17,7 @@
 #include <CWeaponInfo.h>
 #include <CWorld.h>
 #include <eModelID.h>
+#include <eTaskType.h>
 
 #include "HUDManager.h"
 #include "../Render/HUDMetrics.h"
@@ -369,6 +371,8 @@ void HUDManager::OnGameLoaded()
     mValidVehicleFireInputLastFrame = false;
     mWeaponChangedThisFrame = false;
     mClockSpacingPreview.Reset();
+    mCellphoneIconTimer.Reset();
+    mJetpackIconTimer.Reset();
 
     mPlayer = nullptr;
     mLastPlayer = nullptr;
@@ -480,6 +484,7 @@ void HUDManager::Update()
     mWeaponChangedThisFrame = false;
     UpdateWeaponIcon();
     UpdateAmmo();
+    UpdateSpecialIcons();
     UpdateVehicleFiring();
     UpdateWanted();
 
@@ -1368,9 +1373,131 @@ void HUDManager::PreviewSpacingGroup(HUDSpacingPreviewGroup group)
     }
 }
 
+bool HUDManager::ShouldDrawCellphoneIcon() const
+{
+    return HUDSettings::Get().ShowHiddenWeaponIcons &&
+        mSessionInitialized && mCellphoneIconTimer.Visible();
+}
+
+bool HUDManager::ShouldDrawJetpackIcon() const
+{
+    return HUDSettings::Get().ShowHiddenWeaponIcons &&
+        mSessionInitialized && mJetpackIconTimer.Visible();
+}
+
+bool HUDManager::ShouldDrawJetpackBesideWeapon() const
+{
+    return ShouldDrawJetpackIcon() &&
+        HUDSettings::Get().ShowJetpackBesideWeapon;
+}
+
+bool HUDManager::ShouldDrawJetpackAsWeaponIcon() const
+{
+    // Never cover an equipped firearm with the jetpack icon.
+    // Side-by-side rendering is separately opt-in.
+    if (!ShouldDrawJetpackIcon() ||
+        HUDSettings::Get().ShowJetpackBesideWeapon || !mPlayer)
+        return false;
+
+    const CWeapon* weapon = mPlayer->GetWeapon();
+    return weapon && weapon->m_eWeaponType == WEAPONTYPE_UNARMED;
+}
+
+int HUDManager::GetCustomWeaponIconModel() const
+{
+    if (!HUDSettings::Get().ShowHiddenWeaponIcons ||
+        !mSessionInitialized || !mPlayer)
+    {
+        return 0;
+    }
+
+    const CWeapon* weapon = mPlayer->GetWeapon();
+
+    if (!weapon || !mPlayer->m_pWeaponObject)
+        return 0;
+
+    const eWeaponType weaponType = weapon->m_eWeaponType;
+
+    // Values above UNUSED are GTA damage/event types, not safe
+    // weapon-info indices. Unarmed has no held weapon icon.
+    if (weaponType <= WEAPONTYPE_UNARMED ||
+        weaponType > WEAPONTYPE_UNUSED)
+    {
+        return 0;
+    }
+
+    // GTA tracks the model actually attached to the player's hand,
+    // including when a weapon mod swaps Cane/Shovel for a skateboard.
+    const int heldModelId = mPlayer->m_nWeaponModelId;
+
+    if (heldModelId <= 0 ||
+        heldModelId >= CModelInfo::ms_modelInfoCount ||
+        !CModelInfo::GetModelInfo(heldModelId))
+    {
+        return 0;
+    }
+
+    // Native CHud and WeaponIconsTXD already draw the regular weapon
+    // model's icon. Only supplement a DIFFERENT held model, so
+    // ordinary weapons are never drawn twice.
+    const CWeaponInfo* info = CWeaponInfo::GetWeaponInfo(
+        weaponType, mPlayer->GetWeaponSkill());
+
+    if (!info || heldModelId == info->m_nModelId ||
+        heldModelId == info->m_nModelId2)
+    {
+        return 0;
+    }
+
+    return heldModelId;
+}
+
+void HUDManager::UpdateSpecialIcons()
+{
+    const auto& settings = HUDSettings::Get();
+
+    if (!mPlayer || !mPlayer->m_pIntelligence)
+        return;
+
+    CPedIntelligence* intelligence = mPlayer->m_pIntelligence;
+
+    const bool jetpackActive = settings.ShowHiddenWeaponIcons &&
+        intelligence->GetTaskJetPack() != nullptr;
+
+    // The cellphone is a scripted pedestrian task, not a vanilla
+    // active weapon type. A phone icon can be requested independently.
+    const bool cellphoneActive = settings.ShowHiddenWeaponIcons &&
+        (intelligence->FindTaskByType(TASK_COMPLEX_USE_MOBILE_PHONE) ||
+         intelligence->FindTaskByType(TASK_SIMPLE_PHONE_TALK) ||
+         intelligence->FindTaskByType(TASK_SIMPLE_PHONE_IN) ||
+         intelligence->FindTaskByType(TASK_SIMPLE_PHONE_OUT));
+
+    if (jetpackActive)
+    {
+        mJetpackIconTimer.ShowFor(mVisibleTime);
+        mWeaponIcon.ShowFor(mVisibleTime);
+    }
+    else if (!settings.ShowHiddenWeaponIcons)
+    {
+        mJetpackIconTimer.Reset();
+    }
+
+    if (cellphoneActive)
+    {
+        mCellphoneIconTimer.ShowFor(mVisibleTime);
+        mWeaponIcon.ShowFor(mVisibleTime);
+    }
+    else if (!settings.ShowHiddenWeaponIcons)
+    {
+        mCellphoneIconTimer.Reset();
+    }
+}
+
 void HUDManager::HideAll()
 {
     mClockSpacingPreview.Reset();
+    mCellphoneIconTimer.Reset();
+    mJetpackIconTimer.Reset();
     mClock.Reset();
     mHealth.Reset();
     mArmour.Reset();

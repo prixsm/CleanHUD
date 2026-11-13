@@ -129,7 +129,9 @@ namespace
 
         // Allow fine-tuning without accepting pathological
         // spacings that would send the HUD offscreen.
-        return std::clamp(value, -200.0f, 500.0f);
+        // Generous virtual-layout bound, suitable for extreme
+        // resolutions while preventing pathological arithmetic.
+        return std::clamp(value, -16384.0f, 16384.0f);
     }
 
     static bool ReadBool(
@@ -307,7 +309,7 @@ void HUDSettings::Load()
         path.c_str(), "Visibility", "FadeOutMs", 200, 0, 2000);
 
     VisibilityMs = ReadInt(
-        path.c_str(), "Visibility", "DurationMs", 3000, 0, 60000);
+        path.c_str(), "Visibility", "DurationMs", 3000, 0, 10000);
 
     Clock = ReadBool(path.c_str(), "Elements", "Clock", true);
     Money = ReadBool(path.c_str(), "Elements", "Money", true);
@@ -326,6 +328,12 @@ void HUDSettings::Load()
 
     ShowOnThrowableAim = ReadBool(
         path.c_str(), "WeaponAmmo", "ShowOnThrowableAim", false);
+
+    ShowHiddenWeaponIcons = ReadBool(
+        path.c_str(), "SpecialIcons", "ShowHiddenWeaponIcons", false);
+
+    ShowJetpackBesideWeapon = ReadBool(
+        path.c_str(), "SpecialIcons", "ShowJetpackBesideWeapon", false);
 
     ClockToMoneySpacing = ReadFloat(
         path.c_str(), "Spacing", "ClockToMoneySpacing", 25.0f);
@@ -434,6 +442,8 @@ bool HUDSettings::Save() const
     success = putBool("WeaponAmmo", "ShowOnFootAim", ShowOnFootAim) && success;
     success = putBool("WeaponAmmo", "ShowOnThrowableAim", ShowOnThrowableAim) && success;
     success = putBool("WeaponAmmo", "ShowOnVehicleLook", ShowOnVehicleLook) && success;
+    success = putBool("SpecialIcons", "ShowHiddenWeaponIcons", ShowHiddenWeaponIcons) && success;
+    success = putBool("SpecialIcons", "ShowJetpackBesideWeapon", ShowJetpackBesideWeapon) && success;
     success = putInt("Visibility", "FadeInMs", FadeInMs) && success;
     success = putInt("Visibility", "FadeOutMs", FadeOutMs) && success;
     success = putInt("Visibility", "DurationMs", VisibilityMs) && success;
