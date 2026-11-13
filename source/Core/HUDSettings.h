@@ -48,7 +48,7 @@ public:
     bool ShowHiddenWeaponIcons = true;
     // Jetpack is anchored to the left of the weapon icon by default.
     // These two independent virtual-layout offsets allow free placement.
-    float JetpackIconOffsetX = 0.0f;
+    float JetpackIconOffsetX = 17.0f;
     float JetpackIconOffsetY = 0.0f;
     // Gap below the Clock, based on the first visible stack group.
     float ClockToMoneySpacing = 25.0f;

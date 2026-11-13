@@ -84,9 +84,8 @@ may need to be re-saved.
 
 SleekConfig v1.1 chooses its number of visible decimal places from the
 step. A 1.0 step displays an integer in its own slider; the API does
-not currently offer per-setting formatting. CleanHUD.ini consistently
-saves the same values with **one decimal place** (e.g. `25.0`),
-rather than the earlier two decimals.
+not currently offer per-setting formatting.
+
 Save Mod records your selection in CleanHUD.ini and in SleekConfig's
 regular DAT settings. Loading a preset changes the live settings; it
 does not automatically overwrite CleanHUD.ini until you save.
@@ -180,8 +179,7 @@ once on equip and is not extended indefinitely while flying.
 The jetpack now defaults to a slot left of the weapon icon, regardless
 of which weapon CJ is holding. Its X/Y position can be freely adjusted
 using `JetpackIconOffsetX` and `JetpackIconOffsetY`, rather than a
-side-by-side mode toggle. The former mode and vehicle-name timing
-settings have been retired and are ignored if left in an older INI.
+side-by-side mode toggle.
 
 The model of a custom equipped weapon is resolved automatically
 using GTA's `CPed::m_nWeaponModelId`, which identifies the model
@@ -242,8 +240,7 @@ both external scaling fixes may compound their adjustments; CleanHUD
 does not attempt to override or correct either mod.
 
 SleekConfig groups all three Weapon/Ammo offsets together, followed by
-one `Jetpack Position` group containing both X and Y sliders. This
-avoids the duplicate Weapon/Ammo heading/ImGui ID collision.
+one `Jetpack Position` group containing both X and Y sliders.
 
 The icon renderer checks the `weaponicons` TXD slot used by
 [WeaponIconsTXD](https://github.com/JuniorDjjr/WeaponIconsTXD) first,
@@ -266,6 +263,4 @@ SleekConfig registers a **1.0** increment for each of the 17 Advanced
 Layout float sliders, avoiding fractional-step float validation issues.
 Direct INI values are normalized to the same whole-unit increments.
 The editor displays integer values because its current formatting
-follows the step size; INI output retains the requested `.0` suffix.
-Older saved DAT/preset values that aren't multiples of 1.0 may need
-to be re-saved or cleared.
+follows the step size;
