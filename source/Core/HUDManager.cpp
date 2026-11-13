@@ -1391,9 +1391,10 @@ std::uint8_t HUDManager::GetCellphoneIconAlpha() const
 
 std::uint8_t HUDManager::GetJetpackIconAlpha() const
 {
+    // An unequip ends the *timer*, not the drawn fade-out.
+    // The alpha remains live until HUDComponent::Update reaches zero.
     return HUDSettings::Get().ShowHiddenWeaponIcons &&
-        mSessionInitialized && mJetpackWasEquipped && !mJetpackDropped
-        ? mJetpackIcon.GetAlpha() : 0;
+        mSessionInitialized ? mJetpackIcon.GetAlpha() : 0;
 }
 
 bool HUDManager::ShouldDrawCellphoneIcon() const
@@ -1487,20 +1488,20 @@ void HUDManager::UpdateSpecialIcons()
     CPedIntelligence* intelligence = mPlayer->m_pIntelligence;
     const bool jetpackActive = intelligence->GetTaskJetPack() != nullptr;
 
-    // An exit-button edge must hide the icon immediately, even if the
-    // task is not detached until a later game tick. No fade or timer.
+    // Stop the visibility timer on the exit-button edge, even when
+    // task removal lags one tick. Keep its normal fade-out animation.
     CPad* pad = mPlayer->GetPadFromPlayer();
     const bool droppingJetpack = jetpackActive && pad &&
         !pad->DisablePlayerControls && pad->ExitVehicleJustDown();
 
     if (!jetpackActive)
     {
-        mJetpackIcon.Reset();
+        mJetpackIcon.Hide();
         mJetpackDropped = false;
     }
     else if (droppingJetpack)
     {
-        mJetpackIcon.Reset();
+        mJetpackIcon.Hide();
         mJetpackDropped = true;
     }
     else if (!mJetpackWasEquipped && !mJetpackDropped)
@@ -1512,9 +1513,9 @@ void HUDManager::UpdateSpecialIcons()
     }
     mJetpackWasEquipped = jetpackActive;
 
-    // PHONE_OUT still belongs to the parent phone-use task after the
-    // game has started unequipping the phone. Hide it instantly there
-    // instead of leaving a ghost icon for DurationMs + FadeOutMs.
+    // PHONE_OUT may still belong to the parent phone-use task.
+    // Stop extending the icon when this task begins, but allow the
+    // usual CleanHUD FadeOutMs instead of resetting its alpha.
     const bool puttingPhoneAway =
         intelligence->FindTaskByType(TASK_SIMPLE_PHONE_OUT) != nullptr;
     const bool cellphoneEquipped = !puttingPhoneAway &&
@@ -1530,7 +1531,7 @@ void HUDManager::UpdateSpecialIcons()
     }
     else
     {
-        mCellphoneIcon.Reset();
+        mCellphoneIcon.Hide();
     }
 }
 
