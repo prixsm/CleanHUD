@@ -97,6 +97,8 @@ private:
     // Jetpack is an on-equip event, unlike the continuously held phone task.
     bool mJetpackWasEquipped = false;
     bool mJetpackDropped = false;
+    // PHONE_OUT may end before its parent phone task is removed.
+    bool mCellphonePuttingAway = false;
 
     // HUD components
     HUDComponent mClock;
