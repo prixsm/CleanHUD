@@ -160,7 +160,8 @@ namespace
 
         const int customModel = manager.GetCustomWeaponIconModel();
         if (customModel > 0 && !manager.ShouldDrawCellphoneIcon() &&
-            !manager.ShouldReplaceWeaponWithJetpack())
+            !manager.ShouldReplaceWeaponWithJetpack() &&
+            !manager.ShouldReplaceWeaponWithSkateboard())
             DrawModelIcon(customModel, iconX, iconY,
                 iconWidth, iconHeight, p.Alpha);
 
@@ -191,6 +192,29 @@ namespace
         if (manager.ShouldDrawJetpackIcon())
             DrawModelIcon(MODEL_JETPACK, jetpackX, jetpackY,
                 iconWidth, iconHeight, manager.GetJetpackIconAlpha());
+
+        if (manager.ShouldDrawSkateboardIcon())
+        {
+            // A riding skateboard is an independent vehicle-like
+            // icon: same measured native scale, separate fade timer.
+            // With bare hands it occupies the weapon slot. With a
+            // gun/throwable/custom weapon it sits left of that slot.
+            const float sideGap =
+                8.0f * (iconWidth / 47.0f);
+            const float sideShift = 12.0f * offsetScaleX;
+            const float skateX = manager.ShouldReplaceWeaponWithSkateboard()
+                ? iconX + settings.SkateboardIconOffsetX * offsetScaleX
+                : iconX - iconWidth - sideGap + sideShift +
+                    settings.SkateboardIconOffsetX * offsetScaleX -
+                    (manager.ShouldDrawJetpackIcon()
+                        ? iconWidth + sideGap : 0.0f);
+            const float skateY = iconY +
+                settings.SkateboardIconOffsetY * offsetScaleY;
+
+            DrawModelIcon(manager.GetSkateboardIconModel(),
+                skateX, skateY, iconWidth, iconHeight,
+                manager.GetSkateboardIconAlpha());
+        }
     }
 
     void CaptureWeaponPosition(int x, int y, float alpha)
