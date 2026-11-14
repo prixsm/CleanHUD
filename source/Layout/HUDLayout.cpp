@@ -104,8 +104,8 @@ void HUDLayout::PrepareStack(
 
         if (!mPreviouslyPresent[i])
         {
-            // New components draw at their final position;
-            // only components that were already on screen move.
+            // New entries reserve their final slot. Status bars
+            // also animate visually as they enter this slot.
             mHoldEntrancePosition[i] = true;
 
             // The permanently displayed Clock is the fixed
