@@ -343,7 +343,7 @@ void HUDSettings::Load()
         path.c_str(), "Skateboard", "VehicleModelId", 12500, 1, 32767);
 
     SkateboardIconModelId = ReadInt(
-        path.c_str(), "Skateboard", "IconModelId", 326, 1, 32767);
+        path.c_str(), "Skateboard", "IconModelId", 12400, 1, 32767);
 
     SkateboardIconOffsetX = ReadFloat(
         path.c_str(), "Skateboard", "IconOffsetX", 0.0f);
