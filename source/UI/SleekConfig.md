@@ -25,6 +25,11 @@ Edits run on the game main thread through SleekConfig's change callback.
 CleanHUD's HUDSettings instance is changed directly, so ordinary HUD updates
 apply the value immediately; **no ASI/game restart** is needed.
 
+`SlideStack=1` animates the space created when temporary elements
+enter above the visible stack. Health, armour and breath bars also
+slide into their own slots as they fade in. The stack does not slide
+backward during fade-out, and Minimal mode keeps native positions.
+
 SleekConfig owns the F10 hotkey and handles player input, keyboard/mouse,
 Direct3D9 render hooks and graphics-device lifecycle. CleanHUD does not
 register duplicate F10/D3D9 hooks.
