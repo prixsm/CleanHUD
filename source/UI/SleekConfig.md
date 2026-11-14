@@ -15,10 +15,11 @@ without an F10 configuration panel or error.
 
 ## Live editing
 
-Controls cover General (Stack/Minimal, Clock, optional slide),
-Visibility (fade and show duration), Elements, Weapon & Ammo and
-Advanced Layout. The Advanced Layout page is divided into Clock, Money,
-Wanted, Status Bars and Individual spacing groups.
+Controls are organized under **General**, **Elements**, **Visibility**
+and **Advanced Layout**. General contains HUD layout, clock behavior,
+stack animation, weapon/aim behavior, and special-icon visibility.
+Elements and Visibility have no additional groups. Advanced Layout
+keeps its named spacing and positioning groups.
 
 Edits run on the game main thread through SleekConfig's change callback.
 CleanHUD's HUDSettings instance is changed directly, so ordinary HUD updates
@@ -59,7 +60,7 @@ use **Save Mod** or a SleekConfig preset when satisfied with the layout.
 
 ## SleekConfig 1.1 features
 
-SleekConfig **v1.1.0** (released November 9, 2026) adds a compact menu
+SleekConfig **v1.1.0** adds a compact menu
 layout, improved fine-dragging and named presets. These features come from
 the separately installed `SleekConfig.asi`; CleanHUD does not need to
 duplicate their rendering or add its own preset storage.
@@ -119,8 +120,8 @@ The `SleekConfig_GetApi` entry point is resolved dynamically from the
 separately installed SleekConfig.asi. Registration retries on the main thread
 if SleekConfig becomes available later.
 
-The SleekConfig **v1 API** remains unchanged in v1.1.0; the vendored
-headers still match upstream. Target: GTA San Andreas PC 1.0 US, Win32.
+The vendored SleekConfig API headers match the supported integration.
+Target: GTA San Andreas PC 1.0 US, Win32.
 
 ## Regression tests to perform in game
 
@@ -136,7 +137,8 @@ headers still match upstream. Target: GTA San Andreas PC 1.0 US, Win32.
   documented above.
 - Verify Advanced Layout slider steps are 1.0 and the range is
   -1500.0 to +1500.0. Save Mod formats values like 25.0 (one decimal).
-- Verify fade/duration ranges still accept 0 to 2000/10000.
+- Verify Fade In and Fade Out use 50 ms steps, and Visibility Duration
+  uses 500 ms steps, within the existing 0..2000/0..10000 bounds.
 - Test with other SleekConfig-enabled mods: there should be one shared F10
   panel, no duplicate D3D9 hook and no stuck mouse or player controls.
 - Verify New Game/Load Game startup, main-menu labels,
@@ -146,15 +148,14 @@ headers still match upstream. Target: GTA San Andreas PC 1.0 US, Win32.
 
 Stack mode exposes `WeaponAmmoOffsetX`, `WeaponAmmoOffsetY`, and
 `WeaponToAmmoVerticalOffset` in **Advanced Layout → Weapon & Ammo Position**.
-These replace the ineffective `WeaponSpacing`, `AmmoSpacing`, and
-`HealthSpacing` fields. SleekConfig changes preview the currently drawable
-Weapon and Ammo. Minimal mode retains GTA's native positions.
+Editing these values previews the currently drawable weapon and ammo.
+Minimal mode keeps GTA's native positions.
 
-For `WeaponToAmmoVerticalOffset`, the suggested values are **79.0**
-when using MixSets `WeaponIconScaleFix`, or **87.0** when using
-WidescreenFix `ProportionalWeaponIcon` (the default). These are
-user-tested starting points, not automatic scale-fix detection.
-SleekConfig shows this recommendation in the setting's hover description.
+For `WeaponToAmmoVerticalOffset`, start with **83.0** for unmodified GTA
+weapon-icon scaling (the default), **79.0** with MixSets
+`WeaponIconScaleFix`, or **87.0** with WidescreenFix
+`ProportionalWeaponIcon`. These are suggested manual adjustments,
+also displayed in SleekConfig's tooltip.
 
 ## Optional hidden and custom weapon icons
 
@@ -166,10 +167,11 @@ use the same visibility
 fading settings as the rest of CleanHUD; jetpack visibility is triggered
 once on equip and is not extended indefinitely while flying.
 
-The jetpack now defaults to a slot left of the weapon icon, regardless
-of which weapon CJ is holding. Its X/Y position can be freely adjusted
-using `JetpackIconOffsetX` and `JetpackIconOffsetY`, rather than a
-side-by-side mode toggle.
+The jetpack shares the usual weapon-icon position when CJ has no
+firearm, replacing the normal icon for fists, knuckles, and other
+non-firearm equipment. While a firearm is equipped, the jetpack
+appears to the **left** of its icon. `JetpackIconOffsetX` and
+`JetpackIconOffsetY` allow adjustments in either case.
 
 The model of a custom equipped weapon is resolved automatically
 using GTA's `CPed::m_nWeaponModelId`, which identifies the model
@@ -189,15 +191,23 @@ but can still be disabled in the INI or SleekConfig.
 
 ### Jetpack behavior
 
-The jetpack icon is anchored to the left of the weapon slot at
-`JetpackIconOffsetX=0`, `JetpackIconOffsetY=0`, with a small gap.
-Positive X moves right, positive Y moves down. Both use independent
-virtual HUD units (screen-width/1920 and screen-height/1080), and work
-with Stack as well as Minimal HUD mode. Changing either jetpack
-position slider temporarily re-shows the jetpack icon for `DurationMs`
-when the jetpack is actually equipped, even if its original on-equip
-visibility timer expired. No preview occurs when the jetpack has
-been dropped or the icon option is disabled.
+The jetpack defaults to `JetpackIconOffsetX=29.0` and
+`JetpackIconOffsetY=0.0`. With a firearm equipped, this places its
+icon to the left of the firearm icon with a small gap. When there is
+no firearm, the same defaults place the jetpack **at the weapon slot**
+instead, hiding the native non-firearm icon while the jetpack is
+visible. Positive X moves right, positive Y moves down; changing X
+relative to its default also adjusts the centered jetpack.
+
+Both offsets use virtual HUD units (screen-width/1920 and
+screen-height/1080) in Stack and Minimal modes. Editing either offset
+temporarily shows the jetpack for `DurationMs` when equipped, even
+after its normal timer expires. This preview does not invent a jetpack
+or revive one that has been dropped.
+
+The jetpack's normal visibility begins on equip and fades out using
+CleanHUD's visibility timings. The Exit Vehicle input starts its
+fade-out immediately.
 
 CleanHUD's cellphone, jetpack and custom
 icons use the **most recently measured native sprite bounds**, so they
@@ -211,8 +221,8 @@ Weapon/Ammo spacing sliders remain the adjustment mechanism. Enabling
 both external scaling fixes may compound their adjustments; CleanHUD
 does not attempt to override or correct either mod.
 
-SleekConfig groups all three Weapon/Ammo offsets together, followed by
-one `Jetpack Position` group containing both X and Y sliders.
+Advanced Layout keeps Weapon/Ammo offsets together and jetpack X/Y
+offsets in a separate `Jetpack Position` group.
 
 The icon renderer checks the `weaponicons` TXD slot used by
 [WeaponIconsTXD](https://github.com/JuniorDjjr/WeaponIconsTXD) first,
