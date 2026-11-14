@@ -141,9 +141,8 @@ namespace
         const float screenWidth = plugin::screen::GetScreenWidth();
         const float screenHeight = plugin::screen::GetScreenHeight();
 
-        // Never fall back to vanilla scale merely because no native
-        // sprite happened to be rendered on this particular frame.
-        // Invalidate cached pixels only after an actual resolution change.
+        // Retain the last measured native icon size across intermittent
+        // draw frames; refresh the cached pixels when resolution changes.
         const bool haveMeasuredScale =
             p.Width > 0.0f && p.Height > 0.0f &&
             p.CapturedScreenWidth == screenWidth &&
