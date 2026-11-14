@@ -283,9 +283,13 @@ bool HUDManager::ShouldDisplayAmmo() const
     const eWeaponType weaponType =
         weapon->m_eWeaponType;
 
+    // Use the selected weapon's actual skill, just like GTA's
+    // CHud::DrawAmmo. Extended weapon loaders may have no Poor
+    // skill entry for Standard-only weapons; omitting the skill
+    // made their ammo ineligible for Stack positioning.
     const CWeaponInfo* weaponInfo =
         CWeaponInfo::GetWeaponInfo(
-            weaponType);
+            weaponType, mPlayer->GetWeaponSkill());
 
     if (!weaponInfo)
         return false;
