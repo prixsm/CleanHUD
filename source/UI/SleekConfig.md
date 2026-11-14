@@ -2,7 +2,6 @@
 
 CleanHUD's in-game settings are now registered with the separate
 [SleekConfig](https://github.com/pedrolecio/SleekConfig) GTA SA settings menu.
-CleanHUD does **not** include its own ImGui renderer or window hooks.
 
 ## Installing
 
@@ -23,10 +22,7 @@ Wanted, Status Bars and Individual spacing groups.
 
 Edits run on the game main thread through SleekConfig's change callback.
 CleanHUD's HUDSettings instance is changed directly, so ordinary HUD updates
-apply the value immediately; **no ASI/game restart** is needed. Editing a
-spacing value does not invent game state; ordinary Stack spacing sliders
-preview their actual neighboring HUD groups. Jetpack position edits preview
-the icon only if CJ has a jetpack equipped.
+apply the value immediately; **no ASI/game restart** is needed.
 
 SleekConfig owns the F10 hotkey and handles player input, keyboard/mouse,
 Direct3D9 render hooks and graphics-device lifecycle. CleanHUD does not
@@ -70,17 +66,12 @@ duplicate their rendering or add its own preset storage.
 
 Update SleekConfig to **1.1.0 or newer** and keep only one copy of its
 ASI active. In F10, choose CleanHUD and use **Presets** to save a named
-configuration or load it during gameplay. Existing registered setting IDs
-that remain registered are unchanged; with the experimental scale toggle
-removed, the editor returns to **35 controls**.
+configuration or load it during gameplay.
 
 For exact spacing edits: SleekConfig's sliders follow the mouse,
 Shift offers fine adjustments, and Ctrl+click or double-click lets you
 enter a number. The 17 Advanced Layout sliders use **1.0** steps
-and a more practical **-1500 to +1500** range. Old fractional values
-are rounded to the nearest whole virtual unit on INI load or when
-published to SleekConfig. Older DAT presets with fractional values
-may need to be re-saved.
+and a more practical **-1500 to +1500** range.
 
 SleekConfig v1.1 chooses its number of visible decimal places from the
 step. A 1.0 step displays an integer in its own slider; the API does
@@ -144,12 +135,11 @@ headers still match upstream. Target: GTA San Andreas PC 1.0 US, Win32.
 - Reload/Restore Saved and Defaults behavior, including the DAT precedence
   documented above.
 - Verify Advanced Layout slider steps are 1.0 and the range is
-  -1500.0 to +1500.0. Loading a legacy 27.5 INI position rounds to
-  28.0. Save Mod formats values like 25.0 (one decimal).
+  -1500.0 to +1500.0. Save Mod formats values like 25.0 (one decimal).
 - Verify fade/duration ranges still accept 0 to 2000/10000.
 - Test with other SleekConfig-enabled mods: there should be one shared F10
   panel, no duplicate D3D9 hook and no stuck mouse or player controls.
-- Verify New Game/Load Game startup (no HUD flash), main-menu labels,
+- Verify New Game/Load Game startup, main-menu labels,
   existing vehicle drive-by/vision-goggle behavior and TAB preview.
 
 ## Weapon/Ammo fine positioning
@@ -197,22 +187,7 @@ scripted renderers** that do not update GTA's held weapon model.
 Missing models/textures are ignored. Hidden weapon icons default on,
 but can still be disabled in the INI or SleekConfig.
 
-### Jetpack, phone and scaling behavior
-
-The jetpack icon starts `DurationMs` once when CJ equips it, using
-`FadeInMs` and `FadeOutMs` as normal. It may fade away even while
-the jetpack remains equipped; equipping it again retriggers the timer.
-Pressing **Exit Vehicle** while jetpacking starts the icon's fade-out
-immediately and prevents its visibility timer from restarting until
-a new equip. Its existing alpha fades out for `FadeOutMs`.
-
-The cellphone icon is held visible during the active phone-use task.
-Once the phone-out/unequip animation begins, CleanHUD ends the
-visibility timer but keeps its icon drawn through **FadeOutMs**.
-The same applies when dropping the jetpack with Exit Vehicle.
-Both stop their visibility lifetime immediately, then fade smoothly.
-The ordinary fist/knuckle icon remains suppressed while the
-cellphone icon has visible alpha.
+### Jetpack behavior
 
 The jetpack icon is anchored to the left of the weapon slot at
 `JetpackIconOffsetX=0`, `JetpackIconOffsetY=0`, with a small gap.
@@ -224,10 +199,7 @@ when the jetpack is actually equipped, even if its original on-equip
 visibility timer expired. No preview occurs when the jetpack has
 been dropped or the icon option is disabled.
 
-CleanHUD no longer has a unified weapon-icon scale feature. Native
-fists and weapons keep their normal render geometry, including changes
-made by MixSets `WeaponIconScaleFix` or WidescreenFix's
-`ProportionalWeaponIcon`. CleanHUD's cellphone, jetpack and custom
+CleanHUD's cellphone, jetpack and custom
 icons use the **most recently measured native sprite bounds**, so they
 follow whichever scaling mod the player uses without injecting another
 scaling correction. Measurements persist across transient missing sprite
