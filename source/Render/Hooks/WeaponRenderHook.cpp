@@ -185,8 +185,9 @@ namespace
         const float jetpackY = iconY +
             settings.JetpackIconOffsetY * offsetScaleY;
 
-        if (manager.ShouldDrawJetpackIcon() &&
-            !manager.ShouldDrawCellphoneIcon())
+        // A phone occupies the normal weapon slot; the jetpack uses
+        // its side position instead of being hidden or overlapping.
+        if (manager.ShouldDrawJetpackIcon())
             DrawModelIcon(MODEL_JETPACK, jetpackX, jetpackY,
                 iconWidth, iconHeight, manager.GetJetpackIconAlpha());
     }
