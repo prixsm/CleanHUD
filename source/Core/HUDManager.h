@@ -40,6 +40,10 @@ public:
     // True only for unarmed/brass-knuckle slots, while the jetpack
     // is visible and no cellphone occupies that slot.
     bool ShouldReplaceWeaponWithJetpack() const;
+    bool ShouldDrawSkateboardIcon() const;
+    bool ShouldReplaceWeaponWithSkateboard() const;
+    std::uint8_t GetSkateboardIconAlpha() const;
+    int GetSkateboardIconModel() const;
     int GetCustomWeaponIconModel() const;
     bool IsUsingVanillaLayout() const;
     bool ShouldDisplayAmmo() const;
@@ -58,6 +62,8 @@ public:
     // Preview the currently equipped jetpack during X/Y slider edits,
     // including Minimal mode where stack spacing previews do not run.
     void PreviewJetpackPosition();
+    // Previews a real skateboard ride without inventing a vehicle.
+    void PreviewSkateboardPosition();
 
     static HUDManager& Get();
 
@@ -103,6 +109,7 @@ private:
     VisibilityTimer mClockSpacingPreview;
     // Jetpack is an on-equip event, unlike the continuously held phone task.
     bool mJetpackWasEquipped = false;
+    bool mSkateboardWasRiding = false;
     // PHONE_OUT may end before its parent phone task is removed.
     bool mCellphonePuttingAway = false;
 
@@ -118,6 +125,7 @@ private:
     // Independent alphas; no native draw-call patches for supplemental icons.
     HUDComponent mCellphoneIcon;
     HUDComponent mJetpackIcon;
+    HUDComponent mSkateboardIcon;
 
     HUDLayout mLayout;
 
@@ -176,9 +184,11 @@ private:
     void UpdateMoney();
     void UpdateWeaponIcon();
     void UpdateSpecialIcons();
-    // Jetpack equip and position preview must show ammo and weapon
-    // for the same time when the selected weapon has an ammo readout.
-    void ShowWeaponAndAmmoForJetpack(std::uint32_t duration);
+    void UpdateSkateboardIcon();
+    bool IsRidingConfiguredSkateboard() const;
+    // Equipment reveal keeps the underlying weapon and valid ammo
+    // on a common visibility window.
+    void ShowWeaponAndAmmoForEquipment(std::uint32_t duration);
     void UpdateAmmo();
     void UpdateVehicleFiring();
     bool IsValidVehicleFireInput() const;

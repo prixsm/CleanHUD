@@ -58,8 +58,8 @@ Other examples:
   keep control over them.
 
 Stack spacing previews are inactive in Minimal mode (which has no stack
-gaps). Jetpack X/Y edits are the exception: they preview the equipped
-jetpack in both Stack and Minimal. All previews are disabled during
+gaps). Jetpack X/Y and skateboard X/Y edits preview the actually
+equipped/ridden equipment in both Stack and Minimal. All previews are disabled during
 startup/loading, preventing HUD flashes. They don't force a Save:
 use **Save Mod** or a SleekConfig preset when satisfied with the layout.
 
@@ -76,7 +76,7 @@ configuration or load it during gameplay.
 
 For exact spacing edits: SleekConfig's sliders follow the mouse,
 Shift offers fine adjustments, and Ctrl+click or double-click lets you
-enter a number. The 17 Advanced Layout sliders use **1.0** steps
+enter a number. The 19 Advanced Layout sliders use **1.0** steps
 and a more practical **-1500 to +1500** range.
 
 SleekConfig v1.1 chooses its number of visible decimal places from the
@@ -133,7 +133,7 @@ Target: GTA San Andreas PC 1.0 US, Win32.
 - Start without SleekConfig. Game/menu text, loading, TAB, both HUD modes,
   firing and fading behave as before. CleanHUD.ini is loaded.
 - Start with SleekConfig. F10 opens **only** SleekConfig; CleanHUD is listed
-  under Visuals with 35 controls across its pages.
+  under Visuals with 40 controls across its pages.
 - Change each group of sliders/checkboxes, especially Stack/Minimal, the
   four Clock gaps and Status Bar to Weapon. Layout updates during play.
 - Save Mod, exit/restart, verify the modified CleanHUD.ini and
@@ -156,11 +156,10 @@ Stack mode exposes `WeaponAmmoOffsetX`, `WeaponAmmoOffsetY`, and
 Editing these values previews the currently drawable weapon and ammo.
 Minimal mode keeps GTA's native positions.
 
-For `WeaponToAmmoVerticalOffset`, start with **83.0** for unmodified GTA
-weapon-icon scaling (the default), **79.0** with MixSets
-`WeaponIconScaleFix`, or **87.0** with WidescreenFix
-`ProportionalWeaponIcon`. These are suggested manual adjustments,
-also displayed in SleekConfig's tooltip.
+For `WeaponToAmmoVerticalOffset`, use **83.0** as the default,
+or try **87.0** with WidescreenFix `ProportionalWeaponIcon`.
+This is a manual layout adjustment, also described in SleekConfig's
+tooltip.
 
 ## Optional hidden and custom weapon icons
 
@@ -227,14 +226,58 @@ follow whichever scaling mod the player uses without injecting another
 scaling correction. Measurements persist across transient missing sprite
 draws and are discarded on resolution changes.
 
-Because MixSets and WidescreenFix do not use exactly the same scaling,
-their relative Weapon/Ammo positions can still differ; the existing
-Weapon/Ammo spacing sliders remain the adjustment mechanism. Enabling
-both external scaling fixes may compound their adjustments; CleanHUD
-does not attempt to override or correct either mod.
+An external weapon-icon scale adjustment may change the apparent
+distance between the weapon icon and the ammo readout. CleanHUD
+does not override the external scaling; use
+`WeaponToAmmoVerticalOffset` to tune their relative positions.
 
 Advanced Layout keeps Weapon/Ammo offsets together and jetpack X/Y
 offsets in a separate `Jetpack Position` group.
+
+### Optional skateboard riding icon
+
+CleanHUD can show a separate, **opt-in skateboard icon while the
+player rides a skateboard vehicle**, without confusing it with the
+skateboard weapon held on foot. Enable `[Skateboard]
+ShowWhileRiding=1` (or the **Skateboard riding icon** checkbox under
+SleekConfig → General) and leave `ShowHiddenWeaponIcons=1`.
+
+The supplied Skate Mod Remake CLEO script uses these configuration
+keys in `cleo/skate_remake.ini`: `VehicleID=12500` for the vehicle
+spawned on mounting, `WeaponModel=326` for the carried skateboard,
+and `WeaponType=15` (Cane) for its weapon slot. CleanHUD defaults to
+`VehicleModelId=12500` and `IconModelId=326`; if the script's
+values are changed, update the corresponding CleanHUD settings.
+Other skateboard mods may use different vehicle/model IDs. This
+integration does not read the external skate mod INI automatically.
+
+When riding is detected via the player's **actual occupied vehicle
+model**, CleanHUD starts the normal `DurationMs` visibility timer
+once. The icon fades in using `FadeInMs` and fades out after that
+timer expires. Dismounting immediately ends the timer and uses
+`FadeOutMs`. It never appears merely because CJ carries the Cane
+weapon; carried skateboard rendering remains handled by the normal
+weapon/custom-model icon path.
+
+With fists or brass knuckles selected while riding, the skateboard
+occupies the primary weapon-icon slot. With a gun or any other held
+weapon, the skateboard icon appears to the left and the weapon/ammo
+are shown for the same initial visibility window. The configurable
+`IconOffsetX`/`IconOffsetY` (Advanced Layout → Skateboard Position)
+apply to either placement. Adjusting them previews the icon while
+the board vehicle is actually occupied, in either HUD mode.
+If a held skateboard returns immediately after dismount, the fading
+riding icon avoids drawing a duplicate of that same model.
+
+Both skateboard and jetpack effects have independent opacity timers.
+Should unusual mods allow both simultaneously, the skateboard icon
+uses an additional left slot to avoid covering the jetpack icon.
+A visible cellphone remains the primary hand-held icon.
+
+The selected `IconModelId` must have a model-name + `ICON` texture
+available through WeaponIconsTXD or its native TXD. This mod does
+not bundle a skateboard icon or infer one from a vehicle mesh. If
+none is available, select an icon model whose texture exists.
 
 The icon renderer checks the `weaponicons` TXD slot used by
 [WeaponIconsTXD](https://github.com/JuniorDjjr/WeaponIconsTXD) first,
@@ -244,16 +287,18 @@ in one of those dictionaries; no new image assets are bundled.
 
 ## Layout range, formatting and visibility cap
 
-All 17 advanced spacing/offset controls accept **-1500 to +1500**
+All 19 advanced spacing/offset controls accept **-1500 to +1500**
 virtual layout units in both SleekConfig and the INI reader. Values
 are rounded to whole virtual units and saved with one decimal place.
-These controls include the jetpack's independent X/Y positions.
+These controls include the jetpack and skateboard's independent X/Y
+positions. Skateboard model IDs are integer options (step 1), and
+only affect the optional rider icon.
 
 `DurationMs` is limited to 0..10000 milliseconds (10 seconds) in
 both SleekConfig and INI loading. Existing longer values are clamped
 on load. FadeInMs/FadeOutMs retain their 0..2000 ranges.
 
-SleekConfig registers a **1.0** increment for each of the 17 Advanced
+SleekConfig registers a **1.0** increment for each of the 19 Advanced
 Layout float sliders, avoiding fractional-step float validation issues.
 Direct INI values are normalized to the same whole-unit increments.
 The editor displays integer values because its current formatting

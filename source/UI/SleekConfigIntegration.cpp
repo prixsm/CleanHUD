@@ -39,6 +39,7 @@ namespace
         std::uint32_t HUDSettings::* Field;
         int Default;
         int Maximum;
+        int Step;
     };
 
     struct FloatSetting
@@ -61,6 +62,7 @@ namespace
         { "show_on_throwable_aim", "Show on throwable aim", "General", "", &HUDSettings::ShowOnThrowableAim, false },
         { "show_on_vehicle_look", "Show on vehicle look", "General", "", &HUDSettings::ShowOnVehicleLook, false },
         { "show_hidden_weapon_icons", "Show hidden/custom weapon icons", "General", "", &HUDSettings::ShowHiddenWeaponIcons, true },
+        { "show_skateboard_riding_icon", "Skateboard riding icon", "General", "", &HUDSettings::ShowSkateboardRidingIcon, false },
         { "clock", "Clock", "Elements", "", &HUDSettings::Clock, true },
         { "money", "Money", "Elements", "", &HUDSettings::Money, true },
         { "wanted", "Wanted stars", "Elements", "", &HUDSettings::Wanted, true },
@@ -72,9 +74,11 @@ namespace
     };
 
     constexpr IntSetting IntSettings[] = {
-        { "fade_in_ms", "Fade in (ms)", "Visibility", "", &HUDSettings::FadeInMs, 200, 2000 },
-        { "fade_out_ms", "Fade out (ms)", "Visibility", "", &HUDSettings::FadeOutMs, 200, 2000 },
-        { "duration_ms", "Visibility duration (ms)", "Visibility", "", &HUDSettings::VisibilityMs, 3000, 10000 }
+        { "fade_in_ms", "Fade in (ms)", "Visibility", "", &HUDSettings::FadeInMs, 200, 2000, 50 },
+        { "fade_out_ms", "Fade out (ms)", "Visibility", "", &HUDSettings::FadeOutMs, 200, 2000, 50 },
+        { "duration_ms", "Visibility duration (ms)", "Visibility", "", &HUDSettings::VisibilityMs, 3000, 10000, 250 },
+        { "skateboard_vehicle_model_id", "Skateboard vehicle model ID", "General", "", &HUDSettings::SkateboardVehicleModelId, 12500, 32767, 1 },
+        { "skateboard_icon_model_id", "Skateboard ICON model ID", "General", "", &HUDSettings::SkateboardIconModelId, 326, 32767, 1 }
     };
 
     constexpr FloatSetting FloatSettings[] = {
@@ -111,6 +115,10 @@ namespace
         { "jetpack_icon_offset_x", "Jetpack icon offset X", "Jetpack Position", &HUDSettings::JetpackIconOffsetX, 0.0f,
             HUDSpacingPreviewGroup::Weapon, HUDSpacingPreviewGroup::Weapon },
         { "jetpack_icon_offset_y", "Jetpack icon offset Y", "Jetpack Position", &HUDSettings::JetpackIconOffsetY, 0.0f,
+            HUDSpacingPreviewGroup::Weapon, HUDSpacingPreviewGroup::Weapon },
+        { "skateboard_icon_offset_x", "Skateboard icon offset X", "Skateboard Position", &HUDSettings::SkateboardIconOffsetX, 0.0f,
+            HUDSpacingPreviewGroup::Weapon, HUDSpacingPreviewGroup::Weapon },
+        { "skateboard_icon_offset_y", "Skateboard icon offset Y", "Skateboard Position", &HUDSettings::SkateboardIconOffsetY, 0.0f,
             HUDSpacingPreviewGroup::Weapon, HUDSpacingPreviewGroup::Weapon }
     };
 
@@ -153,8 +161,26 @@ namespace
                 "vehicle; drive-by firing reveals them regardless.";
         else if (std::strcmp(id, "show_hidden_weapon_icons") == 0)
             setting.description =
-                "Show the equipped cellphone, jetpack and custom held "
-                "weapon icons using GTA's native weapon icon scale.";
+                "Show equipped cellphone, jetpack and custom held "
+                "weapon icons using GTA's native icon scaling.";
+        else if (std::strcmp(id, "show_skateboard_riding_icon") == 0)
+            setting.description =
+                "Optional: show a timed skateboard icon only while "
+                "riding the configured vehicle model. Requires hidden "
+                "icons enabled and an ICON texture on the icon model.";
+        else if (std::strcmp(id, "skateboard_vehicle_model_id") == 0)
+            setting.description =
+                "Vehicle model used by your skateboard mod. Skate Mod "
+                "Remake defaults to VehicleID=12500.";
+        else if (std::strcmp(id, "skateboard_icon_model_id") == 0)
+            setting.description =
+                "Weapon/model whose ICON texture depicts the board. "
+                "Skate Mod Remake defaults to WeaponModel=326.";
+        else if (std::strcmp(id, "skateboard_icon_offset_x") == 0 ||
+                 std::strcmp(id, "skateboard_icon_offset_y") == 0)
+            setting.description =
+                "Move the riding icon relative to the weapon slot "
+                "or its left-side position; preview only when riding.";
         return setting;
     }
 
@@ -189,13 +215,13 @@ namespace
         {
             value = {};
             value.type = SC_INT;
-            const int step = std::strcmp(entry.Id, "duration_ms") == 0
-                ? 250 : 50;
             const int original = static_cast<int>(
                 settings.*(entry.Field));
+            const int minimum = entry.Step == 1 ? 1 : 0;
             value.integer = std::clamp(
-                ((original + step / 2) / step) * step,
-                0, entry.Maximum);
+                ((original + entry.Step / 2) / entry.Step) *
+                    entry.Step,
+                minimum, entry.Maximum);
 
             if (gApi->publish_value(gMod, entry.Id, &value) != SC_OK)
                 return false;
@@ -265,6 +291,12 @@ namespace
 
             settings.*(entry.Field) =
                 static_cast<std::uint32_t>(proposed->integer);
+
+            if (entry.Field == &HUDSettings::SkateboardVehicleModelId ||
+                entry.Field == &HUDSettings::SkateboardIconModelId)
+            {
+                HUDManager::Get().PreviewSkateboardPosition();
+            }
             return 1;
         }
 
@@ -289,6 +321,11 @@ namespace
                     entry.Field == &HUDSettings::JetpackIconOffsetY)
                 {
                     HUDManager::Get().PreviewJetpackPosition();
+                }
+                else if (entry.Field == &HUDSettings::SkateboardIconOffsetX ||
+                         entry.Field == &HUDSettings::SkateboardIconOffsetY)
+                {
+                    HUDManager::Get().PreviewSkateboardPosition();
                 }
                 else
                 {
@@ -353,10 +390,9 @@ namespace
                 entry.Id, entry.Label, entry.Page,
                 entry.Group, SC_INT);
 
-            setting.minimum = 0;
+            setting.minimum = entry.Step == 1 ? 1 : 0;
             setting.maximum = entry.Maximum;
-            setting.step = std::strcmp(entry.Id, "duration_ms") == 0
-                ? 250 : 50;
+            setting.step = entry.Step;
             setting.default_value.integer = entry.Default;
 
             if (gApi->register_setting(gMod, &setting) != SC_OK)
@@ -380,9 +416,16 @@ namespace
             if (std::strcmp(entry.Id, "weapon_to_ammo_vertical_offset") == 0)
             {
                 setting.description =
-                    "No scale fix: 83.0 (default); "
-                    "MixSets WeaponIconScaleFix: 79.0; "
-                    "WidescreenFix ProportionalWeaponIcon: 87.0.";
+                    "Default vertical offset: 83.0. "
+                    "WidescreenFix ProportionalWeaponIcon: try 87.0.";
+            }
+
+            if (std::strcmp(entry.Id, "skateboard_icon_offset_x") == 0 ||
+                std::strcmp(entry.Id, "skateboard_icon_offset_y") == 0)
+            {
+                setting.description =
+                    "Position of the icon while riding a skateboard. "
+                    "Only shown when that vehicle is actually occupied.";
             }
 
             if (gApi->register_setting(gMod, &setting) != SC_OK)
