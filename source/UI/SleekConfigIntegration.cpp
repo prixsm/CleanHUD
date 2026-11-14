@@ -150,7 +150,8 @@ namespace
                 "visible element makes room above other HUD elements.";
         else if (std::strcmp(id, "show_on_foot_aim") == 0)
             setting.description =
-                "Reveal weapon and ammo while aiming on foot.";
+                "Reveal weapon/ammo while aiming on foot. While using "
+                "a jetpack, an enabled weapon or actual shot is required.";
         else if (std::strcmp(id, "show_on_throwable_aim") == 0)
             setting.description =
                 "Allow aim-button reveal for grenades, tear gas, "

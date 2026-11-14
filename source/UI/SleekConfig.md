@@ -220,6 +220,17 @@ visibility. Equipping or previewing the jetpack also reveals ammo
 alongside the selected weapon for the same `DurationMs` timer,
 when that weapon has an ammo readout.
 
+When using the jetpack, aim-button visibility follows GTA's
+current weapon capability: instant-hit firing plus the
+`AimWithArm` weapon-info flag. These values are inspected live
+rather than maintaining a fixed list of weapon names, so mods
+that adjust weapon data are accommodated. A weapon observed
+in the actual firing state is also allowed to reveal its HUD
+when a script implements shooting independently of weapon data.
+Simply pressing Aim on an unusable weapon does not force the
+weapon/ammo icons to appear. Outside jetpack use, existing
+on-foot and vehicle aim behavior is unchanged.
+
 CleanHUD's cellphone, jetpack and custom
 icons use the **most recently measured native sprite bounds**, so they
 follow whichever scaling mod the player uses without injecting another
