@@ -1458,7 +1458,7 @@ bool HUDManager::ShouldSuppressNativeFist() const
         ShouldReplaceWeaponWithJetpack();
 }
 
-bool HUDManager::ShouldSuppressNativeKnuckles() const
+bool HUDManager::ShouldSuppressNativeWeaponSprite() const
 {
     if (!mPlayer)
         return false;
