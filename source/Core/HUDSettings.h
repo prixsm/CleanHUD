@@ -56,7 +56,7 @@ public:
     // Carried skateboards remain under normal custom weapon handling.
     bool ShowSkateboardRidingIcon = false;
     std::uint32_t SkateboardVehicleModelId = 12500;
-    std::uint32_t SkateboardIconModelId = 326;
+    std::uint32_t SkateboardIconModelId = 12400;
     float SkateboardIconOffsetX = 0.0f;
     float SkateboardIconOffsetY = 0.0f;
 
