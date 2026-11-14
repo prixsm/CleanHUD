@@ -52,27 +52,29 @@ namespace
         HUDSpacingPreviewGroup Second;
     };
 
+    // Simple controls live directly under their page; no extra
+    // collapsible headings for General, Elements or Visibility.
     constexpr BoolSetting BoolSettings[] = {
-        { "always_show_clock", "Always show Clock", "General", "Clock", &HUDSettings::AlwaysShowClock, true },
-        { "slide_stack", "Slide stack on entry", "General", "Animation", &HUDSettings::SlideStack, false },
-        { "clock", "Clock", "Elements", "Managed elements", &HUDSettings::Clock, true },
-        { "money", "Money", "Elements", "Managed elements", &HUDSettings::Money, true },
-        { "wanted", "Wanted stars", "Elements", "Managed elements", &HUDSettings::Wanted, true },
-        { "health", "Health", "Elements", "Managed elements", &HUDSettings::Health, true },
-        { "armour", "Armour", "Elements", "Managed elements", &HUDSettings::Armour, true },
-        { "breath", "Breath", "Elements", "Managed elements", &HUDSettings::Breath, true },
-        { "weapon", "Weapon icon", "Elements", "Managed elements", &HUDSettings::Weapon, true },
-        { "ammo", "Ammo", "Elements", "Managed elements", &HUDSettings::Ammo, true },
-        { "show_on_foot_aim", "Show on foot aim", "Weapon & Ammo", "Aim controls", &HUDSettings::ShowOnFootAim, true },
-        { "show_on_throwable_aim", "Show on throwable aim", "Weapon & Ammo", "Aim controls", &HUDSettings::ShowOnThrowableAim, false },
-        { "show_on_vehicle_look", "Show on vehicle look", "Weapon & Ammo", "Aim controls", &HUDSettings::ShowOnVehicleLook, false },
-        { "show_hidden_weapon_icons", "Show hidden/custom weapon icons", "Special Icons", "Equipment", &HUDSettings::ShowHiddenWeaponIcons, true }
+        { "always_show_clock", "Always show Clock", "General", "", &HUDSettings::AlwaysShowClock, true },
+        { "slide_stack", "Slide stack on entry", "General", "", &HUDSettings::SlideStack, false },
+        { "show_on_foot_aim", "Show on foot aim", "General", "", &HUDSettings::ShowOnFootAim, true },
+        { "show_on_throwable_aim", "Show on throwable aim", "General", "", &HUDSettings::ShowOnThrowableAim, false },
+        { "show_on_vehicle_look", "Show on vehicle look", "General", "", &HUDSettings::ShowOnVehicleLook, false },
+        { "show_hidden_weapon_icons", "Show hidden/custom weapon icons", "General", "", &HUDSettings::ShowHiddenWeaponIcons, true },
+        { "clock", "Clock", "Elements", "", &HUDSettings::Clock, true },
+        { "money", "Money", "Elements", "", &HUDSettings::Money, true },
+        { "wanted", "Wanted stars", "Elements", "", &HUDSettings::Wanted, true },
+        { "health", "Health", "Elements", "", &HUDSettings::Health, true },
+        { "armour", "Armour", "Elements", "", &HUDSettings::Armour, true },
+        { "breath", "Breath", "Elements", "", &HUDSettings::Breath, true },
+        { "weapon", "Weapon icon", "Elements", "", &HUDSettings::Weapon, true },
+        { "ammo", "Ammo", "Elements", "", &HUDSettings::Ammo, true }
     };
 
     constexpr IntSetting IntSettings[] = {
-        { "fade_in_ms", "Fade in (ms)", "Visibility", "Animation", &HUDSettings::FadeInMs, 200, 2000 },
-        { "fade_out_ms", "Fade out (ms)", "Visibility", "Animation", &HUDSettings::FadeOutMs, 200, 2000 },
-        { "duration_ms", "Visibility duration (ms)", "Visibility", "Animation", &HUDSettings::VisibilityMs, 3000, 10000 }
+        { "fade_in_ms", "Fade in (ms)", "Visibility", "", &HUDSettings::FadeInMs, 200, 2000 },
+        { "fade_out_ms", "Fade out (ms)", "Visibility", "", &HUDSettings::FadeOutMs, 200, 2000 },
+        { "duration_ms", "Visibility duration (ms)", "Visibility", "", &HUDSettings::VisibilityMs, 3000, 10000 }
     };
 
     constexpr FloatSetting FloatSettings[] = {
@@ -104,7 +106,7 @@ namespace
             HUDSpacingPreviewGroup::Weapon, HUDSpacingPreviewGroup::Ammo },
         { "weapon_ammo_offset_y", "Weapon/Ammo offset Y", "Weapon & Ammo Position", &HUDSettings::WeaponAmmoOffsetY, -16.0f,
             HUDSpacingPreviewGroup::Weapon, HUDSpacingPreviewGroup::Ammo },
-        { "weapon_to_ammo_vertical_offset", "Weapon to Ammo vertical offset", "Weapon & Ammo Position", &HUDSettings::WeaponToAmmoVerticalOffset, 87.0f,
+        { "weapon_to_ammo_vertical_offset", "Weapon to Ammo vertical offset", "Weapon & Ammo Position", &HUDSettings::WeaponToAmmoVerticalOffset, 83.0f,
             HUDSpacingPreviewGroup::Weapon, HUDSpacingPreviewGroup::Ammo },
         { "jetpack_icon_offset_x", "Jetpack icon offset X", "Jetpack Position", &HUDSettings::JetpackIconOffsetX, 0.0f,
             HUDSpacingPreviewGroup::Weapon, HUDSpacingPreviewGroup::Weapon },
@@ -124,6 +126,35 @@ namespace
         setting.group = group;
         setting.type = type;
         setting.default_value.type = type;
+
+        // Shown in SleekConfig's setting tooltip, not a new group.
+        if (std::strcmp(id, "hud_mode") == 0)
+            setting.description =
+                "Stack arranges temporary HUD elements vertically; "
+                "Minimal fades elements at GTA's original positions.";
+        else if (std::strcmp(id, "always_show_clock") == 0)
+            setting.description =
+                "Keep the clock visible above the Stack. When off, "
+                "the managed clock fades with CleanHUD visibility rules.";
+        else if (std::strcmp(id, "slide_stack") == 0)
+            setting.description =
+                "In Stack mode, smooth the position changes as a newly "
+                "visible element makes room above other HUD elements.";
+        else if (std::strcmp(id, "show_on_foot_aim") == 0)
+            setting.description =
+                "Reveal weapon and ammo while aiming on foot.";
+        else if (std::strcmp(id, "show_on_throwable_aim") == 0)
+            setting.description =
+                "Allow aim-button reveal for grenades, tear gas, "
+                "Molotovs and satchel charges (for aiming mods).";
+        else if (std::strcmp(id, "show_on_vehicle_look") == 0)
+            setting.description =
+                "Reveal weapon/ammo when looking left or right in a "
+                "vehicle; drive-by firing reveals them regardless.";
+        else if (std::strcmp(id, "show_hidden_weapon_icons") == 0)
+            setting.description =
+                "Show the equipped cellphone, jetpack and custom held "
+                "weapon icons using GTA's native weapon icon scale.";
         return setting;
     }
 
@@ -158,11 +189,20 @@ namespace
         {
             value = {};
             value.type = SC_INT;
-            value.integer = static_cast<std::int32_t>(
+            const int step = std::strcmp(entry.Id, "duration_ms") == 0
+                ? 250 : 50;
+            const int original = static_cast<int>(
                 settings.*(entry.Field));
+            value.integer = std::clamp(
+                ((original + step / 2) / step) * step,
+                0, entry.Maximum);
 
             if (gApi->publish_value(gMod, entry.Id, &value) != SC_OK)
                 return false;
+
+            // Legacy INI values may not land exactly on the menu step.
+            settings.*(entry.Field) =
+                static_cast<std::uint32_t>(value.integer);
         }
 
         for (const auto& entry : FloatSettings)
@@ -177,8 +217,8 @@ namespace
             if (gApi->publish_value(gMod, entry.Id, &value) != SC_OK)
                 return false;
 
-            // Keep the immediately active layout in sync with what
-            // the half-step menu displays, not just its saved values.
+            // Keep the active layout in sync with the rounded values
+            // displayed by SleekConfig.
             settings.*(entry.Field) = value.real;
         }
 
@@ -281,7 +321,7 @@ namespace
     bool RegisterSettings()
     {
         ScSettingDesc mode = Describe(
-            "hud_mode", "HUD layout", "General", "Mode", SC_ENUM);
+            "hud_mode", "HUD layout", "General", "", SC_ENUM);
 
         mode.options = "Stack|Minimal";
         mode.minimum = 0;
@@ -315,7 +355,8 @@ namespace
 
             setting.minimum = 0;
             setting.maximum = entry.Maximum;
-            setting.step = 1;
+            setting.step = std::strcmp(entry.Id, "duration_ms") == 0
+                ? 250 : 50;
             setting.default_value.integer = entry.Default;
 
             if (gApi->register_setting(gMod, &setting) != SC_OK)
@@ -339,8 +380,9 @@ namespace
             if (std::strcmp(entry.Id, "weapon_to_ammo_vertical_offset") == 0)
             {
                 setting.description =
-                    "Recommended: 79.0 for MixSets WeaponIconScaleFix; "
-                    "87.0 for WidescreenFix ProportionalWeaponIcon (default).";
+                    "No scale fix: 83.0 (default); "
+                    "MixSets WeaponIconScaleFix: 79.0; "
+                    "WidescreenFix ProportionalWeaponIcon: 87.0.";
             }
 
             if (gApi->register_setting(gMod, &setting) != SC_OK)

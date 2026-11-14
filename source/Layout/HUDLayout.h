@@ -87,6 +87,9 @@ private:
     std::array<bool, ElementCount> mSlideOnEntry = {};
     std::array<bool, ElementCount> mHoldEntrancePosition = {};
     std::array<float, ElementCount> mStackProgress = {};
+    // Status bars animate their own entrance as well as the stack
+    // displacement caused by elements appearing above them.
+    std::array<float, ElementCount> mStatusEntryProgress = {};
 
     std::vector<HUDLayoutItem> mItems;
 };

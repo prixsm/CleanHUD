@@ -35,8 +35,10 @@ public:
     std::uint8_t GetCellphoneIconAlpha() const;
     std::uint8_t GetJetpackIconAlpha() const;
     bool ShouldSuppressNativeFist() const;
-    bool ShouldSuppressNativeKnuckles() const;
+    bool ShouldSuppressNativeWeaponSprite() const;
     bool ShouldDrawJetpackIcon() const;
+    // True when no firearm occupies the weapon slot alongside jetpack.
+    bool ShouldReplaceWeaponWithJetpack() const;
     int GetCustomWeaponIconModel() const;
     bool IsUsingVanillaLayout() const;
     bool ShouldDisplayAmmo() const;

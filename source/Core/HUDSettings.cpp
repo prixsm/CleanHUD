@@ -331,7 +331,7 @@ void HUDSettings::Load()
         path.c_str(), "SpecialIcons", "ShowHiddenWeaponIcons", true);
 
     JetpackIconOffsetX = ReadFloat(
-        path.c_str(), "SpecialIcons", "JetpackIconOffsetX", 17.0f);
+        path.c_str(), "SpecialIcons", "JetpackIconOffsetX", 0.0f);
 
     JetpackIconOffsetY = ReadFloat(
         path.c_str(), "SpecialIcons", "JetpackIconOffsetY", 0.0f);
@@ -380,7 +380,7 @@ void HUDSettings::Load()
 
     WeaponToAmmoVerticalOffset = ReadFloat(
         path.c_str(), "WeaponAmmoLayout",
-        "WeaponToAmmoVerticalOffset", 87.0f);
+        "WeaponToAmmoVerticalOffset", 83.0f);
 }
 
 
@@ -470,8 +470,7 @@ bool HUDSettings::Save() const
     if (!success)
         return false;
 
-    // Clean up the old setting in existing user INIs on Save Mod.
-    // It no longer controls any native or supplemental icon scaling.
+    // Keep the saved INI free from unsupported configuration keys.
     if (!WritePrivateProfileStringA(
         "WeaponAmmo", "UnifiedWeaponIconScale", nullptr, path.c_str()))
         return false;

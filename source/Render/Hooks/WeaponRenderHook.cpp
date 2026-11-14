@@ -141,9 +141,8 @@ namespace
         const float screenWidth = plugin::screen::GetScreenWidth();
         const float screenHeight = plugin::screen::GetScreenHeight();
 
-        // Never fall back to vanilla scale merely because no native
-        // sprite happened to be rendered on this particular frame.
-        // Invalidate cached pixels only after an actual resolution change.
+        // Retain the last measured native icon size across intermittent
+        // draw frames; refresh the cached pixels when resolution changes.
         const bool haveMeasuredScale =
             p.Width > 0.0f && p.Height > 0.0f &&
             p.CapturedScreenWidth == screenWidth &&
@@ -160,7 +159,8 @@ namespace
         HUDManager& manager = HUDManager::Get();
 
         const int customModel = manager.GetCustomWeaponIconModel();
-        if (customModel > 0 && !manager.ShouldDrawCellphoneIcon())
+        if (customModel > 0 && !manager.ShouldDrawCellphoneIcon() &&
+            !manager.ShouldReplaceWeaponWithJetpack())
             DrawModelIcon(customModel, iconX, iconY,
                 iconWidth, iconHeight, p.Alpha);
 
@@ -168,16 +168,25 @@ namespace
             DrawModelIcon(MODEL_CELLPHONE, iconX, iconY,
                 iconWidth, iconHeight, manager.GetCellphoneIconAlpha());
 
-        // Independent offsets from the left-side weapon slot. No
-        // mode toggle: players can position the jetpack freely in X/Y.
         const auto& settings = HUDSettings::Get();
-        const float jetpackX = iconX - iconWidth -
-            8.0f * (iconWidth / 47.0f) +
-            settings.JetpackIconOffsetX * (screenWidth / 1920.0f);
-        const float jetpackY = iconY +
-            settings.JetpackIconOffsetY * (screenHeight / 1080.0f);
+        constexpr float SideBySideShiftX = 12.0f;
+        const float offsetScaleX = screenWidth / 1920.0f;
+        const float offsetScaleY = screenHeight / 1080.0f;
 
-        if (manager.ShouldDrawJetpackIcon())
+        // With no firearm, center the jetpack in the normal weapon
+        // slot. Only the side-by-side placement has a built-in 12-unit
+        // right shift; user X/Y offsets apply relative to either anchor.
+        const float jetpackX = manager.ShouldReplaceWeaponWithJetpack()
+            ? iconX + settings.JetpackIconOffsetX * offsetScaleX
+            : iconX - iconWidth -
+                8.0f * (iconWidth / 47.0f) +
+                (SideBySideShiftX + settings.JetpackIconOffsetX) *
+                    offsetScaleX;
+        const float jetpackY = iconY +
+            settings.JetpackIconOffsetY * offsetScaleY;
+
+        if (manager.ShouldDrawJetpackIcon() &&
+            !manager.ShouldDrawCellphoneIcon())
             DrawModelIcon(MODEL_JETPACK, jetpackX, jetpackY,
                 iconWidth, iconHeight, manager.GetJetpackIconAlpha());
     }
@@ -354,9 +363,9 @@ namespace
         const std::uint32_t cleanAlpha =
             pos.Alpha;
 
-        // The phone suppresses only knuckles on the model-sprite
-        // path, not unrelated firearms that may be in use.
-        stack[9] = HUDManager::Get().ShouldSuppressNativeKnuckles()
+        // Phone suppresses knuckles; an equipped jetpack replaces
+        // the non-firearm icon, leaving a firearm's icon intact.
+        stack[9] = HUDManager::Get().ShouldSuppressNativeWeaponSprite()
             ? 0u : originalAlpha * cleanAlpha / 255u;
     }
 }
