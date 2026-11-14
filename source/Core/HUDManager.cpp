@@ -13,6 +13,7 @@
 #include <CStats.h>
 #include <CVehicle.h>
 #include <CTaskSimpleSwim.h>
+#include <CTaskSimpleJetpack.h>
 #include <CWanted.h>
 #include <CWeaponInfo.h>
 #include <CWorld.h>
@@ -376,7 +377,6 @@ void HUDManager::OnGameLoaded()
     mCellphoneIcon.Reset();
     mJetpackIcon.Reset();
     mJetpackWasEquipped = false;
-    mJetpackDropped = false;
     mCellphonePuttingAway = false;
 
     mPlayer = nullptr;
@@ -398,8 +398,7 @@ void HUDManager::Update()
         mCellphoneIcon.Reset();
         mJetpackIcon.Reset();
         mJetpackWasEquipped = false;
-        mJetpackDropped = false;
-        mCellphonePuttingAway = false;
+            mCellphonePuttingAway = false;
 
         // Returning from gameplay to a frontend or loading
         // screen must not leave our draw-call NOPs in place.
@@ -1310,22 +1309,33 @@ void HUDManager::PreviewJetpackPosition()
     // Unlike Stack spacing previews, this also works in Minimal mode.
     if (!mSessionInitialized || !mPlayer || mNeedsReset ||
         !settings.ShowHiddenWeaponIcons ||
-        !mPlayer->m_pIntelligence || mJetpackDropped ||
-        !mPlayer->m_pIntelligence->GetTaskJetPack() ||
+        !mPlayer->m_pIntelligence ||
         settings.VisibilityMs == 0)
     {
         return;
     }
 
-    // Its normal one-time equip timer may already have elapsed.
-    // An actual X/Y edit temporarily reveals it for positioning;
-    // stopping the edits lets the normal fade-out resume.
-    mJetpackIcon.ShowFor(settings.VisibilityMs);
+    // Only a real, unfinished jetpack task can be previewed. This
+    // rejects both midair F presses (which don't end that task) and
+    // old finished tasks waiting for the engine to detach them.
+    const CTaskSimpleJetPack* task =
+        mPlayer->m_pIntelligence->GetTaskJetPack();
+    if (!task || task->m_bIsFinished)
+        return;
 
-    // Supplemental icons use the native weapon slot's draw position.
-    // Keep that reference drawable during the preview as well.
-    if (settings.Weapon)
-        mWeaponIcon.ShowFor(settings.VisibilityMs);
+    mJetpackIcon.ShowFor(settings.VisibilityMs);
+    ShowWeaponAndAmmoForJetpack(settings.VisibilityMs);
+}
+
+void HUDManager::ShowWeaponAndAmmoForJetpack(
+    std::uint32_t duration)
+{
+    // Both readouts should enter and expire together when the
+    // jetpack appears beside another selected weapon.
+    mWeaponIcon.ShowFor(duration);
+
+    if (HUDSettings::Get().Ammo && ShouldDisplayAmmo())
+        mAmmo.ShowFor(duration);
 }
 
 void HUDManager::PreviewSpacingGroup(HUDSpacingPreviewGroup group)
@@ -1444,12 +1454,14 @@ bool HUDManager::ShouldReplaceWeaponWithJetpack() const
     if (!weapon)
         return false;
 
-    // Pistols through miniguns are the GTA firearm range.
-    // Fists, brass knuckles, melee and utility equipment don't
-    // create a second icon while the jetpack is on-screen.
+    // Only truly unarmed slots are replaced. Throwables, melee,
+    // utility equipment and custom weapons have their own weapon
+    // icons, so keep them and place the jetpack alongside.
+    // A visible cellphone already occupies the main icon slot.
     const eWeaponType type = weapon->m_eWeaponType;
-    return type < WEAPONTYPE_PISTOL ||
-        type > WEAPONTYPE_MINIGUN;
+    return !ShouldDrawCellphoneIcon() &&
+        (type == WEAPONTYPE_UNARMED ||
+         type == WEAPONTYPE_BRASSKNUCKLE);
 }
 
 bool HUDManager::ShouldSuppressNativeFist() const
@@ -1535,38 +1547,32 @@ void HUDManager::UpdateSpecialIcons()
         mCellphoneIcon.Reset();
         mJetpackIcon.Reset();
         mJetpackWasEquipped = false;
-        mJetpackDropped = false;
         mCellphonePuttingAway = false;
         return;
     }
 
     CPedIntelligence* intelligence = mPlayer->m_pIntelligence;
-    const bool jetpackActive = intelligence->GetTaskJetPack() != nullptr;
+    const CTaskSimpleJetPack* jetpackTask =
+        intelligence->GetTaskJetPack();
 
-    // Stop the visibility timer on the exit-button edge, even when
-    // task removal lags one tick. Keep its normal fade-out animation.
-    CPad* pad = mPlayer->GetPadFromPlayer();
-    const bool droppingJetpack = jetpackActive && pad &&
-        !pad->DisablePlayerControls && pad->ExitVehicleJustDown();
+    // GTA ignores the exit button while airborne. The jetpack task
+    // itself is the source of truth: only start fading when the game
+    // has marked the task finished or actually removed the task.
+    const bool jetpackEquipped =
+        jetpackTask && !jetpackTask->m_bIsFinished;
 
-    if (!jetpackActive)
+    if (!jetpackEquipped)
     {
         mJetpackIcon.Hide();
-        mJetpackDropped = false;
     }
-    else if (droppingJetpack)
+    else if (!mJetpackWasEquipped)
     {
-        mJetpackIcon.Hide();
-        mJetpackDropped = true;
-    }
-    else if (!mJetpackWasEquipped && !mJetpackDropped)
-    {
-        // A single equip event starts the normal CleanHUD visibility
-        // timer; continued flight must not refresh it every frame.
+        // Normal CleanHUD visibility starts once per actual equip,
+        // not on every frame of continued flight.
         mJetpackIcon.ShowFor(mVisibleTime);
-        mWeaponIcon.ShowFor(mVisibleTime);
+        ShowWeaponAndAmmoForJetpack(mVisibleTime);
     }
-    mJetpackWasEquipped = jetpackActive;
+    mJetpackWasEquipped = jetpackEquipped;
 
     // PHONE_OUT may still belong to the parent phone-use task.
     // Stop extending the icon when this task begins, but allow the
@@ -1606,7 +1612,6 @@ void HUDManager::HideAll()
     mCellphoneIcon.Reset();
     mJetpackIcon.Reset();
     mJetpackWasEquipped = false;
-    mJetpackDropped = false;
     mCellphonePuttingAway = false;
     mClock.Reset();
     mHealth.Reset();
