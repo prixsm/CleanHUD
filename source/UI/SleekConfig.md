@@ -15,11 +15,13 @@ without an F10 configuration panel or error.
 
 ## Live editing
 
-Controls are organized under **General**, **Elements**, **Visibility**
-and **Advanced Layout**. General contains HUD layout, clock behavior,
-stack animation, weapon/aim behavior, and special-icon visibility.
-Elements and Visibility have no additional groups. Advanced Layout
-keeps its named spacing and positioning groups.
+Controls use **General**, **Elements**, **Visibility**, **Skateboard**
+and **Advanced Layout** pages. General contains HUD layout, clock and
+aiming behavior. Elements starts with a page-wide explanation:
+**On** means CleanHUD controls visibility/layout; **Off** means GTA
+or another HUD mod retains control of that element. Skateboard
+contains its opt-in toggle, both model IDs and both position offsets.
+Advanced Layout keeps the general Stack/Weapon/Jetpack groups.
 
 Edits run on the game main thread through SleekConfig's change callback.
 CleanHUD's HUDSettings instance is changed directly, so ordinary HUD updates
@@ -76,8 +78,15 @@ configuration or load it during gameplay.
 
 For exact spacing edits: SleekConfig's sliders follow the mouse,
 Shift offers fine adjustments, and Ctrl+click or double-click lets you
-enter a number. The 19 Advanced Layout sliders use **1.0** steps
-and a more practical **-1500 to +1500** range.
+enter a number. The 17 Advanced Layout sliders and two Skateboard
+offset sliders use **1.0** steps and **-1500 to +1500** bounds.
+
+**Model IDs are still native SleekConfig integer controls, not true
+spinners**: the current SleekConfig API has no spinner widget selection.
+To type a model ID directly instead of dragging over 1..32767,
+**Ctrl+click or double-click** its number. Upstream must add a
+spinner-compatible control before CleanHUD can request one while
+retaining existing typed setting IDs/presets.
 
 SleekConfig v1.1 chooses its number of visible decimal places from the
 step. A 1.0 step displays an integer in its own slider; the API does
@@ -133,15 +142,18 @@ Target: GTA San Andreas PC 1.0 US, Win32.
 - Start without SleekConfig. Game/menu text, loading, TAB, both HUD modes,
   firing and fading behave as before. CleanHUD.ini is loaded.
 - Start with SleekConfig. F10 opens **only** SleekConfig; CleanHUD is listed
-  under Visuals with 40 controls across its pages.
+  under Visuals with 40 editable controls and one Elements help row.
 - Change each group of sliders/checkboxes, especially Stack/Minimal, the
   four Clock gaps and Status Bar to Weapon. Layout updates during play.
 - Save Mod, exit/restart, verify the modified CleanHUD.ini and
   SleekConfig/prixsm.cleanhud.dat. Verify saved values on restart.
 - Reload/Restore Saved and Defaults behavior, including the DAT precedence
   documented above.
-- Verify Advanced Layout slider steps are 1.0 and the range is
-  -1500.0 to +1500.0. Save Mod formats values like 25.0 (one decimal).
+- Verify Advanced Layout and Skateboard offset slider steps are 1.0
+  with -1500.0..+1500.0 bounds. Save Mod writes 25.0 (one decimal).
+- Confirm Elements has a single help row above all eight toggles,
+  and Skateboard has its own page with five controls; model IDs
+  support direct numeric input with Ctrl+click/double-click.
 - Verify Fade In and Fade Out use 50 ms steps, and Visibility Duration
   uses 250 ms steps, within the existing 0..2000/0..10000 bounds.
 - Test with other SleekConfig-enabled mods: there should be one shared F10
@@ -267,8 +279,8 @@ offsets in a separate `Jetpack Position` group.
 CleanHUD can show a separate, **opt-in skateboard icon while the
 player rides a skateboard vehicle**, without confusing it with the
 skateboard weapon held on foot. Enable `[Skateboard]
-ShowWhileRiding=1` (or the **Skateboard riding icon** checkbox under
-SleekConfig → General) and leave `ShowHiddenWeaponIcons=1`.
+ShowWhileRiding=1` (or **Skateboard mod support** under
+SleekConfig → Skateboard) and leave `ShowHiddenWeaponIcons=1`.
 
 For the added-weapon Skate Mod Remake installation, the uploaded
 `cleo/skate_remake.ini` contains `VehicleID=12500`,
@@ -297,7 +309,7 @@ With fists or brass knuckles selected while riding, the skateboard
 occupies the primary weapon-icon slot. With a gun or any other held
 weapon, the skateboard icon appears to the left and the weapon/ammo
 are shown for the same initial visibility window. The configurable
-`IconOffsetX`/`IconOffsetY` (Advanced Layout → Skateboard Position)
+`IconOffsetX`/`IconOffsetY` (SleekConfig → Skateboard)
 apply to either placement. Adjusting them previews the icon while
 the board vehicle is actually occupied, in either HUD mode.
 If a held skateboard returns immediately after dismount, the fading
@@ -319,21 +331,76 @@ then the original model TXD. It does not patch WeaponIconsTXD's two
 lookup calls. Icons appear only if their model has an `ICON` texture
 in one of those dictionaries; no new image assets are bundled.
 
+## Gameplay compatibility and lifetime audit
+
+CleanHUD reads **GTA's CPad state**, not keyboard scan codes,
+for drive-by shooting or look-direction input. The uploaded GInput
+1.11 API describes optional `DrivebyWithAnalog` and
+`HotkeyToDriveby` pad settings, but CleanHUD does not need to
+link or load `GInputSA.asi`, obtain an `IGInputPad` pointer, or
+register a GInput callback. Confirmed held-weapon `FIRING` state
+or ammunition consumption while in a vehicle can reveal Weapon/Ammo
+regardless of weapon type, model, vehicle class, or the original
+`GetCarGunFired` mapping. A fire-button press alone cannot do so.
+Consumable ammo edits from trainers can also count as a decrease.
+
+`ShowOnVehicleLook` is intentionally conservative. Default
+SMGs can preview immediately; other weapon types become eligible
+for look-only preview once **actual fire or ammo consumption** is
+observed with that weapon in the current vehicle. Switching
+vehicles/loading a game clears this learned state. The optional
+look preview still obeys the known vanilla vehicle-direction checks,
+so custom vehicle classes may not offer speculative look previews
+even though their actual shots reveal the HUD.
+
+The source-level memory audit found no per-frame `new`, `malloc`,
+RenderWare texture creation, or retained ownership of GTA TXD
+textures. Supplemental icons only borrow a texture during drawing;
+plugin-sdk's `CSprite2d` has no automatic destructor that frees
+the borrowed texture. SafetyHook hook objects have static lifetime
+and SleekConfig is unregistered on RenderWare shutdown. CleanHUD
+does register plugin-sdk game/draw events for the game process
+lifetime: **unloading/reloading the ASI mid-game is not a supported
+or leak-tested operation**. A code review alone cannot prove the
+absence of leaks; long-session heap/device-reload testing is still
+required for release readiness.
+
+### Pre-release GInput / drive-by test matrix
+
+1. Without GInput, test vanilla Tec-9, Micro SMG and MP5 drive-by;
+   weapon and ammo reveal only on confirmed shooting, not bike
+   bunny hop or car honking.
+2. With GInput pad, test both analog drive-by and hotkey mappings.
+   Check cars, motorcycles, bicycles and Skate Mod Remake, including
+   XInput disconnect/reconnect and mouse/keyboard switching.
+3. Enable an expanded-weapon drive-by mod and actually shoot with
+   an additional weapon (pistol, rifle or another mod-enabled type).
+   Both `WEAPONSTATE_FIRING` and ammo-decrement-only scripts should
+   work without a hardcoded SMG list.
+4. With `ShowOnVehicleLook=1`, verify an unfamiliar weapon does
+   not reveal on sideways look before it is observed firing; after
+   a confirmed shot, it may preview in supported vehicle classes.
+   Verify weapon switching and exiting/re-entering reset this state.
+5. Play a long session with frequent reloads, resolutions, jetpack,
+   phone and skateboard use, SleekConfig saves, and repeated HUD
+   fading. Compare private bytes/committed memory across stationary
+   baselines rather than claiming a leak from a one-time loading peak.
+
 ## Layout range, formatting and visibility cap
 
-All 19 advanced spacing/offset controls accept **-1500 to +1500**
-virtual layout units in both SleekConfig and the INI reader. Values
-are rounded to whole virtual units and saved with one decimal place.
-These controls include the jetpack and skateboard's independent X/Y
-positions. Skateboard model IDs are integer options (step 1), and
-only affect the optional rider icon.
+All 19 spacing/offset controls accept **-1500 to +1500** virtual
+layout units in both SleekConfig and the INI reader. The 17 general
+layout/jetpack controls remain under Advanced Layout; the two
+skateboard X/Y offsets are in Skateboard. Values round to whole
+virtual units and save with one decimal place. Model IDs are integer
+options (step 1) and affect only the optional rider icon.
 
 `DurationMs` is limited to 0..10000 milliseconds (10 seconds) in
 both SleekConfig and INI loading. Existing longer values are clamped
 on load. FadeInMs/FadeOutMs retain their 0..2000 ranges.
 
-SleekConfig registers a **1.0** increment for each of the 19 Advanced
-Layout float sliders, avoiding fractional-step float validation issues.
+SleekConfig registers a **1.0** increment for all 19 float
+sliders across Advanced Layout and Skateboard, avoiding float validation issues.
 Direct INI values are normalized to the same whole-unit increments.
 The editor displays integer values because its current formatting
 follows the step size;
