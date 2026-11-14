@@ -83,10 +83,9 @@ void HUDLayout::PrepareStack(
             continue;
         }
 
-        // Status bars were previously drawn immediately at their
-        // final Y while only the entries below them moved. Give each
-        // bar a short one-way entrance slide tied to its fade-in;
-        // keep its last progress if the fade reverses.
+        // Animate each status bar into its own stack slot during
+        // fade-in, keeping progress monotonic so fading out does
+        // not reverse the movement.
         if (settings.SlideStack && IsStatusBar(component.GetType()))
         {
             if (!mPreviouslyPresent[i])
