@@ -50,6 +50,16 @@ public:
     // weapon-slot or side-by-side anchor, depending on the held weapon.
     float JetpackIconOffsetX = 0.0f;
     float JetpackIconOffsetY = 0.0f;
+
+    // Optional skateboard-as-vehicle integration. The vehicle ID
+    // identifies riding; the icon model supplies its ICON texture.
+    // Carried skateboards remain under normal custom weapon handling.
+    bool ShowSkateboardRidingIcon = false;
+    std::uint32_t SkateboardVehicleModelId = 12500;
+    std::uint32_t SkateboardIconModelId = 326;
+    float SkateboardIconOffsetX = 0.0f;
+    float SkateboardIconOffsetY = 0.0f;
+
     // Gap below the Clock, based on the first visible stack group.
     float ClockToMoneySpacing = 25.0f;
     float ClockToWantedSpacing = 25.0f;

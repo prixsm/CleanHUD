@@ -336,6 +336,21 @@ void HUDSettings::Load()
     JetpackIconOffsetY = ReadFloat(
         path.c_str(), "SpecialIcons", "JetpackIconOffsetY", 0.0f);
 
+    ShowSkateboardRidingIcon = ReadBool(
+        path.c_str(), "Skateboard", "ShowWhileRiding", false);
+
+    SkateboardVehicleModelId = ReadInt(
+        path.c_str(), "Skateboard", "VehicleModelId", 12500, 1, 32767);
+
+    SkateboardIconModelId = ReadInt(
+        path.c_str(), "Skateboard", "IconModelId", 326, 1, 32767);
+
+    SkateboardIconOffsetX = ReadFloat(
+        path.c_str(), "Skateboard", "IconOffsetX", 0.0f);
+
+    SkateboardIconOffsetY = ReadFloat(
+        path.c_str(), "Skateboard", "IconOffsetY", 0.0f);
+
     ClockToMoneySpacing = ReadFloat(
         path.c_str(), "Spacing", "ClockToMoneySpacing", 25.0f);
 
@@ -448,6 +463,11 @@ bool HUDSettings::Save() const
     success = putBool("SpecialIcons", "ShowHiddenWeaponIcons", ShowHiddenWeaponIcons) && success;
     success = putFloat("SpecialIcons", "JetpackIconOffsetX", JetpackIconOffsetX) && success;
     success = putFloat("SpecialIcons", "JetpackIconOffsetY", JetpackIconOffsetY) && success;
+    success = putBool("Skateboard", "ShowWhileRiding", ShowSkateboardRidingIcon) && success;
+    success = putInt("Skateboard", "VehicleModelId", SkateboardVehicleModelId) && success;
+    success = putInt("Skateboard", "IconModelId", SkateboardIconModelId) && success;
+    success = putFloat("Skateboard", "IconOffsetX", SkateboardIconOffsetX) && success;
+    success = putFloat("Skateboard", "IconOffsetY", SkateboardIconOffsetY) && success;
     success = putInt("Visibility", "FadeInMs", FadeInMs) && success;
     success = putInt("Visibility", "FadeOutMs", FadeOutMs) && success;
     success = putInt("Visibility", "DurationMs", VisibilityMs) && success;

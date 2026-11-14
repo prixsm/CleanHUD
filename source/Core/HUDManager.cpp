@@ -65,7 +65,8 @@ HUDManager::HUDManager() :
         {},
         false),
     mCellphoneIcon(HUDComponentType::Weapon, {}),
-    mJetpackIcon(HUDComponentType::Weapon, {})
+    mJetpackIcon(HUDComponentType::Weapon, {}),
+    mSkateboardIcon(HUDComponentType::Weapon, {})
 {
 }
 
@@ -376,7 +377,9 @@ void HUDManager::OnGameLoaded()
     mClockSpacingPreview.Reset();
     mCellphoneIcon.Reset();
     mJetpackIcon.Reset();
+    mSkateboardIcon.Reset();
     mJetpackWasEquipped = false;
+    mSkateboardWasRiding = false;
     mCellphonePuttingAway = false;
 
     mPlayer = nullptr;
@@ -397,8 +400,10 @@ void HUDManager::Update()
         mWeaponChangedThisFrame = false;
         mCellphoneIcon.Reset();
         mJetpackIcon.Reset();
+        mSkateboardIcon.Reset();
         mJetpackWasEquipped = false;
-            mCellphonePuttingAway = false;
+        mSkateboardWasRiding = false;
+        mCellphonePuttingAway = false;
 
         // Returning from gameplay to a frontend or loading
         // screen must not leave our draw-call NOPs in place.
@@ -494,8 +499,10 @@ void HUDManager::Update()
     UpdateWeaponIcon();
     UpdateAmmo();
     UpdateSpecialIcons();
+    UpdateSkateboardIcon();
     mCellphoneIcon.Update();
     mJetpackIcon.Update();
+    mSkateboardIcon.Update();
     UpdateVehicleFiring();
     UpdateWanted();
 
@@ -1352,18 +1359,32 @@ void HUDManager::PreviewJetpackPosition()
         return;
 
     mJetpackIcon.ShowFor(settings.VisibilityMs);
-    ShowWeaponAndAmmoForJetpack(settings.VisibilityMs);
+    ShowWeaponAndAmmoForEquipment(settings.VisibilityMs);
 }
 
-void HUDManager::ShowWeaponAndAmmoForJetpack(
+void HUDManager::ShowWeaponAndAmmoForEquipment(
     std::uint32_t duration)
 {
-    // Both readouts should enter and expire together when the
-    // jetpack appears beside another selected weapon.
+    // Keep weapon and ammo on the same visibility window when
+    // riding a skateboard or equipping a jetpack.
     mWeaponIcon.ShowFor(duration);
 
     if (HUDSettings::Get().Ammo && ShouldDisplayAmmo())
         mAmmo.ShowFor(duration);
+}
+
+void HUDManager::PreviewSkateboardPosition()
+{
+    const auto& settings = HUDSettings::Get();
+    if (!mSessionInitialized || !mPlayer || mNeedsReset ||
+        settings.VisibilityMs == 0 ||
+        !IsRidingConfiguredSkateboard())
+    {
+        return;
+    }
+
+    mSkateboardIcon.ShowFor(settings.VisibilityMs);
+    ShowWeaponAndAmmoForEquipment(settings.VisibilityMs);
 }
 
 void HUDManager::PreviewSpacingGroup(HUDSpacingPreviewGroup group)
@@ -1449,6 +1470,74 @@ void HUDManager::PreviewSpacingGroup(HUDSpacingPreviewGroup group)
     }
 }
 
+bool HUDManager::IsRidingConfiguredSkateboard() const
+{
+    const auto& settings = HUDSettings::Get();
+    return settings.ShowHiddenWeaponIcons &&
+        settings.ShowSkateboardRidingIcon &&
+        mSessionInitialized && mPlayer &&
+        mPlayer->bInVehicle && mPlayer->m_pVehicle &&
+        settings.SkateboardVehicleModelId > 0 &&
+        static_cast<std::uint32_t>(
+            mPlayer->m_pVehicle->m_nModelIndex) ==
+        settings.SkateboardVehicleModelId;
+}
+
+std::uint8_t HUDManager::GetSkateboardIconAlpha() const
+{
+    const auto& settings = HUDSettings::Get();
+    return settings.ShowHiddenWeaponIcons &&
+        settings.ShowSkateboardRidingIcon && mSessionInitialized
+        ? mSkateboardIcon.GetAlpha() : 0;
+}
+
+int HUDManager::GetSkateboardIconModel() const
+{
+    return static_cast<int>(HUDSettings::Get().SkateboardIconModelId);
+}
+
+bool HUDManager::ShouldDrawSkateboardIcon() const
+{
+    if (GetSkateboardIconAlpha() == 0 || !mPlayer)
+        return false;
+
+    const auto modelId = GetSkateboardIconModel();
+    if (modelId <= 0 || modelId >= CModelInfo::ms_modelInfoCount ||
+        !CModelInfo::GetModelInfo(modelId))
+    {
+        return false;
+    }
+
+    // After dismount, the CLEO script can restore the same board as
+    // a held weapon. Avoid drawing two copies during its fade-out.
+    const CWeapon* weapon = mPlayer->GetWeapon();
+    if (!IsRidingConfiguredSkateboard() && weapon &&
+        weapon->m_eWeaponType != WEAPONTYPE_UNARMED &&
+        mPlayer->m_nWeaponModelId == modelId)
+    {
+        return false;
+    }
+
+    return true;
+}
+
+bool HUDManager::ShouldReplaceWeaponWithSkateboard() const
+{
+    if (!ShouldDrawSkateboardIcon() ||
+        ShouldDrawCellphoneIcon() ||
+        ShouldDrawJetpackIcon() || !mPlayer)
+    {
+        return false;
+    }
+
+    const CWeapon* weapon = mPlayer->GetWeapon();
+    if (!weapon)
+        return false;
+
+    return weapon->m_eWeaponType == WEAPONTYPE_UNARMED ||
+        weapon->m_eWeaponType == WEAPONTYPE_BRASSKNUCKLE;
+}
+
 std::uint8_t HUDManager::GetCellphoneIconAlpha() const
 {
     return HUDSettings::Get().ShowHiddenWeaponIcons && mSessionInitialized
@@ -1495,7 +1584,8 @@ bool HUDManager::ShouldReplaceWeaponWithJetpack() const
 bool HUDManager::ShouldSuppressNativeFist() const
 {
     return ShouldDrawCellphoneIcon() ||
-        ShouldReplaceWeaponWithJetpack();
+        ShouldReplaceWeaponWithJetpack() ||
+        ShouldReplaceWeaponWithSkateboard();
 }
 
 bool HUDManager::ShouldSuppressNativeWeaponSprite() const
@@ -1507,7 +1597,8 @@ bool HUDManager::ShouldSuppressNativeWeaponSprite() const
     if (!weapon)
         return false;
 
-    if (ShouldReplaceWeaponWithJetpack())
+    if (ShouldReplaceWeaponWithJetpack() ||
+        ShouldReplaceWeaponWithSkateboard())
         return true;
 
     // During a phone task, suppress only knuckles; firearm icons
@@ -1598,7 +1689,7 @@ void HUDManager::UpdateSpecialIcons()
         // Normal CleanHUD visibility starts once per actual equip,
         // not on every frame of continued flight.
         mJetpackIcon.ShowFor(mVisibleTime);
-        ShowWeaponAndAmmoForJetpack(mVisibleTime);
+        ShowWeaponAndAmmoForEquipment(mVisibleTime);
     }
     mJetpackWasEquipped = jetpackEquipped;
 
@@ -1634,12 +1725,42 @@ void HUDManager::UpdateSpecialIcons()
     }
 }
 
+void HUDManager::UpdateSkateboardIcon()
+{
+    const auto& settings = HUDSettings::Get();
+
+    if (!settings.ShowHiddenWeaponIcons ||
+        !settings.ShowSkateboardRidingIcon)
+    {
+        mSkateboardIcon.Reset();
+        mSkateboardWasRiding = false;
+        return;
+    }
+
+    const bool riding = IsRidingConfiguredSkateboard();
+    if (riding && !mSkateboardWasRiding)
+    {
+        mSkateboardIcon.ShowFor(mVisibleTime);
+        ShowWeaponAndAmmoForEquipment(mVisibleTime);
+    }
+    else if (!riding)
+    {
+        // Leaving this vehicle ends the ride, not the FadeOutMs
+        // animation. A held skateboard can take over its own slot.
+        mSkateboardIcon.Hide();
+    }
+
+    mSkateboardWasRiding = riding;
+}
+
 void HUDManager::HideAll()
 {
     mClockSpacingPreview.Reset();
     mCellphoneIcon.Reset();
     mJetpackIcon.Reset();
+    mSkateboardIcon.Reset();
     mJetpackWasEquipped = false;
+    mSkateboardWasRiding = false;
     mCellphonePuttingAway = false;
     mClock.Reset();
     mHealth.Reset();
