@@ -331,7 +331,7 @@ void HUDSettings::Load()
         path.c_str(), "SpecialIcons", "ShowHiddenWeaponIcons", true);
 
     JetpackIconOffsetX = ReadFloat(
-        path.c_str(), "SpecialIcons", "JetpackIconOffsetX", 17.0f);
+        path.c_str(), "SpecialIcons", "JetpackIconOffsetX", 29.0f);
 
     JetpackIconOffsetY = ReadFloat(
         path.c_str(), "SpecialIcons", "JetpackIconOffsetY", 0.0f);
@@ -380,7 +380,7 @@ void HUDSettings::Load()
 
     WeaponToAmmoVerticalOffset = ReadFloat(
         path.c_str(), "WeaponAmmoLayout",
-        "WeaponToAmmoVerticalOffset", 87.0f);
+        "WeaponToAmmoVerticalOffset", 83.0f);
 }
 
 
