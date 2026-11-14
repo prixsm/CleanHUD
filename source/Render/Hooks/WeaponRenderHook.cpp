@@ -366,7 +366,7 @@ namespace
 
         // Phone suppresses knuckles; an equipped jetpack replaces
         // the non-firearm icon, leaving a firearm's icon intact.
-        stack[9] = HUDManager::Get().ShouldSuppressNativeKnuckles()
+        stack[9] = HUDManager::Get().ShouldSuppressNativeWeaponSprite()
             ? 0u : originalAlpha * cleanAlpha / 255u;
     }
 }
