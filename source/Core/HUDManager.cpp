@@ -1435,19 +1435,45 @@ bool HUDManager::ShouldDrawJetpackIcon() const
     return GetJetpackIconAlpha() != 0;
 }
 
+bool HUDManager::ShouldReplaceWeaponWithJetpack() const
+{
+    if (!ShouldDrawJetpackIcon() || !mPlayer)
+        return false;
+
+    const CWeapon* weapon = mPlayer->GetWeapon();
+    if (!weapon)
+        return false;
+
+    // Pistols through miniguns are the GTA firearm range.
+    // Fists, brass knuckles, melee and utility equipment don't
+    // create a second icon while the jetpack is on-screen.
+    const eWeaponType type = weapon->m_eWeaponType;
+    return type < WEAPONTYPE_PISTOL ||
+        type > WEAPONTYPE_MINIGUN;
+}
+
 bool HUDManager::ShouldSuppressNativeFist() const
 {
-    return ShouldDrawCellphoneIcon();
+    return ShouldDrawCellphoneIcon() ||
+        ShouldReplaceWeaponWithJetpack();
 }
 
 bool HUDManager::ShouldSuppressNativeKnuckles() const
 {
-    // Leave ordinary firearm icons alone during a phone task. Only
-    // suppress the unarmed-family knuckle model behind the cellphone.
-    if (!ShouldDrawCellphoneIcon() || !mPlayer)
+    if (!mPlayer)
         return false;
+
     const CWeapon* weapon = mPlayer->GetWeapon();
-    return weapon && weapon->m_eWeaponType == WEAPONTYPE_BRASSKNUCKLE;
+    if (!weapon)
+        return false;
+
+    if (ShouldReplaceWeaponWithJetpack())
+        return true;
+
+    // During a phone task, suppress only knuckles; firearm icons
+    // continue through GTA's ordinary weapon rendering path.
+    return ShouldDrawCellphoneIcon() &&
+        weapon->m_eWeaponType == WEAPONTYPE_BRASSKNUCKLE;
 }
 
 int HUDManager::GetCustomWeaponIconModel() const
