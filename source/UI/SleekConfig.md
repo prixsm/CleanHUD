@@ -161,6 +161,24 @@ or try **87.0** with WidescreenFix `ProportionalWeaponIcon`.
 This is a manual layout adjustment, also described in SleekConfig's
 tooltip.
 
+### Extended-weapon ammo positioning
+
+CleanHUD relocates ammo using the Stack layout's weapon/ammo anchor.
+Expanded-weapon loaders can alter individual formatting branches
+inside GTA's native ammo-drawing routine. To keep both clip-based
+ammo and single-count weapons aligned, CleanHUD also applies the
+same Stack coordinates at the **final ammo font draw**, restricted
+to calls made inside GTA's `CHud::DrawAmmo`. This does not move
+money, subtitles, or other text, nor does it affect Minimal mode.
+
+The regression checklist includes country rifle, sniper rifle,
+grenades/tear gas/Molotovs/satchels, camera, fire extinguisher,
+spray can, minigun, flamethrower, both launchers, and ordinary
+pistols/SMGs/shotguns. The fix does not rely on a list of weapon
+IDs; it follows the native ammo drawing scope. If an external
+mod draws ammo wholly outside `CHud::DrawAmmo`, further
+mod-specific handling may still be required.
+
 ## Optional hidden and custom weapon icons
 
 The `[SpecialIcons]` section has one master toggle, **on by
