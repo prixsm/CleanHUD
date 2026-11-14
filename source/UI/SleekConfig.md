@@ -1,6 +1,6 @@
 # CleanHUD + SleekConfig
 
-CleanHUD's in-game settings are now registered with the separate
+CleanHUD's in-game settings are registered with the separate
 [SleekConfig](https://github.com/pedrolecio/SleekConfig) GTA SA settings menu.
 
 ## Installing
@@ -108,14 +108,14 @@ CleanHUD DAT override while the game is closed, then relaunch.
 (where available). **Defaults** restores the registered CleanHUD defaults
 as live, unsaved values until the next Save Mod.
 
-No automatic migration of previously saved standalone-editor settings is
-needed because both editors use the same CleanHUD.ini keys.
+Settings retain their CleanHUD.ini keys across reloads and saves.
 
 ## Build
 
-CleanHUD only vendors the two small SleekConfig API headers and its MIT
-license under `third_party/sleekconfig/`; it no longer builds Dear ImGui or
-its backends. No `SleekConfig.lib` or additional linker dependency is needed.
+CleanHUD vendors SleekConfig's API headers and MIT license under
+`third_party/sleekconfig/`. SleekConfig handles Dear ImGui and its
+backends independently. No `SleekConfig.lib` or additional linker
+dependency is needed.
 The `SleekConfig_GetApi` entry point is resolved dynamically from the
 separately installed SleekConfig.asi. Registration retries on the main thread
 if SleekConfig becomes available later.
@@ -159,7 +159,7 @@ also displayed in SleekConfig's tooltip.
 
 ## Optional hidden and custom weapon icons
 
-The `[SpecialIcons]` section has one master toggle, now **on by
+The `[SpecialIcons]` section has one master toggle, **on by
 default**: `ShowHiddenWeaponIcons=1` enables cellphone, jetpack and
 custom/unused weapon icons. Existing saved INI/DAT settings that
 explicitly disabled it remain respected. Both special equipment icons
