@@ -1010,8 +1010,8 @@ void HUDManager::UpdateVehicleFiring()
 
     // A confirmed FIRING state belongs to CJ's held weapon, not the
     // vehicle's turret or its horn. Accept it even if a drive-by mod
-    // uses non-SMG weapons, custom vehicles, or GInput mappings that
-    // do not report the ordinary GetCarGunFired input.
+    // uses non-SMG weapons, custom vehicles, or GInput's alternate
+    // analog/hotkey drive-by controls.
     // No HUD reveal occurs from a button press alone.
     if (vehicle && weapon && ShouldDisplayAmmo() &&
         weapon->m_nAmmoTotal != 0 &&
