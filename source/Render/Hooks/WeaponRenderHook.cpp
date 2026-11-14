@@ -160,7 +160,8 @@ namespace
         HUDManager& manager = HUDManager::Get();
 
         const int customModel = manager.GetCustomWeaponIconModel();
-        if (customModel > 0 && !manager.ShouldDrawCellphoneIcon())
+        if (customModel > 0 && !manager.ShouldDrawCellphoneIcon() &&
+            !manager.ShouldReplaceWeaponWithJetpack())
             DrawModelIcon(customModel, iconX, iconY,
                 iconWidth, iconHeight, p.Alpha);
 
@@ -168,16 +169,26 @@ namespace
             DrawModelIcon(MODEL_CELLPHONE, iconX, iconY,
                 iconWidth, iconHeight, manager.GetCellphoneIconAlpha());
 
-        // Independent offsets from the left-side weapon slot. No
-        // mode toggle: players can position the jetpack freely in X/Y.
         const auto& settings = HUDSettings::Get();
-        const float jetpackX = iconX - iconWidth -
-            8.0f * (iconWidth / 47.0f) +
-            settings.JetpackIconOffsetX * (screenWidth / 1920.0f);
-        const float jetpackY = iconY +
-            settings.JetpackIconOffsetY * (screenHeight / 1080.0f);
+        constexpr float DefaultJetpackOffsetX = 29.0f;
+        const float offsetScaleX = screenWidth / 1920.0f;
+        const float offsetScaleY = screenHeight / 1080.0f;
 
-        if (manager.ShouldDrawJetpackIcon())
+        // With no firearm, the jetpack replaces the occupied weapon
+        // slot. With a firearm, place the separate jetpack icon left
+        // of it. Subtracting the default keeps the replacement exactly
+        // aligned with the native slot while allowing X/Y fine-tuning.
+        const float jetpackX = manager.ShouldReplaceWeaponWithJetpack()
+            ? iconX + (settings.JetpackIconOffsetX -
+                DefaultJetpackOffsetX) * offsetScaleX
+            : iconX - iconWidth -
+                8.0f * (iconWidth / 47.0f) +
+                settings.JetpackIconOffsetX * offsetScaleX;
+        const float jetpackY = iconY +
+            settings.JetpackIconOffsetY * offsetScaleY;
+
+        if (manager.ShouldDrawJetpackIcon() &&
+            !manager.ShouldDrawCellphoneIcon())
             DrawModelIcon(MODEL_JETPACK, jetpackX, jetpackY,
                 iconWidth, iconHeight, manager.GetJetpackIconAlpha());
     }
@@ -354,8 +365,8 @@ namespace
         const std::uint32_t cleanAlpha =
             pos.Alpha;
 
-        // The phone suppresses only knuckles on the model-sprite
-        // path, not unrelated firearms that may be in use.
+        // Phone suppresses knuckles; an equipped jetpack replaces
+        // the non-firearm icon, leaving a firearm's icon intact.
         stack[9] = HUDManager::Get().ShouldSuppressNativeKnuckles()
             ? 0u : originalAlpha * cleanAlpha / 255u;
     }
