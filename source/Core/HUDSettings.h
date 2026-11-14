@@ -46,9 +46,9 @@ public:
 
     // Restore normally hidden equipment/model icons by default.
     bool ShowHiddenWeaponIcons = true;
-    // Jetpack replaces the fist/knuckles slot; alongside an equipped
-    // weapon it uses this X offset to position its own icon to the left.
-    float JetpackIconOffsetX = 29.0f;
+    // Extra horizontal adjustment relative to the jetpack icon's
+    // weapon-slot or side-by-side anchor, depending on the held weapon.
+    float JetpackIconOffsetX = 0.0f;
     float JetpackIconOffsetY = 0.0f;
     // Gap below the Clock, based on the first visible stack group.
     float ClockToMoneySpacing = 25.0f;
