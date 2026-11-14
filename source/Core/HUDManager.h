@@ -37,6 +37,8 @@ public:
     bool ShouldSuppressNativeFist() const;
     bool ShouldSuppressNativeKnuckles() const;
     bool ShouldDrawJetpackIcon() const;
+    // True when no firearm occupies the weapon slot alongside jetpack.
+    bool ShouldReplaceWeaponWithJetpack() const;
     int GetCustomWeaponIconModel() const;
     bool IsUsingVanillaLayout() const;
     bool ShouldDisplayAmmo() const;
