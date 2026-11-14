@@ -470,8 +470,7 @@ bool HUDSettings::Save() const
     if (!success)
         return false;
 
-    // Clean up the old setting in existing user INIs on Save Mod.
-    // It no longer controls any native or supplemental icon scaling.
+    // Keep the saved INI free from unsupported configuration keys.
     if (!WritePrivateProfileStringA(
         "WeaponAmmo", "UnifiedWeaponIconScale", nullptr, path.c_str()))
         return false;
