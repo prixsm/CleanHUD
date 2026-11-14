@@ -401,7 +401,7 @@ void HUDManager::Update()
     {
         mSessionInitialized = false;
         mLastPlayer = nullptr;
-            mWeaponChangedThisFrame = false;
+        mWeaponChangedThisFrame = false;
         mConfirmedDriveByVehicle = nullptr;
         mConfirmedDriveByWeapon = WEAPONTYPE_UNARMED;
         mCellphoneIcon.Reset();
@@ -986,7 +986,8 @@ void HUDManager::UpdateAmmo()
     // regardless of controller mappings, weapon family or vehicle
     // class. Trainer ammo edits can also qualify; no button alone
     // will trigger a reveal. Weapon-switch changes are excluded.
-    if (!mWeaponChangedThisFrame && consumedAmmo)
+    if (!mWeaponChangedThisFrame && consumedAmmo &&
+        ShouldDisplayAmmo())
     {
         mAmmo.ShowFor(mVisibleTime);
         mWeaponIcon.ShowFor(mVisibleTime);
@@ -1021,7 +1022,6 @@ void HUDManager::UpdateVehicleFiring()
         mConfirmedDriveByVehicle = vehicle;
         mConfirmedDriveByWeapon = weapon->m_eWeaponType;
     }
-
 }
 
 bool HUDManager::IsWeaponAiming() const
@@ -1754,6 +1754,8 @@ void HUDManager::HideAll()
     mJetpackWasEquipped = false;
     mSkateboardWasRiding = false;
     mCellphonePuttingAway = false;
+    mConfirmedDriveByVehicle = nullptr;
+    mConfirmedDriveByWeapon = WEAPONTYPE_UNARMED;
     mClock.Reset();
     mHealth.Reset();
     mArmour.Reset();
