@@ -37,7 +37,8 @@ public:
     bool ShouldSuppressNativeFist() const;
     bool ShouldSuppressNativeWeaponSprite() const;
     bool ShouldDrawJetpackIcon() const;
-    // True when no firearm occupies the weapon slot alongside jetpack.
+    // True only for unarmed/brass-knuckle slots, while the jetpack
+    // is visible and no cellphone occupies that slot.
     bool ShouldReplaceWeaponWithJetpack() const;
     int GetCustomWeaponIconModel() const;
     bool IsUsingVanillaLayout() const;
