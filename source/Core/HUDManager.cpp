@@ -376,7 +376,6 @@ void HUDManager::OnGameLoaded()
     HUDRenderer::Get().Reset();
     mSessionInitialized = false;
     mVanillaLayoutLatched = false;
-    mValidVehicleFireInputLastFrame = false;
     mWeaponChangedThisFrame = false;
     mConfirmedDriveByVehicle = nullptr;
     mConfirmedDriveByWeapon = WEAPONTYPE_UNARMED;
@@ -402,8 +401,7 @@ void HUDManager::Update()
     {
         mSessionInitialized = false;
         mLastPlayer = nullptr;
-        mValidVehicleFireInputLastFrame = false;
-        mWeaponChangedThisFrame = false;
+            mWeaponChangedThisFrame = false;
         mConfirmedDriveByVehicle = nullptr;
         mConfirmedDriveByWeapon = WEAPONTYPE_UNARMED;
         mCellphoneIcon.Reset();
@@ -585,7 +583,6 @@ void HUDManager::ResetSessionState()
     HideAll();
     RestoreVanillaElements();
     mLayout.ResetHistory();
-    mValidVehicleFireInputLastFrame = false;
     mWeaponChangedThisFrame = false;
 
     mPreviousHealth = mLastHealth;
@@ -981,53 +978,21 @@ void HUDManager::UpdateAmmo()
         return;
     }
 
-    if (capability == VehicleFireCapability::None)
-        return;
-
     const bool consumedAmmo =
         current.AmmoInClip < previous.AmmoInClip ||
         current.AmmoTotal < previous.AmmoTotal;
 
-    // A weapon change or reload isn't a confirmed drive-by.
-    // Allow the previous frame's valid input because input
-    // and weapon processing can occur on different ticks.
-    // GInput and drive-by mods may expose other selected weapons.
-    // A confirmed ammo decrease plus actual vehicle fire input is
-    // evidence of a handheld shot; never infer one from Fire alone.
-    if (!mWeaponChangedThisFrame &&
-        consumedAmmo &&
-        (IsValidVehicleFireInput() ||
-            mValidVehicleFireInputLastFrame))
+    // A real decrease in CJ's held-weapon ammo is evidence of use
+    // regardless of controller mappings, weapon family or vehicle
+    // class. Trainer ammo edits can also qualify; no button alone
+    // will trigger a reveal. Weapon-switch changes are excluded.
+    if (!mWeaponChangedThisFrame && consumedAmmo)
     {
         mAmmo.ShowFor(mVisibleTime);
         mWeaponIcon.ShowFor(mVisibleTime);
         mConfirmedDriveByVehicle = vehicle;
         mConfirmedDriveByWeapon = weapon->m_eWeaponType;
     }
-}
-
-bool HUDManager::IsValidVehicleFireInput() const
-{
-    if (!mPlayer || !mPlayer->bInVehicle ||
-        !mPlayer->m_pVehicle)
-    {
-        return false;
-    }
-
-    const CWeapon* weapon = mPlayer->GetWeapon();
-
-    if (!weapon || weapon->m_nAmmoTotal == 0 ||
-        !ShouldDisplayAmmo())
-    {
-        return false;
-    }
-
-    CPad* pad = mPlayer->GetPadFromPlayer();
-
-    return pad && !pad->DisablePlayerControls &&
-        pad->GetCarGunFired() != 0 &&
-        AllowsHandheldFireDirection(
-            *mPlayer->m_pVehicle, *pad);
 }
 
 void HUDManager::UpdateVehicleFiring()
@@ -1040,7 +1005,6 @@ void HUDManager::UpdateVehicleFiring()
         mConfirmedDriveByWeapon = WEAPONTYPE_UNARMED;
     }
 
-    const bool validInput = IsValidVehicleFireInput();
     const CWeapon* weapon = mPlayer->GetWeapon();
 
     // A confirmed FIRING state belongs to CJ's held weapon, not the
@@ -1058,7 +1022,6 @@ void HUDManager::UpdateVehicleFiring()
         mConfirmedDriveByWeapon = weapon->m_eWeaponType;
     }
 
-    mValidVehicleFireInputLastFrame = validInput;
 }
 
 bool HUDManager::IsWeaponAiming() const
