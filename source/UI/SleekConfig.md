@@ -253,14 +253,20 @@ skateboard weapon held on foot. Enable `[Skateboard]
 ShowWhileRiding=1` (or the **Skateboard riding icon** checkbox under
 SleekConfig → General) and leave `ShowHiddenWeaponIcons=1`.
 
-The supplied Skate Mod Remake CLEO script uses these configuration
-keys in `cleo/skate_remake.ini`: `VehicleID=12500` for the vehicle
-spawned on mounting, `WeaponModel=326` for the carried skateboard,
-and `WeaponType=15` (Cane) for its weapon slot. CleanHUD defaults to
-`VehicleModelId=12500` and `IconModelId=326`; if the script's
-values are changed, update the corresponding CleanHUD settings.
-Other skateboard mods may use different vehicle/model IDs. This
-integration does not read the external skate mod INI automatically.
+For the added-weapon Skate Mod Remake installation, the uploaded
+`cleo/skate_remake.ini` contains `VehicleID=12500`,
+`WeaponModel=12400`, and `WeaponType=70`. The corresponding
+`Weapons.ide` registers model `12400` as `SKATE`.
+CleanHUD therefore defaults to `VehicleModelId=12500` and
+`IconModelId=12400`. Older replacement configurations may use
+weapon model `326` (Cane), but that produces a Cane icon for
+the added-model installation.
+
+**Existing CleanHUD.ini values are preserved on upgrade.**
+If `IconModelId=326` has already been saved, explicitly change it
+to `12400` in CleanHUD.ini or SleekConfig and save. For another
+skateboard mod, match its actual vehicle and weapon model IDs.
+The integration does not automatically read external mod INIs.
 
 When riding is detected via the player's **actual occupied vehicle
 model**, CleanHUD starts the normal `DurationMs` visibility timer
