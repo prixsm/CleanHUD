@@ -108,7 +108,7 @@ namespace
             HUDSpacingPreviewGroup::Weapon, HUDSpacingPreviewGroup::Ammo },
         { "weapon_to_ammo_vertical_offset", "Weapon to Ammo vertical offset", "Weapon & Ammo Position", &HUDSettings::WeaponToAmmoVerticalOffset, 83.0f,
             HUDSpacingPreviewGroup::Weapon, HUDSpacingPreviewGroup::Ammo },
-        { "jetpack_icon_offset_x", "Jetpack icon offset X", "Jetpack Position", &HUDSettings::JetpackIconOffsetX, 29.0f,
+        { "jetpack_icon_offset_x", "Jetpack icon offset X", "Jetpack Position", &HUDSettings::JetpackIconOffsetX, 0.0f,
             HUDSpacingPreviewGroup::Weapon, HUDSpacingPreviewGroup::Weapon },
         { "jetpack_icon_offset_y", "Jetpack icon offset Y", "Jetpack Position", &HUDSettings::JetpackIconOffsetY, 0.0f,
             HUDSpacingPreviewGroup::Weapon, HUDSpacingPreviewGroup::Weapon }
@@ -190,7 +190,7 @@ namespace
             value = {};
             value.type = SC_INT;
             const int step = std::strcmp(entry.Id, "duration_ms") == 0
-                ? 500 : 50;
+                ? 250 : 50;
             const int original = static_cast<int>(
                 settings.*(entry.Field));
             value.integer = std::clamp(
@@ -356,7 +356,7 @@ namespace
             setting.minimum = 0;
             setting.maximum = entry.Maximum;
             setting.step = std::strcmp(entry.Id, "duration_ms") == 0
-                ? 500 : 50;
+                ? 250 : 50;
             setting.default_value.integer = entry.Default;
 
             if (gApi->register_setting(gMod, &setting) != SC_OK)
