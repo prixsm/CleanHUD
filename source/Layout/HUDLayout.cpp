@@ -26,6 +26,13 @@ namespace
         return static_cast<std::size_t>(
             found - StackOrder.begin());
     }
+
+    bool IsStatusBar(HUDComponentType type)
+    {
+        return type == HUDComponentType::Health ||
+            type == HUDComponentType::Armour ||
+            type == HUDComponentType::Breath;
+    }
 }
 
 void HUDLayout::Reset()
@@ -48,6 +55,7 @@ void HUDLayout::ResetHistory()
     mSlideOnEntry.fill(false);
     mHoldEntrancePosition.fill(false);
     mStackProgress.fill(0.0f);
+    mStatusEntryProgress.fill(0.0f);
     mItems.clear();
     mCurrentY = mAnchorY;
     mFinalY = mAnchorY;
@@ -71,7 +79,27 @@ void HUDLayout::PrepareStack(
             mSlideOnEntry[i] = false;
             mHoldEntrancePosition[i] = false;
             mStackProgress[i] = 0.0f;
+            mStatusEntryProgress[i] = 0.0f;
             continue;
+        }
+
+        // Status bars were previously drawn immediately at their
+        // final Y while only the entries below them moved. Give each
+        // bar a short one-way entrance slide tied to its fade-in;
+        // keep its last progress if the fade reverses.
+        if (settings.SlideStack && IsStatusBar(component.GetType()))
+        {
+            if (!mPreviouslyPresent[i])
+                mStatusEntryProgress[i] = 0.0f;
+
+            if (!component.IsFadingOut())
+                mStatusEntryProgress[i] = std::max(
+                    mStatusEntryProgress[i],
+                    component.GetLayoutProgress());
+        }
+        else
+        {
+            mStatusEntryProgress[i] = 1.0f;
         }
 
         if (!mPreviouslyPresent[i])
@@ -200,11 +228,21 @@ void HUDLayout::Add(
     item.Component = &component;
     item.Type = component.GetType();
 
+    // The stack space itself still advances through mStackProgress.
+    // Move an entering status bar visually from one bar height above
+    // its settled slot, without changing spacing or sliding it back
+    // during fade-out.
+    const float entryShift =
+        HUDSettings::Get().SlideStack && IsStatusBar(item.Type)
+        ? height * (1.0f -
+            mStatusEntryProgress[StackIndex(item.Type)])
+        : 0.0f;
+
     item.Position =
     {
         mAnchorX + offsetX,
         (UsesFinalEntryPosition(item.Type)
-            ? mFinalY : mCurrentY) + offsetY
+            ? mFinalY : mCurrentY) + offsetY - entryShift
     };
 
     item.Height = height;
