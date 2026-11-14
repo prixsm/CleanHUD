@@ -78,7 +78,7 @@ namespace
         { "fade_out_ms", "Fade out (ms)", "Visibility", "", &HUDSettings::FadeOutMs, 200, 2000, 50 },
         { "duration_ms", "Visibility duration (ms)", "Visibility", "", &HUDSettings::VisibilityMs, 3000, 10000, 250 },
         { "skateboard_vehicle_model_id", "Skateboard vehicle model ID", "General", "", &HUDSettings::SkateboardVehicleModelId, 12500, 32767, 1 },
-        { "skateboard_icon_model_id", "Skateboard ICON model ID", "General", "", &HUDSettings::SkateboardIconModelId, 326, 32767, 1 }
+        { "skateboard_icon_model_id", "Skateboard ICON model ID", "General", "", &HUDSettings::SkateboardIconModelId, 12400, 32767, 1 }
     };
 
     constexpr FloatSetting FloatSettings[] = {
@@ -176,7 +176,8 @@ namespace
         else if (std::strcmp(id, "skateboard_icon_model_id") == 0)
             setting.description =
                 "Weapon/model whose ICON texture depicts the board. "
-                "Skate Mod Remake defaults to WeaponModel=326.";
+                "Added Skate Mod Remake uses WeaponModel=12400. "
+                "Old Cane setup used 326; use your skate_remake.ini.";
         else if (std::strcmp(id, "skateboard_icon_offset_x") == 0 ||
                  std::strcmp(id, "skateboard_icon_offset_y") == 0)
             setting.description =
