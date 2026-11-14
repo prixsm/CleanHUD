@@ -62,7 +62,7 @@ namespace
         { "show_on_throwable_aim", "Show on throwable aim", "General", "", &HUDSettings::ShowOnThrowableAim, false },
         { "show_on_vehicle_look", "Show on vehicle look", "General", "", &HUDSettings::ShowOnVehicleLook, false },
         { "show_hidden_weapon_icons", "Show hidden/custom weapon icons", "General", "", &HUDSettings::ShowHiddenWeaponIcons, true },
-        { "show_skateboard_riding_icon", "Skateboard riding icon", "General", "", &HUDSettings::ShowSkateboardRidingIcon, false },
+        { "show_skateboard_riding_icon", "Skateboard mod support", "Skateboard", "", &HUDSettings::ShowSkateboardRidingIcon, false },
         { "clock", "Clock", "Elements", "", &HUDSettings::Clock, true },
         { "money", "Money", "Elements", "", &HUDSettings::Money, true },
         { "wanted", "Wanted stars", "Elements", "", &HUDSettings::Wanted, true },
@@ -77,8 +77,8 @@ namespace
         { "fade_in_ms", "Fade in (ms)", "Visibility", "", &HUDSettings::FadeInMs, 200, 2000, 50 },
         { "fade_out_ms", "Fade out (ms)", "Visibility", "", &HUDSettings::FadeOutMs, 200, 2000, 50 },
         { "duration_ms", "Visibility duration (ms)", "Visibility", "", &HUDSettings::VisibilityMs, 3000, 10000, 250 },
-        { "skateboard_vehicle_model_id", "Skateboard vehicle model ID", "General", "", &HUDSettings::SkateboardVehicleModelId, 12500, 32767, 1 },
-        { "skateboard_icon_model_id", "Skateboard ICON model ID", "General", "", &HUDSettings::SkateboardIconModelId, 12400, 32767, 1 }
+        { "skateboard_vehicle_model_id", "Vehicle model ID", "Skateboard", "", &HUDSettings::SkateboardVehicleModelId, 12500, 32767, 1 },
+        { "skateboard_icon_model_id", "Icon model ID", "Skateboard", "", &HUDSettings::SkateboardIconModelId, 12400, 32767, 1 }
     };
 
     constexpr FloatSetting FloatSettings[] = {
@@ -160,29 +160,20 @@ namespace
             setting.description =
                 "Reveal weapon/ammo when looking left or right in a "
                 "vehicle; drive-by firing reveals them regardless.";
-        else if (std::strcmp(id, "show_hidden_weapon_icons") == 0)
-            setting.description =
-                "Show equipped cellphone, jetpack and custom held "
-                "weapon icons using GTA's native icon scaling.";
         else if (std::strcmp(id, "show_skateboard_riding_icon") == 0)
             setting.description =
-                "Optional: show a timed skateboard icon only while "
-                "riding the configured vehicle model. Requires hidden "
-                "icons enabled and an ICON texture on the icon model.";
+                "Enable skateboard vehicle-icon support for mods such "
+                "as Skate Mod Remake. Requires Show hidden/custom "
+                "weapon icons enabled.";
         else if (std::strcmp(id, "skateboard_vehicle_model_id") == 0)
             setting.description =
-                "Vehicle model used by your skateboard mod. Skate Mod "
-                "Remake defaults to VehicleID=12500.";
+                "Matches the vehicle CJ rides (Skate Mod Remake: 12500). "
+                "Ctrl+click or double-click the number to type an ID.";
         else if (std::strcmp(id, "skateboard_icon_model_id") == 0)
             setting.description =
-                "Weapon/model whose ICON texture depicts the board. "
-                "Added Skate Mod Remake uses WeaponModel=12400. "
-                "Old Cane setup used 326; use your skate_remake.ini.";
-        else if (std::strcmp(id, "skateboard_icon_offset_x") == 0 ||
-                 std::strcmp(id, "skateboard_icon_offset_y") == 0)
-            setting.description =
-                "Move the riding icon relative to the weapon slot "
-                "or its left-side position; preview only when riding.";
+                "Model whose ICON texture depicts the board "
+                "(added Skate Mod Remake: 12400). Ctrl+click or "
+                "double-click the number to type an ID.";
         return setting;
     }
 
@@ -371,6 +362,18 @@ namespace
         if (gApi->register_setting(gMod, &mode) != SC_OK)
             return false;
 
+        // One page-level explanation replaces eight repeated tooltips.
+        // This is static help text, not a saved or user-editable option.
+        ScSettingDesc elementsHelp = Describe(
+            "elements_behavior_help", "Elements behavior",
+            "Elements", "", SC_DESCRIPTION);
+        elementsHelp.description =
+            "On: CleanHUD manages this element's visibility and layout. "
+            "Off: leave its rendering to GTA or another HUD mod.";
+
+        if (gApi->register_setting(gMod, &elementsHelp) != SC_OK)
+            return false;
+
         for (const auto& entry : BoolSettings)
         {
             auto setting = Describe(
@@ -403,9 +406,13 @@ namespace
 
         for (const auto& entry : FloatSettings)
         {
+            const bool skateboardOffset =
+                entry.Field == &HUDSettings::SkateboardIconOffsetX ||
+                entry.Field == &HUDSettings::SkateboardIconOffsetY;
             auto setting = Describe(
-                entry.Id, entry.Label, "Advanced Layout",
-                entry.Group, SC_FLOAT);
+                entry.Id, entry.Label,
+                skateboardOffset ? "Skateboard" : "Advanced Layout",
+                skateboardOffset ? "" : entry.Group, SC_FLOAT);
 
             // The rendered layout moves at whole-unit increments.
             // SleekConfig 1.1 determines numeric formatting from
@@ -420,14 +427,6 @@ namespace
                 setting.description =
                     "Set this to 87.0 if you have ProportionalWeaponIcon = 1 "
                     "on your WidescreenFix.ini.";
-            }
-
-            if (std::strcmp(entry.Id, "skateboard_icon_offset_x") == 0 ||
-                std::strcmp(entry.Id, "skateboard_icon_offset_y") == 0)
-            {
-                setting.description =
-                    "Position of the icon while riding a skateboard. "
-                    "Only shown when that vehicle is actually occupied.";
             }
 
             if (gApi->register_setting(gMod, &setting) != SC_OK)
