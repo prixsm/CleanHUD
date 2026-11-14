@@ -416,9 +416,8 @@ namespace
             if (std::strcmp(entry.Id, "weapon_to_ammo_vertical_offset") == 0)
             {
                 setting.description =
-                    "No scale fix: 83.0 (default); "
-                    "MixSets WeaponIconScaleFix: 79.0; "
-                    "WidescreenFix ProportionalWeaponIcon: 87.0.";
+                    "Default vertical offset: 83.0. "
+                    "WidescreenFix ProportionalWeaponIcon: try 87.0.";
             }
 
             if (std::strcmp(entry.Id, "skateboard_icon_offset_x") == 0 ||
