@@ -156,11 +156,10 @@ Stack mode exposes `WeaponAmmoOffsetX`, `WeaponAmmoOffsetY`, and
 Editing these values previews the currently drawable weapon and ammo.
 Minimal mode keeps GTA's native positions.
 
-For `WeaponToAmmoVerticalOffset`, start with **83.0** for unmodified GTA
-weapon-icon scaling (the default), **79.0** with MixSets
-`WeaponIconScaleFix`, or **87.0** with WidescreenFix
-`ProportionalWeaponIcon`. These are suggested manual adjustments,
-also displayed in SleekConfig's tooltip.
+For `WeaponToAmmoVerticalOffset`, use **83.0** as the default,
+or try **87.0** with WidescreenFix `ProportionalWeaponIcon`.
+This is a manual layout adjustment, also described in SleekConfig's
+tooltip.
 
 ## Optional hidden and custom weapon icons
 
@@ -221,17 +220,27 @@ visibility. Equipping or previewing the jetpack also reveals ammo
 alongside the selected weapon for the same `DurationMs` timer,
 when that weapon has an ammo readout.
 
+When using the jetpack, aim-button visibility follows GTA's
+current weapon capability: instant-hit firing plus the
+`AimWithArm` weapon-info flag. These values are inspected live
+rather than maintaining a fixed list of weapon names, so mods
+that adjust weapon data are accommodated. A weapon observed
+in the actual firing state is also allowed to reveal its HUD
+when a script implements shooting independently of weapon data.
+Simply pressing Aim on an unusable weapon does not force the
+weapon/ammo icons to appear. Outside jetpack use, existing
+on-foot and vehicle aim behavior is unchanged.
+
 CleanHUD's cellphone, jetpack and custom
 icons use the **most recently measured native sprite bounds**, so they
 follow whichever scaling mod the player uses without injecting another
 scaling correction. Measurements persist across transient missing sprite
 draws and are discarded on resolution changes.
 
-Because MixSets and WidescreenFix do not use exactly the same scaling,
-their relative Weapon/Ammo positions can still differ; the existing
-Weapon/Ammo spacing sliders remain the adjustment mechanism. Enabling
-both external scaling fixes may compound their adjustments; CleanHUD
-does not attempt to override or correct either mod.
+An external weapon-icon scale adjustment may change the apparent
+distance between the weapon icon and the ammo readout. CleanHUD
+does not override the external scaling; use
+`WeaponToAmmoVerticalOffset` to tune their relative positions.
 
 Advanced Layout keeps Weapon/Ammo offsets together and jetpack X/Y
 offsets in a separate `Jetpack Position` group.
