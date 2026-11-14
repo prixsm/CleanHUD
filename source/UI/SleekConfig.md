@@ -163,21 +163,20 @@ tooltip.
 
 ### Extended-weapon ammo positioning
 
-CleanHUD relocates ammo using the Stack layout's weapon/ammo anchor.
-Expanded-weapon loaders can alter individual formatting branches
-inside GTA's native ammo-drawing routine. To keep both clip-based
-ammo and single-count weapons aligned, CleanHUD also applies the
-same Stack coordinates at the **final ammo font draw**, restricted
-to calls made inside GTA's `CHud::DrawAmmo`. This does not move
-money, subtitles, or other text, nor does it affect Minimal mode.
+CleanHUD uses the currently equipped weapon's skill when checking
+whether its ammo belongs in the Stack. This matches GTA's
+`CHud::DrawAmmo` logic and supports expanded-weapon loaders that
+register weapon data only for **Standard** skill (including
+throwables, sniper/country rifles, heavy weapons, camera, spray can
+and fire extinguisher), alongside ordinary multiple-skill guns.
+The same native ammo-render hook then applies the usual Stack
+position without a second font hook or weapon-specific exceptions.
 
-The regression checklist includes country rifle, sniper rifle,
-grenades/tear gas/Molotovs/satchels, camera, fire extinguisher,
-spray can, minigun, flamethrower, both launchers, and ordinary
-pistols/SMGs/shotguns. The fix does not rely on a list of weapon
-IDs; it follows the native ammo drawing scope. If an external
-mod draws ammo wholly outside `CHud::DrawAmmo`, further
-mod-specific handling may still be required.
+With fastman92's weapon type loader enabled, verify country rifle,
+sniper, grenades/tear gas/Molotovs/satchels, camera, extinguisher,
+spray can, minigun, flamethrower and both launchers, plus ordinary
+pistols/SMGs/shotguns. Minimal mode and unmanaged ammo retain GTA's
+original positions.
 
 ## Optional hidden and custom weapon icons
 
