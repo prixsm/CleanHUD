@@ -361,7 +361,7 @@ namespace
         ScSettingDesc mode = Describe(
             "hud_mode", "HUD layout", "General", "", SC_ENUM);
 
-        mode.options = "Stack|Minimal";
+        mode.options = "Stack | Minimal";
         mode.minimum = 0;
         mode.maximum = 1;
         mode.step = 1;
@@ -417,8 +417,8 @@ namespace
             if (std::strcmp(entry.Id, "weapon_to_ammo_vertical_offset") == 0)
             {
                 setting.description =
-                    "Default vertical offset: 83.0. "
-                    "WidescreenFix ProportionalWeaponIcon: try 87.0.";
+                    "Set this to 87.0 if you have ProportionalWeaponIcon = 1 "
+                    "on your WidescreenFix.ini.";
             }
 
             if (std::strcmp(entry.Id, "skateboard_icon_offset_x") == 0 ||
