@@ -143,7 +143,7 @@ Target: GTA San Andreas PC 1.0 US, Win32.
 - Verify Advanced Layout slider steps are 1.0 and the range is
   -1500.0 to +1500.0. Save Mod formats values like 25.0 (one decimal).
 - Verify Fade In and Fade Out use 50 ms steps, and Visibility Duration
-  uses 500 ms steps, within the existing 0..2000/0..10000 bounds.
+  uses 250 ms steps, within the existing 0..2000/0..10000 bounds.
 - Test with other SleekConfig-enabled mods: there should be one shared F10
   panel, no duplicate D3D9 hook and no stuck mouse or player controls.
 - Verify New Game/Load Game startup, main-menu labels,
@@ -196,13 +196,13 @@ but can still be disabled in the INI or SleekConfig.
 
 ### Jetpack behavior
 
-The jetpack defaults to `JetpackIconOffsetX=29.0` and
-`JetpackIconOffsetY=0.0`. With a firearm equipped, this places its
-icon to the left of the firearm icon with a small gap. When there is
-no firearm, the same defaults place the jetpack **at the weapon slot**
-instead, hiding the native non-firearm icon while the jetpack is
-visible. Positive X moves right, positive Y moves down; changing X
-relative to its default also adjusts the centered jetpack.
+The jetpack defaults to `JetpackIconOffsetX=0.0` and
+`JetpackIconOffsetY=0.0`. Without a firearm, its icon appears **at
+the weapon slot**, hiding the native non-firearm icon while the jetpack
+is visible. With a firearm equipped, the jetpack appears to the left
+of its icon; the renderer shifts that side-by-side position **12
+virtual X units right** independently of the user offset.
+Positive X moves right, positive Y moves down in both placements.
 
 Both offsets use virtual HUD units (screen-width/1920 and
 screen-height/1080) in Stack and Minimal modes. Editing either offset
