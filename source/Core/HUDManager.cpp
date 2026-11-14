@@ -1056,6 +1056,34 @@ bool HUDManager::IsWeaponAiming() const
 
     if (!mPlayer->bInVehicle)
     {
+        const CTaskSimpleJetPack* jetpackTask =
+            mPlayer->m_pIntelligence
+                ? mPlayer->m_pIntelligence->GetTaskJetPack()
+                : nullptr;
+
+        if (jetpackTask && !jetpackTask->m_bIsFinished)
+        {
+            // GTA's jetpack processes the current weapon only for
+            // instant-hit weapons using the arm-aim flag. Read the
+            // active weapon info at runtime so weapon.dat changes
+            // are respected without hardcoding a weapon type list.
+            const CWeaponInfo* info = CWeaponInfo::GetWeaponInfo(
+                weapon->m_eWeaponType,
+                mPlayer->GetWeaponSkill());
+
+            const bool nativeJetpackWeapon = info &&
+                info->m_nWeaponFire == WEAPON_FIRE_INSTANT_HIT &&
+                info->m_nFlags.bAimWithArm;
+
+            // Mods can drive weapons without changing weapon.dat.
+            // Genuine FIRING state is evidence; aim input alone is not.
+            const bool confirmedFiring =
+                weapon->m_nState == WEAPONSTATE_FIRING;
+
+            if (!nativeJetpackWeapon && !confirmedFiring)
+                return false;
+        }
+
         return settings.ShowOnFootAim &&
             (settings.ShowOnThrowableAim ||
                 !IsThrowableWeapon(weapon->m_eWeaponType)) &&
