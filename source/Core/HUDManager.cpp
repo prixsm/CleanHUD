@@ -378,6 +378,8 @@ void HUDManager::OnGameLoaded()
     mVanillaLayoutLatched = false;
     mValidVehicleFireInputLastFrame = false;
     mWeaponChangedThisFrame = false;
+    mConfirmedDriveByVehicle = nullptr;
+    mConfirmedDriveByWeapon = WEAPONTYPE_UNARMED;
     mClockSpacingPreview.Reset();
     mCellphoneIcon.Reset();
     mJetpackIcon.Reset();
@@ -402,6 +404,8 @@ void HUDManager::Update()
         mLastPlayer = nullptr;
         mValidVehicleFireInputLastFrame = false;
         mWeaponChangedThisFrame = false;
+        mConfirmedDriveByVehicle = nullptr;
+        mConfirmedDriveByWeapon = WEAPONTYPE_UNARMED;
         mCellphoneIcon.Reset();
         mJetpackIcon.Reset();
         mSkateboardIcon.Reset();
@@ -987,14 +991,18 @@ void HUDManager::UpdateAmmo()
     // A weapon change or reload isn't a confirmed drive-by.
     // Allow the previous frame's valid input because input
     // and weapon processing can occur on different ticks.
+    // GInput and drive-by mods may expose other selected weapons.
+    // A confirmed ammo decrease plus actual vehicle fire input is
+    // evidence of a handheld shot; never infer one from Fire alone.
     if (!mWeaponChangedThisFrame &&
         consumedAmmo &&
-        IsDriveByWeapon(weapon->m_eWeaponType) &&
         (IsValidVehicleFireInput() ||
             mValidVehicleFireInputLastFrame))
     {
         mAmmo.ShowFor(mVisibleTime);
         mWeaponIcon.ShowFor(mVisibleTime);
+        mConfirmedDriveByVehicle = vehicle;
+        mConfirmedDriveByWeapon = weapon->m_eWeaponType;
     }
 }
 
@@ -1008,9 +1016,8 @@ bool HUDManager::IsValidVehicleFireInput() const
 
     const CWeapon* weapon = mPlayer->GetWeapon();
 
-    if (!weapon ||
-        !IsDriveByWeapon(weapon->m_eWeaponType) ||
-        weapon->m_nAmmoTotal == 0)
+    if (!weapon || weapon->m_nAmmoTotal == 0 ||
+        !ShouldDisplayAmmo())
     {
         return false;
     }
@@ -1025,17 +1032,30 @@ bool HUDManager::IsValidVehicleFireInput() const
 
 void HUDManager::UpdateVehicleFiring()
 {
+    const CVehicle* vehicle =
+        mPlayer && mPlayer->bInVehicle ? mPlayer->m_pVehicle : nullptr;
+    if (mConfirmedDriveByVehicle != vehicle)
+    {
+        mConfirmedDriveByVehicle = nullptr;
+        mConfirmedDriveByWeapon = WEAPONTYPE_UNARMED;
+    }
+
     const bool validInput = IsValidVehicleFireInput();
     const CWeapon* weapon = mPlayer->GetWeapon();
 
-    // The weapon's FIRING state confirms a handheld shot,
-    // including shots not deducted from total ammunition.
-    // This does not trigger for fire-button-only input.
-    if (validInput && weapon &&
+    // A confirmed FIRING state belongs to CJ's held weapon, not the
+    // vehicle's turret or its horn. Accept it even if a drive-by mod
+    // uses non-SMG weapons, custom vehicles, or GInput mappings that
+    // do not report the ordinary GetCarGunFired input.
+    // No HUD reveal occurs from a button press alone.
+    if (vehicle && weapon && ShouldDisplayAmmo() &&
+        weapon->m_nAmmoTotal != 0 &&
         weapon->m_nState == WEAPONSTATE_FIRING)
     {
         mWeaponIcon.ShowFor(mVisibleTime);
         mAmmo.ShowFor(mVisibleTime);
+        mConfirmedDriveByVehicle = vehicle;
+        mConfirmedDriveByWeapon = weapon->m_eWeaponType;
     }
 
     mValidVehicleFireInputLastFrame = validInput;
@@ -1103,12 +1123,17 @@ bool HUDManager::IsWeaponAiming() const
 
     const CVehicle* vehicle = mPlayer->m_pVehicle;
 
-    // Side-looking preview remains opt-in. Bikes/quadbikes,
-    // ordinary cars and boats can preview an eligible SMG;
-    // aircraft, vehicle weapons and pedal bikes cannot.
+    // Side-looking preview remains opt-in. Recognize vanilla SMGs
+    // before firing; allow other weapon types after a confirmed shot
+    // in this vehicle. This prevents unrelated selected weapons from
+    // appearing merely because the player looks sideways.
+    const bool knownDriveByWeapon =
+        IsDriveByWeapon(weapon->m_eWeaponType) ||
+        (vehicle && mConfirmedDriveByVehicle == vehicle &&
+            mConfirmedDriveByWeapon == weapon->m_eWeaponType);
     return settings.ShowOnVehicleLook &&
         vehicle &&
-        IsDriveByWeapon(weapon->m_eWeaponType) &&
+        knownDriveByWeapon &&
         GetVehicleFireCapability(*vehicle) !=
             VehicleFireCapability::Bicycle &&
         IsLookingToOneSide(*pad) &&
