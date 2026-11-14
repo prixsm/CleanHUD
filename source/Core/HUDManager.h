@@ -100,9 +100,12 @@ private:
     bool mNeedsReset = true;
     bool mVanillaLayoutLatched = false;
     bool mWasDead = false;
-    // One-frame input grace covers game-process/weapon-update ordering.
-    bool mValidVehicleFireInputLastFrame = false;
+    // Weapon changes are handled separately from confirmed ammo usage.
     bool mWeaponChangedThisFrame = false;
+    // Look-only preview may recognize an additional weapon only after
+    // observing a genuine drive-by during this vehicle occupancy.
+    const CVehicle* mConfirmedDriveByVehicle = nullptr;
+    eWeaponType mConfirmedDriveByWeapon = WEAPONTYPE_UNARMED;
 
     // Only used to stop AlwaysShowClock=0 from hiding a preview
     // before its ordinary mClock.ShowFor() timer expires.
@@ -191,7 +194,6 @@ private:
     void ShowWeaponAndAmmoForEquipment(std::uint32_t duration);
     void UpdateAmmo();
     void UpdateVehicleFiring();
-    bool IsValidVehicleFireInput() const;
     bool IsWeaponAiming() const;
     bool HasEmptyVehicleAmmo() const;
     void UpdateWanted();
