@@ -173,9 +173,10 @@ namespace
         const float offsetScaleX = screenWidth / 1920.0f;
         const float offsetScaleY = screenHeight / 1080.0f;
 
-        // With no firearm, center the jetpack in the normal weapon
-        // slot. Only the side-by-side placement has a built-in 12-unit
-        // right shift; user X/Y offsets apply relative to either anchor.
+        // Fists/knuckles share their slot with the jetpack. All other
+        // equipped weapons, including throwables and custom held
+        // models, retain the slot; the jetpack draws beside them.
+        // The side-by-side position has a built-in 12-unit right shift.
         const float jetpackX = manager.ShouldReplaceWeaponWithJetpack()
             ? iconX + settings.JetpackIconOffsetX * offsetScaleX
             : iconX - iconWidth -
@@ -185,8 +186,9 @@ namespace
         const float jetpackY = iconY +
             settings.JetpackIconOffsetY * offsetScaleY;
 
-        if (manager.ShouldDrawJetpackIcon() &&
-            !manager.ShouldDrawCellphoneIcon())
+        // A phone occupies the normal weapon slot; the jetpack uses
+        // its side position instead of being hidden or overlapping.
+        if (manager.ShouldDrawJetpackIcon())
             DrawModelIcon(MODEL_JETPACK, jetpackX, jetpackY,
                 iconWidth, iconHeight, manager.GetJetpackIconAlpha());
     }
@@ -363,8 +365,8 @@ namespace
         const std::uint32_t cleanAlpha =
             pos.Alpha;
 
-        // Phone suppresses knuckles; an equipped jetpack replaces
-        // the non-firearm icon, leaving a firearm's icon intact.
+        // Phone suppresses knuckles; the jetpack replaces only bare
+        // hands or knuckles, not throwables, melee or other weapons.
         stack[9] = HUDManager::Get().ShouldSuppressNativeWeaponSprite()
             ? 0u : originalAlpha * cleanAlpha / 255u;
     }

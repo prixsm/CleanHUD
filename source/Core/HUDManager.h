@@ -37,7 +37,8 @@ public:
     bool ShouldSuppressNativeFist() const;
     bool ShouldSuppressNativeWeaponSprite() const;
     bool ShouldDrawJetpackIcon() const;
-    // True when no firearm occupies the weapon slot alongside jetpack.
+    // True only for unarmed/brass-knuckle slots, while the jetpack
+    // is visible and no cellphone occupies that slot.
     bool ShouldReplaceWeaponWithJetpack() const;
     int GetCustomWeaponIconModel() const;
     bool IsUsingVanillaLayout() const;
@@ -102,7 +103,6 @@ private:
     VisibilityTimer mClockSpacingPreview;
     // Jetpack is an on-equip event, unlike the continuously held phone task.
     bool mJetpackWasEquipped = false;
-    bool mJetpackDropped = false;
     // PHONE_OUT may end before its parent phone task is removed.
     bool mCellphonePuttingAway = false;
 
@@ -176,6 +176,9 @@ private:
     void UpdateMoney();
     void UpdateWeaponIcon();
     void UpdateSpecialIcons();
+    // Jetpack equip and position preview must show ammo and weapon
+    // for the same time when the selected weapon has an ammo readout.
+    void ShowWeaponAndAmmoForJetpack(std::uint32_t duration);
     void UpdateAmmo();
     void UpdateVehicleFiring();
     bool IsValidVehicleFireInput() const;

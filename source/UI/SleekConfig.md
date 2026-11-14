@@ -172,11 +172,14 @@ use the same visibility
 fading settings as the rest of CleanHUD; jetpack visibility is triggered
 once on equip and is not extended indefinitely while flying.
 
-The jetpack shares the usual weapon-icon position when CJ has no
-firearm, replacing the normal icon for fists, knuckles, and other
-non-firearm equipment. While a firearm is equipped, the jetpack
-appears to the **left** of its icon. `JetpackIconOffsetX` and
-`JetpackIconOffsetY` allow adjustments in either case.
+The jetpack occupies the normal weapon-icon position only when CJ
+has **fists or brass knuckles** selected. For any other selected
+weapon—including grenades, tear gas, Molotovs, satchel charges,
+melee weapons and custom held weapons—the jetpack appears **left
+of the existing weapon icon**, so neither is obscured. A visible
+cellphone takes priority in the normal weapon slot, with the
+jetpack next to it. `JetpackIconOffsetX` and `JetpackIconOffsetY`
+work in either position.
 
 The model of a custom equipped weapon is resolved automatically
 using GTA's `CPed::m_nWeaponModelId`, which identifies the model
@@ -197,12 +200,12 @@ but can still be disabled in the INI or SleekConfig.
 ### Jetpack behavior
 
 The jetpack defaults to `JetpackIconOffsetX=0.0` and
-`JetpackIconOffsetY=0.0`. Without a firearm, its icon appears **at
-the weapon slot**, hiding the native non-firearm icon while the jetpack
-is visible. With a firearm equipped, the jetpack appears to the left
-of its icon; the renderer shifts that side-by-side position **12
-virtual X units right** independently of the user offset.
-Positive X moves right, positive Y moves down in both placements.
+`JetpackIconOffsetY=0.0`. With fists or knuckles, its icon replaces
+the native weapon-slot icon while visible. With any other held
+weapon or an active cellphone icon, the jetpack appears to the left
+of that icon. The renderer shifts this separate, side-by-side
+position **12 virtual X units right**, independently of the user
+offset. Positive X moves right and positive Y moves down.
 
 Both offsets use virtual HUD units (screen-width/1920 and
 screen-height/1080) in Stack and Minimal modes. Editing either offset
@@ -211,8 +214,12 @@ after its normal timer expires. This preview does not invent a jetpack
 or revive one that has been dropped.
 
 The jetpack's normal visibility begins on equip and fades out using
-CleanHUD's visibility timings. The Exit Vehicle input starts its
-fade-out immediately.
+CleanHUD's visibility timings. A drop starts fading when GTA marks
+the jetpack task finished or removes it. Pressing Exit Vehicle in
+the air, when the jetpack remains equipped, does not end its HUD
+visibility. Equipping or previewing the jetpack also reveals ammo
+alongside the selected weapon for the same `DurationMs` timer,
+when that weapon has an ammo readout.
 
 CleanHUD's cellphone, jetpack and custom
 icons use the **most recently measured native sprite bounds**, so they
