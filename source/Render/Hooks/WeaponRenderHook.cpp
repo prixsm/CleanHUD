@@ -169,20 +169,19 @@ namespace
                 iconWidth, iconHeight, manager.GetCellphoneIconAlpha());
 
         const auto& settings = HUDSettings::Get();
-        constexpr float DefaultJetpackOffsetX = 29.0f;
+        constexpr float SideBySideShiftX = 12.0f;
         const float offsetScaleX = screenWidth / 1920.0f;
         const float offsetScaleY = screenHeight / 1080.0f;
 
-        // With no firearm, the jetpack replaces the occupied weapon
-        // slot. With a firearm, place the separate jetpack icon left
-        // of it. Subtracting the default keeps the replacement exactly
-        // aligned with the native slot while allowing X/Y fine-tuning.
+        // With no firearm, center the jetpack in the normal weapon
+        // slot. Only the side-by-side placement has a built-in 12-unit
+        // right shift; user X/Y offsets apply relative to either anchor.
         const float jetpackX = manager.ShouldReplaceWeaponWithJetpack()
-            ? iconX + (settings.JetpackIconOffsetX -
-                DefaultJetpackOffsetX) * offsetScaleX
+            ? iconX + settings.JetpackIconOffsetX * offsetScaleX
             : iconX - iconWidth -
                 8.0f * (iconWidth / 47.0f) +
-                settings.JetpackIconOffsetX * offsetScaleX;
+                (SideBySideShiftX + settings.JetpackIconOffsetX) *
+                    offsetScaleX;
         const float jetpackY = iconY +
             settings.JetpackIconOffsetY * offsetScaleY;
 
