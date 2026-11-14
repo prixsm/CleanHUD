@@ -46,9 +46,9 @@ public:
 
     // Restore normally hidden equipment/model icons by default.
     bool ShowHiddenWeaponIcons = true;
-    // Jetpack is anchored to the left of the weapon icon by default.
-    // These two independent virtual-layout offsets allow free placement.
-    float JetpackIconOffsetX = 17.0f;
+    // Jetpack replaces the fist/knuckles slot; alongside an equipped
+    // weapon it uses this X offset to position its own icon to the left.
+    float JetpackIconOffsetX = 29.0f;
     float JetpackIconOffsetY = 0.0f;
     // Gap below the Clock, based on the first visible stack group.
     float ClockToMoneySpacing = 25.0f;
@@ -68,7 +68,7 @@ public:
     // the vertical distance controls the Ammo position beneath Weapon.
     float WeaponAmmoOffsetX = 12.0f;
     float WeaponAmmoOffsetY = -16.0f;
-    float WeaponToAmmoVerticalOffset = 87.0f;
+    float WeaponToAmmoVerticalOffset = 83.0f;
 
 private:
     HUDSettings() = default;
