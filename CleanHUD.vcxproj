@@ -46,7 +46,7 @@
     <IgnoreImportLibrary>true</IgnoreImportLibrary>
     <OutDir>$(ProjectDir)bin\GTA-SA\Release\</OutDir>
     <IntDir>$(ProjectDir)obj\GTA-SA\Release\</IntDir>
-    <TargetName>CleanHUD.SA</TargetName>
+    <TargetName>CleanHUD</TargetName>
     <TargetExt>.asi</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug GTA-SA|Win32'">
@@ -54,7 +54,7 @@
     <IgnoreImportLibrary>true</IgnoreImportLibrary>
     <OutDir>$(ProjectDir)bin\GTA-SA\Debug\</OutDir>
     <IntDir>$(ProjectDir)obj\GTA-SA\Debug\</IntDir>
-    <TargetName>CleanHUD.SA</TargetName>
+    <TargetName>CleanHUD</TargetName>
     <TargetExt>.asi</TargetExt>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release GTA-SA|Win32'">
@@ -83,7 +83,7 @@
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <AdditionalDependencies>plugin.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(PLUGIN_SDK_DIR)\output\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <ImportLibrary>bin\GTA-SA\Release\CleanHUD.SA.lib</ImportLibrary>
+      <ImportLibrary>bin\GTA-SA\Release\CleanHUD.lib</ImportLibrary>
     </Link>
     <PostBuildEvent>
       <Command>
@@ -116,7 +116,7 @@ xcopy /Y "$(TargetPath)" "$(GTA_SA_DIR)\scripts"
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>plugin_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(PLUGIN_SDK_DIR)\output\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <ImportLibrary>bin\GTA-SA\Debug\CleanHUD.SA.lib</ImportLibrary>
+      <ImportLibrary>bin\GTA-SA\Debug\CleanHUD.lib</ImportLibrary>
     </Link>
     <PostBuildEvent>
       <Command>
