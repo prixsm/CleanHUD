@@ -341,10 +341,14 @@ void HUDManager::UpdateBikeHopSuppression()
     // on a BMX hop: GTA saves CJ's held weapon and selects UNARMED.
     // Check that transition as well as the render-weapon flag: the
     // command does not necessarily toggle m_bRenderWeapon itself.
+    // GTA SA's unidentified/sentinel weapon type is 0x37 (55).
+    // Some plugin-sdk revisions do not declare its symbolic name.
+    constexpr eWeaponType UnidentifiedWeapon =
+        static_cast<eWeaponType>(0x37);
     const CWeapon* weapon = mPlayer->GetWeapon();
     const bool scriptedWeaponSwap =
         weapon && weapon->m_eWeaponType == WEAPONTYPE_UNARMED &&
-        mPlayer->m_nSavedWeapon != WEAPONTYPE_UNIDENTIFIED &&
+        mPlayer->m_nSavedWeapon != UnidentifiedWeapon &&
         mPlayer->m_nSavedWeapon != WEAPONTYPE_UNARMED;
     const bool scriptHidingWeapon =
         scriptedWeaponSwap ||
