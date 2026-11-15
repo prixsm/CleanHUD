@@ -299,7 +299,7 @@ void HUDSettings::Load()
     const auto oldKey = ReadInt(
         path.c_str(), "General", "VanillaHUDKey", 9, 0, 255);
     const auto oldPadButton = ReadInt(
-        path.c_str(), "General", "VanillaHUDPadButton", 1, 0, 16);
+        path.c_str(), "General", "VanillaHUDPadButton", 0, 0, 16);
     VanillaHUDKey = ReadInt(
         path.c_str(), "HUDPreview", "VanillaHUDKey", oldKey, 0, 255);
     VanillaHUDPadButton = ReadInt(
