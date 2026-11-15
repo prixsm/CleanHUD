@@ -45,7 +45,7 @@ register duplicate F10/D3D9 hooks.
 The final page, SleekConfig → **HUD Preview**, contains two
 direct-selection dropdowns: **Keyboard virtual key (VK)** (default
 `9 - Tab`) and **Gamepad button (Xbox / PS)** (default `0 - Off`).
-The keyboard menu lists **103 named usable keys** and one
+The keyboard menu lists **103 named common VK codes** and one
 `Custom VK` placeholder. The controller menu has **17 choices**,
 numbered 0 through 16, with both Xbox and PlayStation labels.
 No external VK/keycode reference is required to choose a listed key.
@@ -63,6 +63,9 @@ common keys, any Win32 VK number **0..255** may be entered directly
 in the INI; the menu then shows `Custom VK` without replacing it.
 Values 0 disable either input. Older bindings saved in `[General]`
 are read as fallbacks; saving migrates them into `[HUDPreview]`.
+The new keyboard dropdown has a new SleekConfig setting ID, so
+previous key-capture DAT values cannot be mistaken for dropdown
+indices. The raw INI binding remains compatible.
 
 Controller values: 1..4 are LB/LT/RB/RT, 5..8 D-pad, 9 Back,
 10 Start, 11..14 X/Y/A/B, and 15..16 stick clicks (L3/R3),
