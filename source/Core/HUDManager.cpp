@@ -13,6 +13,7 @@
 #include <CStats.h>
 #include <CVehicle.h>
 #include <CTaskSimpleSwim.h>
+#include <CTimer.h>
 #include <CTaskSimpleJetpack.h>
 #include <CWanted.h>
 #include <CWeaponInfo.h>
@@ -77,6 +78,43 @@ namespace
     {
         return weaponType >= WEAPONTYPE_UNARMED &&
             weaponType <= WEAPONTYPE_CANE;
+    }
+
+    // GTA reconciles controller actions in CPad; GInput also feeds
+    // this state. Zero disables the gamepad binding.
+    static bool PadButtonHeld(std::uint32_t index)
+    {
+        if (index == 0)
+            return false;
+
+        CPad* pad = CPad::GetPad(0);
+        if (!pad)
+            return false;
+
+        const auto& state = pad->NewState;
+        signed short value = 0;
+        switch (index)
+        {
+        case 1:  value = state.LeftShoulder1; break;
+        case 2:  value = state.LeftShoulder2; break;
+        case 3:  value = state.RightShoulder1; break;
+        case 4:  value = state.RightShoulder2; break;
+        case 5:  value = state.DPadUp; break;
+        case 6:  value = state.DPadDown; break;
+        case 7:  value = state.DPadLeft; break;
+        case 8:  value = state.DPadRight; break;
+        case 9:  value = state.Select; break;
+        case 10: value = state.Start; break;
+        case 11: value = state.ButtonSquare; break;
+        case 12: value = state.ButtonTriangle; break;
+        case 13: value = state.ButtonCross; break;
+        case 14: value = state.ButtonCircle; break;
+        case 15: value = state.ShockButtonL; break;
+        case 16: value = state.ShockButtonR; break;
+        default: return false;
+        }
+
+        return value >= 64;
     }
 
     static bool IsDriveByWeapon(eWeaponType weaponType)
@@ -258,13 +296,64 @@ bool HUDManager::IsPlayerHUDInitialized() const
     return mSessionInitialized;
 }
 
+bool HUDManager::IsVanillaPreviewHeld() const
+{
+    const auto& settings = HUDSettings::Get();
+    const bool keyboardHeld =
+        settings.VanillaHUDKey > 0 &&
+        settings.VanillaHUDKey <= 255 &&
+        (GetAsyncKeyState(static_cast<int>(
+            settings.VanillaHUDKey)) & 0x8000) != 0;
+
+    return keyboardHeld ||
+        PadButtonHeld(settings.VanillaHUDPadButton);
+}
+
 bool HUDManager::IsUsingVanillaLayout() const
 {
     return
         HUDSettings::Get().Mode == HUDMode::Minimal ||
         !mSessionInitialized ||
         mVanillaLayoutLatched ||
-        (GetAsyncKeyState(VK_TAB) & 0x8000);
+        IsVanillaPreviewHeld();
+}
+
+bool HUDManager::ShouldSuppressBikeHopHUD() const
+{
+    return mBikeHopSuppressionActive;
+}
+
+void HUDManager::UpdateBikeHopSuppression()
+{
+    const CVehicle* vehicle = mPlayer && mPlayer->bInVehicle
+        ? mPlayer->m_pVehicle : nullptr;
+
+    if (!vehicle ||
+        GetVehicleFireCapability(*vehicle) !=
+            VehicleFireCapability::Bicycle)
+    {
+        mBikeHopSuppressionActive = false;
+        mBikeHopHideUntilMs = 0;
+        return;
+    }
+
+    // Manual Driveby Refixed hides the held weapon while hopping.
+    // The same player-data flag suppresses its native weapon model.
+    const bool scriptHidingWeapon =
+        mPlayer->m_pPlayerData &&
+        !mPlayer->m_pPlayerData->m_bRenderWeapon;
+
+    const std::uint32_t now = CTimer::m_snTimeInMilliseconds;
+    if (scriptHidingWeapon)
+    {
+        constexpr std::uint32_t AfterHopDelayMs = 250;
+        mBikeHopHideUntilMs = now + AfterHopDelayMs;
+    }
+
+    mBikeHopSuppressionActive = scriptHidingWeapon ||
+        (mBikeHopHideUntilMs != 0 &&
+         static_cast<std::int32_t>(
+             mBikeHopHideUntilMs - now) > 0);
 }
 
 bool HUDManager::ShouldDisplayAmmo() const
@@ -377,6 +466,8 @@ void HUDManager::OnGameLoaded()
     mSessionInitialized = false;
     mVanillaLayoutLatched = false;
     mWeaponChangedThisFrame = false;
+    mBikeHopSuppressionActive = false;
+    mBikeHopHideUntilMs = 0;
     mConfirmedDriveByVehicle = nullptr;
     mConfirmedDriveByWeapon = WEAPONTYPE_UNARMED;
     mClockSpacingPreview.Reset();
@@ -402,6 +493,8 @@ void HUDManager::Update()
         mSessionInitialized = false;
         mLastPlayer = nullptr;
         mWeaponChangedThisFrame = false;
+        mBikeHopSuppressionActive = false;
+        mBikeHopHideUntilMs = 0;
         mConfirmedDriveByVehicle = nullptr;
         mConfirmedDriveByWeapon = WEAPONTYPE_UNARMED;
         mCellphoneIcon.Reset();
@@ -423,10 +516,9 @@ void HUDManager::Update()
 
     mVisibleTime = settings.VisibilityMs;
 
-    const bool tabHeld =
-        GetAsyncKeyState(VK_TAB) & 0x8000;
+    const bool previewHeld = IsVanillaPreviewHeld();
 
-    if (tabHeld)
+    if (previewHeld)
     {
         mVanillaLayoutLatched = true;
     }
@@ -493,7 +585,7 @@ void HUDManager::Update()
         mLayout.ResetHistory();
     }
 
-    if (tabHeld || !settings.Clock || settings.AlwaysShowClock)
+    if (previewHeld || !settings.Clock || settings.AlwaysShowClock)
         mClock.Show();
     else if (!mClockSpacingPreview.Visible())
         mClock.Hide();
@@ -501,6 +593,7 @@ void HUDManager::Update()
     UpdateArmour();
     UpdateBreath();
     UpdateMoney();
+    UpdateBikeHopSuppression();
     mWeaponChangedThisFrame = false;
     UpdateWeaponIcon();
     UpdateAmmo();
@@ -512,22 +605,36 @@ void HUDManager::Update()
     UpdateVehicleFiring();
     UpdateWanted();
 
+    // Scripted BMX hops temporarily switch the weapon slot to fists.
+    // Reset those transient timers so icons stay absent just after
+    // the scripted hide ends. Unmanaged icons remain vanilla-owned.
+    if (mBikeHopSuppressionActive)
+    {
+        if (settings.Weapon)
+            mWeaponIcon.Reset();
+        if (settings.Ammo)
+            mAmmo.Reset();
+    }
+
     // Aim-only visibility fades on release. Shot timers remain
     // active rather than being erased by HUDComponent::Hide().
-    const bool weaponAiming = IsWeaponAiming();
+    const bool weaponAiming =
+        !mBikeHopSuppressionActive && IsWeaponAiming();
 
     mClock.Update(!settings.Clock || settings.AlwaysShowClock);
 
     // Disabled CleanHUD elements retain vanilla draw calls.
     // HUDLayout::Add excludes them from CleanHUD's stack.
-    mHealth.Update(tabHeld || !settings.Health);
-    mArmour.Update(tabHeld || !settings.Armour);
-    mBreath.Update(tabHeld || !settings.Breath);
-    mMoney.Update(tabHeld || !settings.Money);
+    mHealth.Update(previewHeld || !settings.Health);
+    mArmour.Update(previewHeld || !settings.Armour);
+    mBreath.Update(previewHeld || !settings.Breath);
+    mMoney.Update(previewHeld || !settings.Money);
     mWeaponIcon.Update(
-        tabHeld || weaponAiming || !settings.Weapon);
+        (!mBikeHopSuppressionActive && (previewHeld || weaponAiming)) ||
+        !settings.Weapon);
     mAmmo.Update(
-        tabHeld || !settings.Ammo || weaponAiming);
+        (!mBikeHopSuppressionActive && (previewHeld || weaponAiming)) ||
+        !settings.Ammo);
 
     mWanted.Update(!settings.Wanted);
 
@@ -560,7 +667,7 @@ void HUDManager::Update()
 
     HUDRenderer::Get().Build(mLayout);
 
-    if (!tabHeld)
+    if (!previewHeld)
     {
         const bool tabFadeOutActive =
             mClock.IsFadingOut() ||
@@ -584,6 +691,8 @@ void HUDManager::ResetSessionState()
     RestoreVanillaElements();
     mLayout.ResetHistory();
     mWeaponChangedThisFrame = false;
+    mBikeHopSuppressionActive = false;
+    mBikeHopHideUntilMs = 0;
 
     mPreviousHealth = mLastHealth;
     mHealthStableFrames = 0;
@@ -1754,6 +1863,8 @@ void HUDManager::HideAll()
     mJetpackWasEquipped = false;
     mSkateboardWasRiding = false;
     mCellphonePuttingAway = false;
+    mBikeHopSuppressionActive = false;
+    mBikeHopHideUntilMs = 0;
     mConfirmedDriveByVehicle = nullptr;
     mConfirmedDriveByWeapon = WEAPONTYPE_UNARMED;
     mClock.Reset();
