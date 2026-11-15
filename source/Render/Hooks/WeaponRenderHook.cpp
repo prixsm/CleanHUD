@@ -132,7 +132,8 @@ namespace
     {
         if (gNativeWeaponPosition.Frame != CTimer::m_FrameCounter ||
             gNativeWeaponPosition.Alpha == 0 ||
-            !HUDManager::Get().IsPlayerHUDInitialized())
+            !HUDManager::Get().IsPlayerHUDInitialized() ||
+            HUDManager::Get().ShouldSuppressBikeHopHUD())
         {
             return;
         }
