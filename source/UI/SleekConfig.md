@@ -44,7 +44,7 @@ register duplicate F10/D3D9 hooks.
 
 The final page, SleekConfig → **HUD Preview**, contains two
 direct-selection dropdowns: **Keyboard virtual key (VK)** (default
-`9 - Tab`) and **Gamepad button (Xbox / PS)** (default `1 - LB/L1`).
+`9 - Tab`) and **Gamepad / mapped GTA button** (default `0 - Off`).
 The keyboard menu lists **103 named common VK codes** and one
 `Custom VK` placeholder. The controller menu has **17 choices**,
 numbered 0 through 16, with both Xbox and PlayStation labels.
@@ -57,7 +57,7 @@ neither binding changes the game controls.
 
 The matching **last section in CleanHUD.ini**, `[HUDPreview]`,
 contains `VanillaHUDKey=9` (raw Windows virtual-key code) and
-`VanillaHUDPadButton=1` (LB/L1). The INI includes the same complete
+`VanillaHUDPadButton=0` (Off). The INI includes the same complete
 keyboard/button list with numeric codes. In addition to the menu's
 common keys, any Win32 VK number **0..255** may be entered directly
 in the INI; the menu then shows `Custom VK` without replacing it.
@@ -70,9 +70,18 @@ indices. The raw INI binding remains compatible.
 Controller values: 1..4 are LB/LT/RB/RT, 5..8 D-pad, 9 Back,
 10 Start, 11..14 X/Y/A/B, and 15..16 stick clicks (L3/R3),
 including the PlayStation equivalents. The gamepad binding reads
-GTA's `CPad::NewState`, also used by GInput. Choose controls that
-do not conflict with the game's own actions; do not map F10 when
-using SleekConfig. Some keyboard punctuation keys are layout-dependent.
+GTA's `CPad::NewState`, also used by GInput. This is a **mapped
+game action, not exclusive physical gamepad input**: pressing a keyboard
+key assigned to the same GTA action (for example Ctrl corresponding
+to LB/L1) may activate the preview too. Therefore gamepad preview
+defaults to **Off**. Choose an action only if that keyboard/controller
+overlap is acceptable. Do not map F10 when using SleekConfig.
+Some keyboard punctuation keys are layout-dependent.
+
+**Upgrades:** an explicit existing INI or SleekConfig DAT value of
+`VanillaHUDPadButton=1` remains 1, by design. To disable it, select
+`0 - Off` in SleekConfig and save; otherwise edit the INI while the
+game is closed and check whether SleekConfig DAT overrides it.
 
 ## Live spacing previews
 
@@ -184,8 +193,10 @@ Target: GTA San Andreas PC 1.0 US, Win32.
   (Elements and HUD Preview).
 - Confirm the last tab is **HUD Preview**, with two dropdowns listing
   keyboard VK codes (including `9 - Tab`) and Xbox/PS gamepad
-  equivalents (including `1 - LB/L1`, now the default; `0 - Off` still disables it). Verify that the menu's numeric
-  codes match the complete lists at the end of the INI.
+  equivalents (including `0 - Off` as the default and `1 - LB/L1`).
+  Verify that the menu's numeric codes match the INI. When selecting
+  LB/L1, also test Ctrl on the keyboard; both may produce the mapped
+  GTA action. Ensure Off disables this unintended preview.
 - Select an alternate keyboard key or controller button, hold/release
   it, and verify native-position preview followed by Stack return.
   Test both bindings disabled, `Custom VK` after loading an uncommon
@@ -392,32 +403,21 @@ an ammo readout, CleanHUD displays Weapon/Ammo **without requiring
 `ShowOnVehicleLook`**. The optional look-only preview still
 follows the existing rules when no scripted drive-by task exists.
 
-For pedal bicycles **and motorcycles**, the script can temporarily
-hide the selected weapon using
-`hide_char_weapon_for_scripted_cutscene`. GTA saves the weapon and
-switches to unarmed. CleanHUD suppresses only that scripted unarmed
-interval and the brief return to **the same saved weapon**, up to
-**250 ms** after restoration. It no longer uses `m_bRenderWeapon`
-as a suppression condition: that flag may stay false during normal
-weapon use with other mods.
+Manual Driveby Refixed can temporarily hide and restore
+the selected weapon on bicycles and motorcycles, causing a brief
+fist/knuckle HUD icon followed by the restored weapon icon. This
+is a cosmetic side effect of the script's weapon swap. CleanHUD
+**does not attempt to suppress it**: previous workarounds reset
+weapon/ammo visibility and interfered with normal bike weapon
+switching and shooting. The appropriate long-term fix belongs
+in the script's own weapon-hide/restore flow.
 
-**Real weapon selection immediately cancels the grace period if the
-selected type differs from the saved weapon. Real firing or spent ammo
-also cancels it**, so bike shots keep their normal visibility timer
-instead of being reset after every shot. Supplemental weapon icons
-are hidden only during the actual suppression interval. If
-Weapon/Ammo are disabled in `[Elements]`, their drawing remains
-under GTA/other-mod ownership.
-
-Regression tests: start scripted drive-by aiming without shooting
-and confirm the firearm HUD appears. On a BMX, bicycle and motorcycle,
-trigger the script's temporary weapon hide and verify the fist/knuckle
-flash and automatic weapon restoration don't show icons. Then switch
-weapons normally on each bike class: the new weapon icon must reveal.
-Shoot repeatedly, including immediately after a hide: weapon/ammo
-must remain visible for the normal `DurationMs` window and fade
-normally, not immediately. Repeat with GInput and without Manual
-Driveby Refixed. Cars/quads remain outside this suppression rule.
+Regression tests: ensure normal weapon switching and firing reveal
+the expected icon/ammo on bicycles and motorcycles for the full
+`DurationMs` period, without being reset by hop/CTRL state. The
+brief script-generated fist/knuckle flash may still occur. Confirm
+scripted vehicle aiming without shooting still reveals the firearm
+and that cars, quads, jetpack and skateboard behavior remain intact.
 
 ## Gameplay compatibility and lifetime audit
 
