@@ -105,6 +105,9 @@ private:
     bool mWeaponChangedThisFrame = false;
     bool mBikeHopSuppressionActive = false;
     std::uint32_t mBikeHopHideUntilMs = 0;
+    // Suppress only the scripted unarmed interval and the brief
+    // return to that same weapon; never swallow real weapon changes.
+    eWeaponType mBikeHopSavedWeapon = WEAPONTYPE_UNARMED;
     // Look-only preview may recognize an additional weapon only after
     // observing a genuine drive-by during this vehicle occupancy.
     const CVehicle* mConfirmedDriveByVehicle = nullptr;

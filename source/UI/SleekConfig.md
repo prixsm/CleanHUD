@@ -44,7 +44,7 @@ register duplicate F10/D3D9 hooks.
 
 The final page, SleekConfig → **HUD Preview**, contains two
 direct-selection dropdowns: **Keyboard virtual key (VK)** (default
-`9 - Tab`) and **Gamepad button (Xbox / PS)** (default `0 - Off`).
+`9 - Tab`) and **Gamepad button (Xbox / PS)** (default `1 - LB/L1`).
 The keyboard menu lists **103 named common VK codes** and one
 `Custom VK` placeholder. The controller menu has **17 choices**,
 numbered 0 through 16, with both Xbox and PlayStation labels.
@@ -57,7 +57,7 @@ neither binding changes the game controls.
 
 The matching **last section in CleanHUD.ini**, `[HUDPreview]`,
 contains `VanillaHUDKey=9` (raw Windows virtual-key code) and
-`VanillaHUDPadButton=0`. The INI includes the same complete
+`VanillaHUDPadButton=1` (LB/L1). The INI includes the same complete
 keyboard/button list with numeric codes. In addition to the menu's
 common keys, any Win32 VK number **0..255** may be entered directly
 in the INI; the menu then shows `Custom VK` without replacing it.
@@ -184,7 +184,7 @@ Target: GTA San Andreas PC 1.0 US, Win32.
   (Elements and HUD Preview).
 - Confirm the last tab is **HUD Preview**, with two dropdowns listing
   keyboard VK codes (including `9 - Tab`) and Xbox/PS gamepad
-  equivalents (including `0 - Off`). Verify that the menu's numeric
+  equivalents (including `1 - LB/L1`, now the default; `0 - Off` still disables it). Verify that the menu's numeric
   codes match the complete lists at the end of the INI.
 - Select an alternate keyboard key or controller button, hold/release
   it, and verify native-position preview followed by Stack return.
@@ -392,26 +392,32 @@ an ammo readout, CleanHUD displays Weapon/Ammo **without requiring
 `ShowOnVehicleLook`**. The optional look-only preview still
 follows the existing rules when no scripted drive-by task exists.
 
-For BMX bunny hops, the script temporarily hides the carried
-weapon using `hide_char_weapon_for_scripted_cutscene`. GTA may
-switch to fists, saving the previously equipped weapon. CleanHUD
-detects that saved-weapon/unarmed state (or render-weapon hidden
-flag) **only in the bicycle class** and suppresses its managed
-Weapon/Ammo components for the hide interval plus **250 ms**
-afterwards. The temporary fist/knuckle slot and supplemental
-weapon icons do not appear during this period. A later genuine
-drive-by shot or aim task can reveal them again normally; if
-Weapon/Ammo are disabled in `[Elements]`, their drawing remains
-under vanilla/other-mod ownership.
+For pedal bicycles **and motorcycles**, the script can temporarily
+hide the selected weapon using
+`hide_char_weapon_for_scripted_cutscene`. GTA saves the weapon and
+switches to unarmed. CleanHUD suppresses only that scripted unarmed
+interval and the brief return to **the same saved weapon**, up to
+**250 ms** after restoration. It no longer uses `m_bRenderWeapon`
+as a suppression condition: that flag may stay false during normal
+weapon use with other mods.
 
-Regression tests: start a scripted drive-by without shooting and
-confirm the firearm HUD appears during Aim; release Aim and
-verify it fades as expected. On BMX with a firearm available,
-bunny hop without shooting and ensure neither the fist/knuckle
-icon nor the selected firearm briefly flashes during/just after
-the hop. Test a genuine shot right after the cooldown, normal
-bike shooting, controller button 4, GInput, and the absence of
-false changes on motorcycles and cars.
+**Real weapon selection immediately cancels the grace period if the
+selected type differs from the saved weapon. Real firing or spent ammo
+also cancels it**, so bike shots keep their normal visibility timer
+instead of being reset after every shot. Supplemental weapon icons
+are hidden only during the actual suppression interval. If
+Weapon/Ammo are disabled in `[Elements]`, their drawing remains
+under GTA/other-mod ownership.
+
+Regression tests: start scripted drive-by aiming without shooting
+and confirm the firearm HUD appears. On a BMX, bicycle and motorcycle,
+trigger the script's temporary weapon hide and verify the fist/knuckle
+flash and automatic weapon restoration don't show icons. Then switch
+weapons normally on each bike class: the new weapon icon must reveal.
+Shoot repeatedly, including immediately after a hide: weapon/ammo
+must remain visible for the normal `DurationMs` window and fade
+normally, not immediately. Repeat with GInput and without Manual
+Driveby Refixed. Cars/quads remain outside this suppression rule.
 
 ## Gameplay compatibility and lifetime audit
 
