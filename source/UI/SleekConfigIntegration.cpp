@@ -243,6 +243,8 @@ namespace
     constexpr int PreviewKeyCount =
         static_cast<int>(sizeof(PreviewKeyChoices) /
             sizeof(PreviewKeyChoices[0]));
+    static_assert(PreviewKeyCount < 255,
+        "Keyboard VK choices must fit SleekConfig's enum limit");
 
     int PreviewKeyIndex(std::uint32_t vk)
     {
