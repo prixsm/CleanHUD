@@ -46,7 +46,6 @@ public:
     int GetSkateboardIconModel() const;
     int GetCustomWeaponIconModel() const;
     bool IsUsingVanillaLayout() const;
-    bool ShouldSuppressBikeHopHUD() const;
     bool ShouldDisplayAmmo() const;
     bool ShouldDisplayArmour() const;
 
@@ -103,8 +102,6 @@ private:
     bool mWasDead = false;
     // Weapon changes are handled separately from confirmed ammo usage.
     bool mWeaponChangedThisFrame = false;
-    bool mBikeHopSuppressionActive = false;
-    std::uint32_t mBikeHopHideUntilMs = 0;
     // Look-only preview may recognize an additional weapon only after
     // observing a genuine drive-by during this vehicle occupancy.
     const CVehicle* mConfirmedDriveByVehicle = nullptr;
@@ -197,8 +194,6 @@ private:
     void ShowWeaponAndAmmoForEquipment(std::uint32_t duration);
     void UpdateAmmo();
     void UpdateVehicleFiring();
-    void UpdateBikeHopSuppression();
-    bool IsVanillaPreviewHeld() const;
     bool IsWeaponAiming() const;
     bool HasEmptyVehicleAmmo() const;
     void UpdateWanted();
