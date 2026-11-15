@@ -36,6 +36,28 @@ SleekConfig owns the F10 hotkey and handles player input, keyboard/mouse,
 Direct3D9 render hooks and graphics-device lifecycle. CleanHUD does not
 register duplicate F10/D3D9 hooks.
 
+## Hold to show GTA's original HUD positions
+
+The first two controls on SleekConfig → **General** are
+**Show vanilla HUD: keyboard key** (a key-binding picker, default Tab)
+and **Show vanilla HUD: gamepad button** (dropdown, default Off).
+Holding either temporarily displays GTA's native HUD positions and
+reveals enabled elements using the existing preview behavior.
+Releasing the control restores CleanHUD's selected layout after
+its normal visibility/fade transition; this does not change
+`HUDMode` or modify game input.
+
+In `[General]` in CleanHUD.ini, the equivalent keys are
+`VanillaHUDKey=9` (Windows VK_TAB) and
+`VanillaHUDPadButton=0` (Off). Set `VanillaHUDKey=0`
+to disable the keyboard binding. The controller setting accepts
+0..16: 1..4 are LB/LT/RB/RT, 5..8 D-pad directions, 9 Back,
+10 Start, 11..14 X/Y/A/B, and 15..16 stick clicks, with
+PlayStation equivalents. The gamepad binding uses GTA's
+`CPad::NewState`, which controller mods such as GInput also update.
+Choose an action that doesn't conflict with the game's own controls;
+a mapped keyboard action may affect the same CPad button.
+
 ## Live spacing previews
 
 Changing any of the 15 stack-spacing/Weapon/Ammo layout sliders in **Stack mode**
@@ -142,7 +164,13 @@ Target: GTA San Andreas PC 1.0 US, Win32.
 - Start without SleekConfig. Game/menu text, loading, TAB, both HUD modes,
   firing and fading behave as before. CleanHUD.ini is loaded.
 - Start with SleekConfig. F10 opens **only** SleekConfig; CleanHUD is listed
-  under Visuals with 40 editable controls and one Elements help row.
+  under Visuals with 42 editable controls and one Elements help row.
+- On General, verify the **first** two settings are the native HUD
+  keyboard key and gamepad button. Tab remains default on keyboard;
+  controller defaults Off. Bind an alternate key/button, hold it,
+  release it, and verify native positioning then Stack return.
+  Also check `VanillaHUDKey=0`, key capture, INI/DAT save/reload,
+  and GInput-mapped controller actions.
 - Change each group of sliders/checkboxes, especially Stack/Minimal, the
   four Clock gaps and Status Bar to Weapon. Layout updates during play.
 - Save Mod, exit/restart, verify the modified CleanHUD.ini and
@@ -330,6 +358,38 @@ The icon renderer checks the `weaponicons` TXD slot used by
 then the original model TXD. It does not patch WeaponIconsTXD's two
 lookup calls. Icons appear only if their model has an `ICON` texture
 in one of those dictionaries; no new image assets are bundled.
+
+## Manual Driveby Refixed: aim and BMX hop behavior
+
+The supplied `ManualDrivebyRefixed.txt` script reads its own
+`DrivebyAimButton` setting (which need not correspond to GTA's
+`GetTarget`/side-look controls). On aim it starts GTA's
+`task_drive_by` task. While an active
+`TASK_COMPLEX_DO_DRIVEBY` task exists and the selected weapon has
+an ammo readout, CleanHUD displays Weapon/Ammo **without requiring
+`ShowOnVehicleLook`**. The optional look-only preview still
+follows the existing rules when no scripted drive-by task exists.
+
+For BMX bunny hops, the script temporarily hides the carried
+weapon using `hide_char_weapon_for_scripted_cutscene`. GTA may
+switch to fists, saving the previously equipped weapon. CleanHUD
+detects that saved-weapon/unarmed state (or render-weapon hidden
+flag) **only in the bicycle class** and suppresses its managed
+Weapon/Ammo components for the hide interval plus **250 ms**
+afterwards. The temporary fist/knuckle slot and supplemental
+weapon icons do not appear during this period. A later genuine
+drive-by shot or aim task can reveal them again normally; if
+Weapon/Ammo are disabled in `[Elements]`, their drawing remains
+under vanilla/other-mod ownership.
+
+Regression tests: start a scripted drive-by without shooting and
+confirm the firearm HUD appears during Aim; release Aim and
+verify it fades as expected. On BMX with a firearm available,
+bunny hop without shooting and ensure neither the fist/knuckle
+icon nor the selected firearm briefly flashes during/just after
+the hop. Test a genuine shot right after the cooldown, normal
+bike shooting, controller button 4, GInput, and the absence of
+false changes on motorcycles and cars.
 
 ## Gameplay compatibility and lifetime audit
 
