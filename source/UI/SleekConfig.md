@@ -365,6 +365,7 @@ The supplied `ManualDrivebyRefixed.txt` script reads its own
 `DrivebyAimButton` setting (which need not correspond to GTA's
 `GetTarget`/side-look controls). On aim it starts GTA's
 `task_drive_by` task. While an active
+`TASK_SIMPLE_GANG_DRIVEBY` (ID 1022, which the script checks) or
 `TASK_COMPLEX_DO_DRIVEBY` task exists and the selected weapon has
 an ammo readout, CleanHUD displays Weapon/Ammo **without requiring
 `ShowOnVehicleLook`**. The optional look-only preview still
