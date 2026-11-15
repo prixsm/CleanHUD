@@ -328,44 +328,82 @@ void HUDManager::UpdateBikeHopSuppression()
     const CVehicle* vehicle = mPlayer && mPlayer->bInVehicle
         ? mPlayer->m_pVehicle : nullptr;
 
+    // Manual Driveby Refixed uses its weapon-hide command on both
+    // pedal bicycles and motorcycles. Quads/cars have different
+    // controls and must not trigger this suppression.
     if (!vehicle ||
-        GetVehicleFireCapability(*vehicle) !=
-            VehicleFireCapability::Bicycle)
+        (vehicle->m_nVehicleSubClass != VEHICLE_BMX &&
+         vehicle->m_nVehicleSubClass != VEHICLE_BIKE))
     {
         mBikeHopSuppressionActive = false;
         mBikeHopHideUntilMs = 0;
+        mBikeHopSavedWeapon = WEAPONTYPE_UNARMED;
         return;
     }
 
-    // Manual Driveby Refixed uses scripted-cutscene weapon hiding
-    // on a BMX hop: GTA saves CJ's held weapon and selects UNARMED.
-    // Check that transition as well as the render-weapon flag: the
-    // command does not necessarily toggle m_bRenderWeapon itself.
-    // GTA SA's unidentified/sentinel weapon type is 0x37 (55).
-    // Some plugin-sdk revisions do not declare its symbolic name.
-    constexpr eWeaponType UnidentifiedWeapon =
-        static_cast<eWeaponType>(0x37);
     const CWeapon* weapon = mPlayer->GetWeapon();
-    const bool scriptedWeaponSwap =
-        weapon && weapon->m_eWeaponType == WEAPONTYPE_UNARMED &&
-        mPlayer->m_nSavedWeapon != UnidentifiedWeapon &&
-        mPlayer->m_nSavedWeapon != WEAPONTYPE_UNARMED;
-    const bool scriptHidingWeapon =
-        scriptedWeaponSwap ||
-        (mPlayer->m_pPlayerData &&
-         !mPlayer->m_pPlayerData->m_bRenderWeapon);
-
-    const std::uint32_t now = CTimer::m_snTimeInMilliseconds;
-    if (scriptHidingWeapon)
+    if (!weapon)
     {
-        constexpr std::uint32_t AfterHopDelayMs = 250;
-        mBikeHopHideUntilMs = now + AfterHopDelayMs;
+        mBikeHopSuppressionActive = false;
+        mBikeHopHideUntilMs = 0;
+        mBikeHopSavedWeapon = WEAPONTYPE_UNARMED;
+        return;
     }
 
-    mBikeHopSuppressionActive = scriptHidingWeapon ||
-        (mBikeHopHideUntilMs != 0 &&
-         static_cast<std::int32_t>(
-             mBikeHopHideUntilMs - now) > 0);
+    // GTA's hide_char_weapon_for_scripted_cutscene saves the
+    // previous weapon and selects UNARMED. The 0x37 sentinel is
+    // used instead of its SDK enum name for older plugin-sdk.
+    // Do NOT use m_bRenderWeapon: other mods may keep it false
+    // while normal bike weapon selection/firing is still valid.
+    constexpr eWeaponType UnidentifiedWeapon =
+        static_cast<eWeaponType>(0x37);
+    const bool scriptedWeaponSwap =
+        weapon->m_eWeaponType == WEAPONTYPE_UNARMED &&
+        mPlayer->m_nSavedWeapon != UnidentifiedWeapon &&
+        mPlayer->m_nSavedWeapon != WEAPONTYPE_UNARMED;
+
+    const std::uint32_t now = CTimer::m_snTimeInMilliseconds;
+    if (scriptedWeaponSwap)
+    {
+        constexpr std::uint32_t AfterHopDelayMs = 250;
+        mBikeHopSavedWeapon = mPlayer->m_nSavedWeapon;
+        mBikeHopHideUntilMs = now + AfterHopDelayMs;
+        mBikeHopSuppressionActive = true;
+        return;
+    }
+
+    // After the script restores the saved weapon, keep the
+    // transient icon hidden very briefly. A *different* equipped
+    // weapon is a real selection and must reveal normally.
+    const bool sameRestoredWeapon =
+        mBikeHopSavedWeapon != WEAPONTYPE_UNARMED &&
+        weapon->m_eWeaponType == mBikeHopSavedWeapon;
+    const bool withinGrace =
+        mBikeHopHideUntilMs != 0 &&
+        static_cast<std::int32_t>(
+            mBikeHopHideUntilMs - now) > 0;
+
+    // Actual firing or ammunition use during the grace period
+    // immediately releases the suppression. This prevents shots
+    // on bikes from being faded/reset before their timer runs.
+    const AmmoState currentAmmo = GetCurrentAmmoState();
+    const bool consumedAmmo =
+        mLastWeaponState.WeaponType == weapon->m_eWeaponType &&
+        (currentAmmo.AmmoInClip < mLastAmmoState.AmmoInClip ||
+         currentAmmo.AmmoTotal < mLastAmmoState.AmmoTotal);
+    const bool activelyFiring =
+        weapon->m_nState == WEAPONSTATE_FIRING;
+
+    if (!sameRestoredWeapon || !withinGrace ||
+        activelyFiring || consumedAmmo)
+    {
+        mBikeHopSuppressionActive = false;
+        mBikeHopHideUntilMs = 0;
+        mBikeHopSavedWeapon = WEAPONTYPE_UNARMED;
+        return;
+    }
+
+    mBikeHopSuppressionActive = true;
 }
 
 bool HUDManager::ShouldDisplayAmmo() const
@@ -480,6 +518,7 @@ void HUDManager::OnGameLoaded()
     mWeaponChangedThisFrame = false;
     mBikeHopSuppressionActive = false;
     mBikeHopHideUntilMs = 0;
+    mBikeHopSavedWeapon = WEAPONTYPE_UNARMED;
     mConfirmedDriveByVehicle = nullptr;
     mConfirmedDriveByWeapon = WEAPONTYPE_UNARMED;
     mClockSpacingPreview.Reset();
@@ -507,6 +546,7 @@ void HUDManager::Update()
         mWeaponChangedThisFrame = false;
         mBikeHopSuppressionActive = false;
         mBikeHopHideUntilMs = 0;
+        mBikeHopSavedWeapon = WEAPONTYPE_UNARMED;
         mConfirmedDriveByVehicle = nullptr;
         mConfirmedDriveByWeapon = WEAPONTYPE_UNARMED;
         mCellphoneIcon.Reset();
@@ -705,6 +745,7 @@ void HUDManager::ResetSessionState()
     mWeaponChangedThisFrame = false;
     mBikeHopSuppressionActive = false;
     mBikeHopHideUntilMs = 0;
+    mBikeHopSavedWeapon = WEAPONTYPE_UNARMED;
 
     mPreviousHealth = mLastHealth;
     mHealthStableFrames = 0;
