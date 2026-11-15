@@ -1931,6 +1931,7 @@ void HUDManager::HideAll()
     mCellphonePuttingAway = false;
     mBikeHopSuppressionActive = false;
     mBikeHopHideUntilMs = 0;
+    mBikeHopSavedWeapon = WEAPONTYPE_UNARMED;
     mConfirmedDriveByVehicle = nullptr;
     mConfirmedDriveByWeapon = WEAPONTYPE_UNARMED;
     mClock.Reset();
