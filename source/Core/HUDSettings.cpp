@@ -294,6 +294,12 @@ void HUDSettings::Load()
         ? HUDMode::Minimal
         : HUDMode::Stack;
 
+    VanillaHUDKey = ReadInt(
+        path.c_str(), "General", "VanillaHUDKey", 9, 0, 255);
+
+    VanillaHUDPadButton = ReadInt(
+        path.c_str(), "General", "VanillaHUDPadButton", 0, 0, 16);
+
     AlwaysShowClock = ReadBool(
         path.c_str(), "General", "AlwaysShowClock", true);
 
@@ -445,6 +451,8 @@ bool HUDSettings::Save() const
     };
 
     bool success = true;
+    success = putInt("General", "VanillaHUDKey", VanillaHUDKey) && success;
+    success = putInt("General", "VanillaHUDPadButton", VanillaHUDPadButton) && success;
     success = put("General", "HUDMode",
         Mode == HUDMode::Stack ? "Stack" : "Minimal") && success;
     success = putBool("General", "AlwaysShowClock", AlwaysShowClock) && success;
