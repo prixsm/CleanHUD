@@ -301,8 +301,9 @@ namespace
         else if (std::strcmp(id, "vanilla_hud_pad_button") == 0)
             setting.description =
                 "Select a GTA gamepad action, with Xbox and PlayStation "
-                "labels. LB/L1 is the default; Off disables the binding. "
-                "GInput uses CPad mapping.";
+                "labels. Off is the default. GTA/GInput can also map "
+                "keyboard keys to these same pad actions (e.g. "
+                "Ctrl may activate LB/L1). Not physical-pad-only.";
         else if (std::strcmp(id, "hud_mode") == 0)
             setting.description =
                 "Stack arranges temporary HUD elements vertically; "
@@ -668,7 +669,7 @@ namespace
             return false;
 
         ScSettingDesc padButton = Describe(
-            "vanilla_hud_pad_button", "Gamepad button (Xbox / PS)",
+            "vanilla_hud_pad_button", "Gamepad / mapped GTA button",
             "HUD Preview", "", SC_ENUM);
         padButton.options =
             "0 - Off|1 - LB/L1|2 - LT/L2|3 - RB/R1|4 - RT/R2|5 - D-pad Up|"
@@ -678,7 +679,7 @@ namespace
         padButton.minimum = 0;
         padButton.maximum = 16;
         padButton.step = 1;
-        padButton.default_value.integer = 1; // LB/L1
+        padButton.default_value.integer = 0; // Off
         if (gApi->register_setting(gMod, &padButton) != SC_OK)
             return false;
 
