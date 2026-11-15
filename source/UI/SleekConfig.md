@@ -44,7 +44,7 @@ register duplicate F10/D3D9 hooks.
 
 The final page, SleekConfig → **HUD Preview**, contains two
 direct-selection dropdowns: **Keyboard virtual key (VK)** (default
-`9 - Tab`) and **Gamepad button (Xbox / PS)** (default `0 - Off`).
+`9 - Tab`) and **Gamepad button (Xbox / PS)** (default `1 - LB/L1`).
 The keyboard menu lists **103 named common VK codes** and one
 `Custom VK` placeholder. The controller menu has **17 choices**,
 numbered 0 through 16, with both Xbox and PlayStation labels.
@@ -57,7 +57,7 @@ neither binding changes the game controls.
 
 The matching **last section in CleanHUD.ini**, `[HUDPreview]`,
 contains `VanillaHUDKey=9` (raw Windows virtual-key code) and
-`VanillaHUDPadButton=0`. The INI includes the same complete
+`VanillaHUDPadButton=1` (LB/L1). The INI includes the same complete
 keyboard/button list with numeric codes. In addition to the menu's
 common keys, any Win32 VK number **0..255** may be entered directly
 in the INI; the menu then shows `Custom VK` without replacing it.
@@ -184,7 +184,7 @@ Target: GTA San Andreas PC 1.0 US, Win32.
   (Elements and HUD Preview).
 - Confirm the last tab is **HUD Preview**, with two dropdowns listing
   keyboard VK codes (including `9 - Tab`) and Xbox/PS gamepad
-  equivalents (including `0 - Off`). Verify that the menu's numeric
+  equivalents (including `1 - LB/L1`, now the default; `0 - Off` still disables it). Verify that the menu's numeric
   codes match the complete lists at the end of the INI.
 - Select an alternate keyboard key or controller button, hold/release
   it, and verify native-position preview followed by Stack return.
