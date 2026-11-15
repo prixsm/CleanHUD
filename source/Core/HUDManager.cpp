@@ -337,11 +337,19 @@ void HUDManager::UpdateBikeHopSuppression()
         return;
     }
 
-    // Manual Driveby Refixed hides the held weapon while hopping.
-    // The same player-data flag suppresses its native weapon model.
+    // Manual Driveby Refixed uses scripted-cutscene weapon hiding
+    // on a BMX hop: GTA saves CJ's held weapon and selects UNARMED.
+    // Check that transition as well as the render-weapon flag: the
+    // command does not necessarily toggle m_bRenderWeapon itself.
+    const CWeapon* weapon = mPlayer->GetWeapon();
+    const bool scriptedWeaponSwap =
+        weapon && weapon->m_eWeaponType == WEAPONTYPE_UNARMED &&
+        mPlayer->m_nSavedWeapon != WEAPONTYPE_UNIDENTIFIED &&
+        mPlayer->m_nSavedWeapon != WEAPONTYPE_UNARMED;
     const bool scriptHidingWeapon =
-        mPlayer->m_pPlayerData &&
-        !mPlayer->m_pPlayerData->m_bRenderWeapon;
+        scriptedWeaponSwap ||
+        (mPlayer->m_pPlayerData &&
+         !mPlayer->m_pPlayerData->m_bRenderWeapon);
 
     const std::uint32_t now = CTimer::m_snTimeInMilliseconds;
     if (scriptHidingWeapon)
