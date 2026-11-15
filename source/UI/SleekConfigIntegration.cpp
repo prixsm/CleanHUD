@@ -301,7 +301,8 @@ namespace
         else if (std::strcmp(id, "vanilla_hud_pad_button") == 0)
             setting.description =
                 "Select a GTA gamepad action, with Xbox and PlayStation "
-                "labels. Off is the default. GInput uses CPad mapping.";
+                "labels. LB/L1 is the default; Off disables the binding. "
+                "GInput uses CPad mapping.";
         else if (std::strcmp(id, "hud_mode") == 0)
             setting.description =
                 "Stack arranges temporary HUD elements vertically; "
@@ -677,7 +678,7 @@ namespace
         padButton.minimum = 0;
         padButton.maximum = 16;
         padButton.step = 1;
-        padButton.default_value.integer = 0; // Off
+        padButton.default_value.integer = 1; // LB/L1
         if (gApi->register_setting(gMod, &padButton) != SC_OK)
             return false;
 
