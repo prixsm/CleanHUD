@@ -1208,8 +1208,10 @@ bool HUDManager::IsWeaponAiming() const
     // That aim button need not map to GetTarget/GetLookLeft/Right, so
     // recognize the actual task before checking opt-in look previews.
     if (mPlayer->m_pIntelligence &&
-        mPlayer->m_pIntelligence->FindTaskByType(
-            TASK_COMPLEX_DO_DRIVEBY))
+        (mPlayer->m_pIntelligence->FindTaskByType(
+             TASK_SIMPLE_GANG_DRIVEBY) ||
+         mPlayer->m_pIntelligence->FindTaskByType(
+             TASK_COMPLEX_DO_DRIVEBY)))
     {
         return true;
     }
