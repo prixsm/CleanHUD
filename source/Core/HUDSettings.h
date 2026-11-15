@@ -23,6 +23,11 @@ public:
 
     bool IsElementEnabled(HUDComponentType type) const;
 
+    // Hold a Win32 virtual key or an assigned GTA pad button to
+    // temporarily render the HUD at its native positions.
+    // Keyboard=TAB by default; gamepad=disabled (0).
+    std::uint32_t VanillaHUDKey = 9;
+    std::uint32_t VanillaHUDPadButton = 0;
     HUDMode Mode = HUDMode::Stack;
     bool AlwaysShowClock = true;
 

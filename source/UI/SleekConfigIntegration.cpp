@@ -4,6 +4,7 @@
 #include <cstring>
 #include <cmath>
 #include <algorithm>
+#include <string>
 
 #include <windows.h>
 #include <sleekconfig.hpp>
@@ -122,6 +123,162 @@ namespace
             HUDSpacingPreviewGroup::Weapon, HUDSpacingPreviewGroup::Weapon }
     };
 
+
+    // SleekConfig's SC_ENUM supplies a scrollable, labelled list.
+    // Values in CleanHUD.ini remain raw Win32 virtual-key codes.
+    // Use a fresh setting ID for this enum: the old SC_KEY setting
+    // saved raw VK numbers, which must not be mistaken for enum indices.
+    struct PreviewKeyChoice
+    {
+        int VirtualKey;
+        const char* Label;
+    };
+
+    constexpr PreviewKeyChoice PreviewKeyChoices[] = {
+        { 0, "Off" },
+        { 8, "Backspace" },
+        { 9, "Tab" },
+        { 13, "Enter" },
+        { 16, "Shift" },
+        { 17, "Ctrl" },
+        { 18, "Alt" },
+        { 19, "Pause" },
+        { 20, "Caps Lock" },
+        { 27, "Escape" },
+        { 32, "Space" },
+        { 33, "Page Up" },
+        { 34, "Page Down" },
+        { 35, "End" },
+        { 36, "Home" },
+        { 37, "Left Arrow" },
+        { 38, "Up Arrow" },
+        { 39, "Right Arrow" },
+        { 40, "Down Arrow" },
+        { 45, "Insert" },
+        { 46, "Delete" },
+        { 48, "0" },
+        { 49, "1" },
+        { 50, "2" },
+        { 51, "3" },
+        { 52, "4" },
+        { 53, "5" },
+        { 54, "6" },
+        { 55, "7" },
+        { 56, "8" },
+        { 57, "9" },
+        { 65, "A" },
+        { 66, "B" },
+        { 67, "C" },
+        { 68, "D" },
+        { 69, "E" },
+        { 70, "F" },
+        { 71, "G" },
+        { 72, "H" },
+        { 73, "I" },
+        { 74, "J" },
+        { 75, "K" },
+        { 76, "L" },
+        { 77, "M" },
+        { 78, "N" },
+        { 79, "O" },
+        { 80, "P" },
+        { 81, "Q" },
+        { 82, "R" },
+        { 83, "S" },
+        { 84, "T" },
+        { 85, "U" },
+        { 86, "V" },
+        { 87, "W" },
+        { 88, "X" },
+        { 89, "Y" },
+        { 90, "Z" },
+        { 96, "Numpad 0" },
+        { 97, "Numpad 1" },
+        { 98, "Numpad 2" },
+        { 99, "Numpad 3" },
+        { 100, "Numpad 4" },
+        { 101, "Numpad 5" },
+        { 102, "Numpad 6" },
+        { 103, "Numpad 7" },
+        { 104, "Numpad 8" },
+        { 105, "Numpad 9" },
+        { 106, "Numpad *" },
+        { 107, "Numpad +" },
+        { 109, "Numpad -" },
+        { 110, "Numpad ." },
+        { 111, "Numpad /" },
+        { 112, "F1" },
+        { 113, "F2" },
+        { 114, "F3" },
+        { 115, "F4" },
+        { 116, "F5" },
+        { 117, "F6" },
+        { 118, "F7" },
+        { 119, "F8" },
+        { 120, "F9" },
+        { 121, "F10" },
+        { 122, "F11" },
+        { 123, "F12" },
+        { 144, "Num Lock" },
+        { 145, "Scroll Lock" },
+        { 160, "Left Shift" },
+        { 161, "Right Shift" },
+        { 162, "Left Ctrl" },
+        { 163, "Right Ctrl" },
+        { 164, "Left Alt" },
+        { 165, "Right Alt" },
+        { 186, "Semicolon" },
+        { 187, "Plus/Equals" },
+        { 188, "Comma" },
+        { 189, "Minus" },
+        { 190, "Period" },
+        { 191, "Slash" },
+        { 192, "Grave" },
+        { 219, "Left Bracket" },
+        { 220, "Backslash" },
+        { 221, "Right Bracket" },
+        { 222, "Apostrophe" },
+    };
+
+    constexpr int PreviewKeyCount =
+        static_cast<int>(sizeof(PreviewKeyChoices) /
+            sizeof(PreviewKeyChoices[0]));
+    static_assert(PreviewKeyCount < 255,
+        "Keyboard VK choices must fit SleekConfig's enum limit");
+
+    int PreviewKeyIndex(std::uint32_t vk)
+    {
+        for (int i = 0; i < PreviewKeyCount; ++i)
+        {
+            if (PreviewKeyChoices[i].VirtualKey ==
+                static_cast<int>(vk))
+                return i;
+        }
+
+        // Retain uncommon custom keys loaded from an existing INI.
+        // This last menu entry does not modify their raw VK value.
+        return PreviewKeyCount;
+    }
+
+    const std::string& PreviewKeyOptions()
+    {
+        static const std::string options = []()
+        {
+            std::string output;
+            for (const auto& choice : PreviewKeyChoices)
+            {
+                if (!output.empty())
+                    output += '|';
+                output += std::to_string(choice.VirtualKey);
+                output += " - ";
+                output += choice.Label;
+            }
+            output += "|Custom VK (configured in INI)";
+            return output;
+        }();
+        return options;
+    }
+
     ScSettingDesc Describe(
         const char* id, const char* label,
         const char* page, const char* group, ScType type)
@@ -136,7 +293,16 @@ namespace
         setting.default_value.type = type;
 
         // Shown in SleekConfig's setting tooltip, not a new group.
-        if (std::strcmp(id, "hud_mode") == 0)
+        if (std::strcmp(id, "vanilla_hud_key_choice") == 0)
+            setting.description =
+                "Select a labelled Windows virtual-key (VK) code. "
+                "Choose Off to disable; Tab is the default. "
+                "For any other VK code (0..255), edit CleanHUD.ini.";
+        else if (std::strcmp(id, "vanilla_hud_pad_button") == 0)
+            setting.description =
+                "Select a GTA gamepad action, with Xbox and PlayStation "
+                "labels. Off is the default. GInput uses CPad mapping.";
+        else if (std::strcmp(id, "hud_mode") == 0)
             setting.description =
                 "Stack arranges temporary HUD elements vertically; "
                 "Minimal fades elements at GTA's original positions.";
@@ -188,6 +354,21 @@ namespace
         HUDSettings& settings = HUDSettings::Get();
         ScValue value = {};
 
+        value.type = SC_ENUM;
+        value.integer = PreviewKeyIndex(settings.VanillaHUDKey);
+        if (gApi->publish_value(gMod, "vanilla_hud_key_choice",
+            &value) != SC_OK)
+            return false;
+
+        value = {};
+        value.type = SC_ENUM;
+        value.integer = static_cast<int>(
+            settings.VanillaHUDPadButton);
+        if (gApi->publish_value(gMod, "vanilla_hud_pad_button",
+            &value) != SC_OK)
+            return false;
+
+        value = {};
         value.type = SC_ENUM;
         value.integer = settings.Mode == HUDMode::Stack ? 0 : 1;
 
@@ -251,6 +432,33 @@ namespace
             return 0;
 
         HUDSettings& settings = HUDSettings::Get();
+
+        if (std::strcmp(id, "vanilla_hud_key_choice") == 0)
+        {
+            if (proposed->type != SC_ENUM ||
+                proposed->integer < 0 ||
+                proposed->integer > PreviewKeyCount)
+                return 0;
+            if (proposed->integer < PreviewKeyCount)
+            {
+                settings.VanillaHUDKey =
+                    static_cast<std::uint32_t>(
+                        PreviewKeyChoices[
+                            proposed->integer].VirtualKey);
+            }
+            // Custom VK option preserves the already configured INI VK.
+            return 1;
+        }
+
+        if (std::strcmp(id, "vanilla_hud_pad_button") == 0)
+        {
+            if (proposed->type != SC_ENUM ||
+                proposed->integer < 0 || proposed->integer > 16)
+                return 0;
+            settings.VanillaHUDPadButton =
+                static_cast<std::uint32_t>(proposed->integer);
+            return 1;
+        }
 
         if (std::strcmp(id, "hud_mode") == 0)
         {
@@ -432,6 +640,46 @@ namespace
             if (gApi->register_setting(gMod, &setting) != SC_OK)
                 return false;
         }
+
+
+        // HUD Preview is registered last: its controls form the final
+        // SleekConfig page, with their own complete choice lists.
+        ScSettingDesc help = Describe(
+            "hud_preview_help", "Hold to show vanilla positions",
+            "HUD Preview", "", SC_DESCRIPTION);
+        help.description =
+            "Hold your chosen key or gamepad button to preview GTA's "
+            "original HUD positions. Release to resume CleanHUD. "
+            "Both dropdowns include the numeric INI codes; avoid "
+            "buttons already used by the game.";
+        if (gApi->register_setting(gMod, &help) != SC_OK)
+            return false;
+
+        ScSettingDesc keyboard = Describe(
+            "vanilla_hud_key_choice", "Keyboard virtual key (VK)",
+            "HUD Preview", "", SC_ENUM);
+        keyboard.options = PreviewKeyOptions().c_str();
+        keyboard.minimum = 0;
+        keyboard.maximum = PreviewKeyCount;
+        keyboard.step = 1;
+        keyboard.default_value.integer = PreviewKeyIndex(9); // Tab
+        if (gApi->register_setting(gMod, &keyboard) != SC_OK)
+            return false;
+
+        ScSettingDesc padButton = Describe(
+            "vanilla_hud_pad_button", "Gamepad button (Xbox / PS)",
+            "HUD Preview", "", SC_ENUM);
+        padButton.options =
+            "0 - Off|1 - LB/L1|2 - LT/L2|3 - RB/R1|4 - RT/R2|5 - D-pad Up|"
+            "6 - D-pad Down|7 - D-pad Left|8 - D-pad Right|9 - Back/Select|"
+            "10 - Start|11 - X/Square|12 - Y/Triangle|13 - A/Cross|"
+            "14 - B/Circle|15 - Left stick click/L3|16 - Right stick click/R3";
+        padButton.minimum = 0;
+        padButton.maximum = 16;
+        padButton.step = 1;
+        padButton.default_value.integer = 0; // Off
+        if (gApi->register_setting(gMod, &padButton) != SC_OK)
+            return false;
 
         return PublishCurrentIniValues();
     }
