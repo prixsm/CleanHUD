@@ -136,7 +136,16 @@ namespace
         setting.default_value.type = type;
 
         // Shown in SleekConfig's setting tooltip, not a new group.
-        if (std::strcmp(id, "hud_mode") == 0)
+        if (std::strcmp(id, "vanilla_hud_key") == 0)
+            setting.description =
+                "Hold this keyboard virtual key to temporarily show "
+                "GTA's original HUD positions (Tab by default). "
+                "Use key 0 in CleanHUD.ini to disable.";
+        else if (std::strcmp(id, "vanilla_hud_pad_button") == 0)
+            setting.description =
+                "Hold this GTA pad action for original HUD positions. "
+                "Off by default; button meanings follow GTA/GInput.";
+        else if (std::strcmp(id, "hud_mode") == 0)
             setting.description =
                 "Stack arranges temporary HUD elements vertically; "
                 "Minimal fades elements at GTA's original positions.";
@@ -188,6 +197,21 @@ namespace
         HUDSettings& settings = HUDSettings::Get();
         ScValue value = {};
 
+        value.type = SC_KEY;
+        value.integer = static_cast<int>(settings.VanillaHUDKey);
+        if (gApi->publish_value(gMod, "vanilla_hud_key",
+            &value) != SC_OK)
+            return false;
+
+        value = {};
+        value.type = SC_ENUM;
+        value.integer = static_cast<int>(
+            settings.VanillaHUDPadButton);
+        if (gApi->publish_value(gMod, "vanilla_hud_pad_button",
+            &value) != SC_OK)
+            return false;
+
+        value = {};
         value.type = SC_ENUM;
         value.integer = settings.Mode == HUDMode::Stack ? 0 : 1;
 
@@ -251,6 +275,26 @@ namespace
             return 0;
 
         HUDSettings& settings = HUDSettings::Get();
+
+        if (std::strcmp(id, "vanilla_hud_key") == 0)
+        {
+            if (proposed->type != SC_KEY ||
+                proposed->integer < 0 || proposed->integer > 255)
+                return 0;
+            settings.VanillaHUDKey =
+                static_cast<std::uint32_t>(proposed->integer);
+            return 1;
+        }
+
+        if (std::strcmp(id, "vanilla_hud_pad_button") == 0)
+        {
+            if (proposed->type != SC_ENUM ||
+                proposed->integer < 0 || proposed->integer > 16)
+                return 0;
+            settings.VanillaHUDPadButton =
+                static_cast<std::uint32_t>(proposed->integer);
+            return 1;
+        }
 
         if (std::strcmp(id, "hud_mode") == 0)
         {
@@ -350,6 +394,33 @@ namespace
 
     bool RegisterSettings()
     {
+        // First two General controls: keyboard VK and gamepad action.
+        // Keep their IDs stable so SleekConfig presets survive upgrades.
+        ScSettingDesc keyboard = Describe(
+            "vanilla_hud_key", "Show vanilla HUD: keyboard key",
+            "General", "", SC_KEY);
+        keyboard.minimum = 0;
+        keyboard.maximum = 255;
+        keyboard.step = 1;
+        keyboard.default_value.integer = 9; // VK_TAB
+        if (gApi->register_setting(gMod, &keyboard) != SC_OK)
+            return false;
+
+        ScSettingDesc padButton = Describe(
+            "vanilla_hud_pad_button", "Show vanilla HUD: gamepad button",
+            "General", "", SC_ENUM);
+        padButton.options =
+            "Off|LB/L1|LT/L2|RB/R1|RT/R2|"
+            "D-Pad Up|D-Pad Down|D-Pad Left|D-Pad Right|"
+            "Back/Select|Start|X/Square|Y/Triangle|"
+            "A/Cross|B/Circle|Left stick click|Right stick click";
+        padButton.minimum = 0;
+        padButton.maximum = 16;
+        padButton.step = 1;
+        padButton.default_value.integer = 0;
+        if (gApi->register_setting(gMod, &padButton) != SC_OK)
+            return false;
+
         ScSettingDesc mode = Describe(
             "hud_mode", "HUD layout", "General", "", SC_ENUM);
 
