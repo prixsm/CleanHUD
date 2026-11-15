@@ -1195,6 +1195,17 @@ bool HUDManager::IsWeaponAiming() const
 
     const CVehicle* vehicle = mPlayer->m_pVehicle;
 
+    // Manual Driveby Refixed (and similar CLEO mods) starts GTA's
+    // drive-by task when its own configurable aim button is pressed.
+    // That aim button need not map to GetTarget/GetLookLeft/Right, so
+    // recognize the actual task before checking opt-in look previews.
+    if (mPlayer->m_pIntelligence &&
+        mPlayer->m_pIntelligence->FindTaskByType(
+            TASK_COMPLEX_DO_DRIVEBY))
+    {
+        return true;
+    }
+
     // Side-looking preview remains opt-in. Recognize vanilla SMGs
     // before firing; allow other weapon types after a confirmed shot
     // in this vehicle. This prevents unrelated selected weapons from
