@@ -5,7 +5,9 @@ CleanHUD's in-game settings are registered with the separate
 
 ## Installing
 
-1. Install CleanHUD as usual (GTA SA PC 1.0 US, Win32 ASI loader).
+1. Install `CleanHUD.asi` beside `CleanHUD.ini` (GTA SA PC 1.0 US,
+   Win32 ASI loader). **Remove any older `CleanHUD.SA.asi` first**:
+   keeping both files would load the mod twice and conflict on hooks.
 2. Install the separate `SleekConfig.asi` from the SleekConfig release,
    following SleekConfig's Mod Loader installation instructions.
 3. Launch GTA SA, press **F10**, choose **CleanHUD** under Visuals.
@@ -15,13 +17,15 @@ without an F10 configuration panel or error.
 
 ## Live editing
 
-Controls use **General**, **Elements**, **Visibility**, **Skateboard**
-and **Advanced Layout** pages. General contains HUD layout, clock and
-aiming behavior. Elements starts with a page-wide explanation:
+Controls use **General**, **Elements**, **Visibility**, **Skateboard**,
+**Advanced Layout**, and **HUD Preview** pages, in that order.
+General contains HUD layout, clock and aiming behavior. Elements starts with a page-wide explanation:
 **On** means CleanHUD controls visibility/layout; **Off** means GTA
 or another HUD mod retains control of that element. Skateboard
 contains its opt-in toggle, both model IDs and both position offsets.
 Advanced Layout keeps the general Stack/Weapon/Jetpack groups.
+The final HUD Preview page contains the keyboard and controller
+binding dropdowns, with named buttons and their numeric INI codes.
 
 Edits run on the game main thread through SleekConfig's change callback.
 CleanHUD's HUDSettings instance is changed directly, so ordinary HUD updates
@@ -38,25 +42,34 @@ register duplicate F10/D3D9 hooks.
 
 ## Hold to show GTA's original HUD positions
 
-The first two controls on SleekConfig → **General** are
-**Show vanilla HUD: keyboard key** (a key-binding picker, default Tab)
-and **Show vanilla HUD: gamepad button** (dropdown, default Off).
-Holding either temporarily displays GTA's native HUD positions and
-reveals enabled elements using the existing preview behavior.
-Releasing the control restores CleanHUD's selected layout after
-its normal visibility/fade transition; this does not change
-`HUDMode` or modify game input.
+The final page, SleekConfig → **HUD Preview**, contains two
+direct-selection dropdowns: **Keyboard virtual key (VK)** (default
+`9 - Tab`) and **Gamepad button (Xbox / PS)** (default `0 - Off`).
+The keyboard menu lists **103 named usable keys** and one
+`Custom VK` placeholder. The controller menu has **17 choices**,
+numbered 0 through 16, with both Xbox and PlayStation labels.
+No external VK/keycode reference is required to choose a listed key.
 
-In `[General]` in CleanHUD.ini, the equivalent keys are
-`VanillaHUDKey=9` (Windows VK_TAB) and
-`VanillaHUDPadButton=0` (Off). Set `VanillaHUDKey=0`
-to disable the keyboard binding. The controller setting accepts
-0..16: 1..4 are LB/LT/RB/RT, 5..8 D-pad directions, 9 Back,
-10 Start, 11..14 X/Y/A/B, and 15..16 stick clicks, with
-PlayStation equivalents. The gamepad binding uses GTA's
-`CPad::NewState`, which controller mods such as GInput also update.
-Choose an action that doesn't conflict with the game's own controls;
-a mapped keyboard action may affect the same CPad button.
+Holding either selected input temporarily displays GTA's native
+HUD positions and reveals enabled elements. Release it to return
+to the current CleanHUD mode after the normal fade transition;
+neither binding changes the game controls.
+
+The matching **last section in CleanHUD.ini**, `[HUDPreview]`,
+contains `VanillaHUDKey=9` (raw Windows virtual-key code) and
+`VanillaHUDPadButton=0`. The INI includes the same complete
+keyboard/button list with numeric codes. In addition to the menu's
+common keys, any Win32 VK number **0..255** may be entered directly
+in the INI; the menu then shows `Custom VK` without replacing it.
+Values 0 disable either input. Older bindings saved in `[General]`
+are read as fallbacks; saving migrates them into `[HUDPreview]`.
+
+Controller values: 1..4 are LB/LT/RB/RT, 5..8 D-pad, 9 Back,
+10 Start, 11..14 X/Y/A/B, and 15..16 stick clicks (L3/R3),
+including the PlayStation equivalents. The gamepad binding reads
+GTA's `CPad::NewState`, also used by GInput. Choose controls that
+do not conflict with the game's own actions; do not map F10 when
+using SleekConfig. Some keyboard punctuation keys are layout-dependent.
 
 ## Live spacing previews
 
@@ -164,13 +177,18 @@ Target: GTA San Andreas PC 1.0 US, Win32.
 - Start without SleekConfig. Game/menu text, loading, TAB, both HUD modes,
   firing and fading behave as before. CleanHUD.ini is loaded.
 - Start with SleekConfig. F10 opens **only** SleekConfig; CleanHUD is listed
-  under Visuals with 42 editable controls and one Elements help row.
-- On General, verify the **first** two settings are the native HUD
-  keyboard key and gamepad button. Tab remains default on keyboard;
-  controller defaults Off. Bind an alternate key/button, hold it,
-  release it, and verify native positioning then Stack return.
-  Also check `VanillaHUDKey=0`, key capture, INI/DAT save/reload,
-  and GInput-mapped controller actions.
+  under Visuals with 42 editable controls and two help rows
+  (Elements and HUD Preview).
+- Confirm the last tab is **HUD Preview**, with two dropdowns listing
+  keyboard VK codes (including `9 - Tab`) and Xbox/PS gamepad
+  equivalents (including `0 - Off`). Verify that the menu's numeric
+  codes match the complete lists at the end of the INI.
+- Select an alternate keyboard key or controller button, hold/release
+  it, and verify native-position preview followed by Stack return.
+  Test both bindings disabled, `Custom VK` after loading an uncommon
+  code from INI, GInput controller input, INI/DAT save and preset reload.
+- Confirm the output is `CleanHUD.asi` for Debug and Release and
+  remove any old `CleanHUD.SA.asi` to avoid double loading.
 - Change each group of sliders/checkboxes, especially Stack/Minimal, the
   four Clock gaps and Status Bar to Weapon. Layout updates during play.
 - Save Mod, exit/restart, verify the modified CleanHUD.ini and
