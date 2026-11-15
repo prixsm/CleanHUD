@@ -13,7 +13,6 @@
 #include <CStats.h>
 #include <CVehicle.h>
 #include <CTaskSimpleSwim.h>
-#include <CTimer.h>
 #include <CTaskSimpleJetpack.h>
 #include <CWanted.h>
 #include <CWeaponInfo.h>
@@ -318,94 +317,6 @@ bool HUDManager::IsUsingVanillaLayout() const
         IsVanillaPreviewHeld();
 }
 
-bool HUDManager::ShouldSuppressBikeHopHUD() const
-{
-    return mBikeHopSuppressionActive;
-}
-
-void HUDManager::UpdateBikeHopSuppression()
-{
-    const CVehicle* vehicle = mPlayer && mPlayer->bInVehicle
-        ? mPlayer->m_pVehicle : nullptr;
-
-    // Manual Driveby Refixed uses its weapon-hide command on both
-    // pedal bicycles and motorcycles. Quads/cars have different
-    // controls and must not trigger this suppression.
-    if (!vehicle ||
-        (vehicle->m_nVehicleSubClass != VEHICLE_BMX &&
-         vehicle->m_nVehicleSubClass != VEHICLE_BIKE))
-    {
-        mBikeHopSuppressionActive = false;
-        mBikeHopHideUntilMs = 0;
-        mBikeHopSavedWeapon = WEAPONTYPE_UNARMED;
-        return;
-    }
-
-    const CWeapon* weapon = mPlayer->GetWeapon();
-    if (!weapon)
-    {
-        mBikeHopSuppressionActive = false;
-        mBikeHopHideUntilMs = 0;
-        mBikeHopSavedWeapon = WEAPONTYPE_UNARMED;
-        return;
-    }
-
-    // GTA's hide_char_weapon_for_scripted_cutscene saves the
-    // previous weapon and selects UNARMED. The 0x37 sentinel is
-    // used instead of its SDK enum name for older plugin-sdk.
-    // Do NOT use m_bRenderWeapon: other mods may keep it false
-    // while normal bike weapon selection/firing is still valid.
-    constexpr eWeaponType UnidentifiedWeapon =
-        static_cast<eWeaponType>(0x37);
-    const bool scriptedWeaponSwap =
-        weapon->m_eWeaponType == WEAPONTYPE_UNARMED &&
-        mPlayer->m_nSavedWeapon != UnidentifiedWeapon &&
-        mPlayer->m_nSavedWeapon != WEAPONTYPE_UNARMED;
-
-    const std::uint32_t now = CTimer::m_snTimeInMilliseconds;
-    if (scriptedWeaponSwap)
-    {
-        constexpr std::uint32_t AfterHopDelayMs = 250;
-        mBikeHopSavedWeapon = mPlayer->m_nSavedWeapon;
-        mBikeHopHideUntilMs = now + AfterHopDelayMs;
-        mBikeHopSuppressionActive = true;
-        return;
-    }
-
-    // After the script restores the saved weapon, keep the
-    // transient icon hidden very briefly. A *different* equipped
-    // weapon is a real selection and must reveal normally.
-    const bool sameRestoredWeapon =
-        mBikeHopSavedWeapon != WEAPONTYPE_UNARMED &&
-        weapon->m_eWeaponType == mBikeHopSavedWeapon;
-    const bool withinGrace =
-        mBikeHopHideUntilMs != 0 &&
-        static_cast<std::int32_t>(
-            mBikeHopHideUntilMs - now) > 0;
-
-    // Actual firing or ammunition use during the grace period
-    // immediately releases the suppression. This prevents shots
-    // on bikes from being faded/reset before their timer runs.
-    const AmmoState currentAmmo = GetCurrentAmmoState();
-    const bool consumedAmmo =
-        mLastWeaponState.WeaponType == weapon->m_eWeaponType &&
-        (currentAmmo.AmmoInClip < mLastAmmoState.AmmoInClip ||
-         currentAmmo.AmmoTotal < mLastAmmoState.AmmoTotal);
-    const bool activelyFiring =
-        weapon->m_nState == WEAPONSTATE_FIRING;
-
-    if (!sameRestoredWeapon || !withinGrace ||
-        activelyFiring || consumedAmmo)
-    {
-        mBikeHopSuppressionActive = false;
-        mBikeHopHideUntilMs = 0;
-        mBikeHopSavedWeapon = WEAPONTYPE_UNARMED;
-        return;
-    }
-
-    mBikeHopSuppressionActive = true;
-}
-
 bool HUDManager::ShouldDisplayAmmo() const
 {
     if (!mPlayer)
@@ -516,9 +427,6 @@ void HUDManager::OnGameLoaded()
     mSessionInitialized = false;
     mVanillaLayoutLatched = false;
     mWeaponChangedThisFrame = false;
-    mBikeHopSuppressionActive = false;
-    mBikeHopHideUntilMs = 0;
-    mBikeHopSavedWeapon = WEAPONTYPE_UNARMED;
     mConfirmedDriveByVehicle = nullptr;
     mConfirmedDriveByWeapon = WEAPONTYPE_UNARMED;
     mClockSpacingPreview.Reset();
@@ -544,9 +452,6 @@ void HUDManager::Update()
         mSessionInitialized = false;
         mLastPlayer = nullptr;
         mWeaponChangedThisFrame = false;
-        mBikeHopSuppressionActive = false;
-        mBikeHopHideUntilMs = 0;
-        mBikeHopSavedWeapon = WEAPONTYPE_UNARMED;
         mConfirmedDriveByVehicle = nullptr;
         mConfirmedDriveByWeapon = WEAPONTYPE_UNARMED;
         mCellphoneIcon.Reset();
@@ -645,7 +550,6 @@ void HUDManager::Update()
     UpdateArmour();
     UpdateBreath();
     UpdateMoney();
-    UpdateBikeHopSuppression();
     mWeaponChangedThisFrame = false;
     UpdateWeaponIcon();
     UpdateAmmo();
@@ -657,21 +561,9 @@ void HUDManager::Update()
     UpdateVehicleFiring();
     UpdateWanted();
 
-    // Scripted BMX hops temporarily switch the weapon slot to fists.
-    // Reset those transient timers so icons stay absent just after
-    // the scripted hide ends. Unmanaged icons remain vanilla-owned.
-    if (mBikeHopSuppressionActive)
-    {
-        if (settings.Weapon)
-            mWeaponIcon.Reset();
-        if (settings.Ammo)
-            mAmmo.Reset();
-    }
-
     // Aim-only visibility fades on release. Shot timers remain
     // active rather than being erased by HUDComponent::Hide().
-    const bool weaponAiming =
-        !mBikeHopSuppressionActive && IsWeaponAiming();
+    const bool weaponAiming = IsWeaponAiming();
 
     mClock.Update(!settings.Clock || settings.AlwaysShowClock);
 
@@ -682,11 +574,9 @@ void HUDManager::Update()
     mBreath.Update(previewHeld || !settings.Breath);
     mMoney.Update(previewHeld || !settings.Money);
     mWeaponIcon.Update(
-        (!mBikeHopSuppressionActive && (previewHeld || weaponAiming)) ||
-        !settings.Weapon);
+        previewHeld || weaponAiming || !settings.Weapon);
     mAmmo.Update(
-        (!mBikeHopSuppressionActive && (previewHeld || weaponAiming)) ||
-        !settings.Ammo);
+        previewHeld || !settings.Ammo || weaponAiming);
 
     mWanted.Update(!settings.Wanted);
 
@@ -743,9 +633,6 @@ void HUDManager::ResetSessionState()
     RestoreVanillaElements();
     mLayout.ResetHistory();
     mWeaponChangedThisFrame = false;
-    mBikeHopSuppressionActive = false;
-    mBikeHopHideUntilMs = 0;
-    mBikeHopSavedWeapon = WEAPONTYPE_UNARMED;
 
     mPreviousHealth = mLastHealth;
     mHealthStableFrames = 0;
@@ -1929,9 +1816,6 @@ void HUDManager::HideAll()
     mJetpackWasEquipped = false;
     mSkateboardWasRiding = false;
     mCellphonePuttingAway = false;
-    mBikeHopSuppressionActive = false;
-    mBikeHopHideUntilMs = 0;
-    mBikeHopSavedWeapon = WEAPONTYPE_UNARMED;
     mConfirmedDriveByVehicle = nullptr;
     mConfirmedDriveByWeapon = WEAPONTYPE_UNARMED;
     mClock.Reset();
