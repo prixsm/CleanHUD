@@ -126,6 +126,8 @@ namespace
 
     // SleekConfig's SC_ENUM supplies a scrollable, labelled list.
     // Values in CleanHUD.ini remain raw Win32 virtual-key codes.
+    // Use a fresh setting ID for this enum: the old SC_KEY setting
+    // saved raw VK numbers, which must not be mistaken for enum indices.
     struct PreviewKeyChoice
     {
         int VirtualKey;
@@ -289,7 +291,7 @@ namespace
         setting.default_value.type = type;
 
         // Shown in SleekConfig's setting tooltip, not a new group.
-        if (std::strcmp(id, "vanilla_hud_key") == 0)
+        if (std::strcmp(id, "vanilla_hud_key_choice") == 0)
             setting.description =
                 "Select a labelled Windows virtual-key (VK) code. "
                 "Choose Off to disable; Tab is the default. "
@@ -352,7 +354,7 @@ namespace
 
         value.type = SC_ENUM;
         value.integer = PreviewKeyIndex(settings.VanillaHUDKey);
-        if (gApi->publish_value(gMod, "vanilla_hud_key",
+        if (gApi->publish_value(gMod, "vanilla_hud_key_choice",
             &value) != SC_OK)
             return false;
 
@@ -429,7 +431,7 @@ namespace
 
         HUDSettings& settings = HUDSettings::Get();
 
-        if (std::strcmp(id, "vanilla_hud_key") == 0)
+        if (std::strcmp(id, "vanilla_hud_key_choice") == 0)
         {
             if (proposed->type != SC_ENUM ||
                 proposed->integer < 0 ||
@@ -652,7 +654,7 @@ namespace
             return false;
 
         ScSettingDesc keyboard = Describe(
-            "vanilla_hud_key", "Keyboard virtual key (VK)",
+            "vanilla_hud_key_choice", "Keyboard virtual key (VK)",
             "HUD Preview", "", SC_ENUM);
         keyboard.options = PreviewKeyOptions().c_str();
         keyboard.minimum = 0;
