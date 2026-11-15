@@ -294,11 +294,17 @@ void HUDSettings::Load()
         ? HUDMode::Minimal
         : HUDMode::Stack;
 
-    VanillaHUDKey = ReadInt(
+    // Older preview builds stored bindings in [General]. Read those
+    // as fallback; the dedicated [HUDPreview] section takes priority.
+    const auto oldKey = ReadInt(
         path.c_str(), "General", "VanillaHUDKey", 9, 0, 255);
-
-    VanillaHUDPadButton = ReadInt(
+    const auto oldPadButton = ReadInt(
         path.c_str(), "General", "VanillaHUDPadButton", 0, 0, 16);
+    VanillaHUDKey = ReadInt(
+        path.c_str(), "HUDPreview", "VanillaHUDKey", oldKey, 0, 255);
+    VanillaHUDPadButton = ReadInt(
+        path.c_str(), "HUDPreview", "VanillaHUDPadButton",
+        oldPadButton, 0, 16);
 
     AlwaysShowClock = ReadBool(
         path.c_str(), "General", "AlwaysShowClock", true);
@@ -451,8 +457,6 @@ bool HUDSettings::Save() const
     };
 
     bool success = true;
-    success = putInt("General", "VanillaHUDKey", VanillaHUDKey) && success;
-    success = putInt("General", "VanillaHUDPadButton", VanillaHUDPadButton) && success;
     success = put("General", "HUDMode",
         Mode == HUDMode::Stack ? "Stack" : "Minimal") && success;
     success = putBool("General", "AlwaysShowClock", AlwaysShowClock) && success;
@@ -494,8 +498,19 @@ bool HUDSettings::Save() const
     success = putFloat("WeaponAmmoLayout", "WeaponAmmoOffsetX", WeaponAmmoOffsetX) && success;
     success = putFloat("WeaponAmmoLayout", "WeaponAmmoOffsetY", WeaponAmmoOffsetY) && success;
     success = putFloat("WeaponAmmoLayout", "WeaponToAmmoVerticalOffset", WeaponToAmmoVerticalOffset) && success;
+    // Always write these last so old INIs get a dedicated bottom section.
+    success = putInt("HUDPreview", "VanillaHUDKey", VanillaHUDKey) && success;
+    success = putInt("HUDPreview", "VanillaHUDPadButton", VanillaHUDPadButton) && success;
 
     if (!success)
+        return false;
+
+    // Migrate old binding entries without discarding other General
+    // settings. New values have already been saved in [HUDPreview].
+    if (!WritePrivateProfileStringA(
+        "General", "VanillaHUDKey", nullptr, path.c_str()) ||
+        !WritePrivateProfileStringA(
+            "General", "VanillaHUDPadButton", nullptr, path.c_str()))
         return false;
 
     // Keep the saved INI free from unsupported configuration keys.
