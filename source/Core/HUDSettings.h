@@ -62,17 +62,16 @@ public:
     float SkateboardIconOffsetX = 0.0f;
     float SkateboardIconOffsetY = 0.0f;
 
-    // Choose the clock gap based on the next visible HUD item.
     float ClockToMoneySpacing = 25.0f;
     float ClockToWantedSpacing = 25.0f;
-    float ClockToStatusBarSpacing = 22.0f;
+    float ClockToStatusBarSpacing = 18.0f;
     float ClockToWeaponSpacing = 30.0f;
     float MoneyToWantedSpacing = 25.0f;
     float MoneyToWeaponSpacing = 35.0f;
     float MoneyToStatusBarSpacing = 22.0f;
     float WantedToWeaponSpacing = 32.0f;
     float WantedToStatusBarSpacing = 22.0f;
-    float StatusBarToWeaponSpacing = 17.0f;
+    float StatusBarToWeaponSpacing = 18.0f;
     float ArmourSpacing = 4.0f;
     float BreathSpacing = 4.0f;
 

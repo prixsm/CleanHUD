@@ -361,7 +361,7 @@ void HUDSettings::Load()
         path.c_str(), "Spacing", "ClockToWantedSpacing", 25.0f);
 
     ClockToStatusBarSpacing = ReadFloat(
-        path.c_str(), "Spacing", "ClockToStatusBarSpacing", 22.0f);
+        path.c_str(), "Spacing", "ClockToStatusBarSpacing", 18.0f);
 
     ClockToWeaponSpacing = ReadFloat(
         path.c_str(), "Spacing", "ClockToWeaponSpacing", 30.0f);
@@ -382,7 +382,7 @@ void HUDSettings::Load()
         path.c_str(), "Spacing", "WantedToWeaponSpacing", 32.0f);
 
     StatusBarToWeaponSpacing = ReadFloat(
-        path.c_str(), "Spacing", "StatusBarToWeaponSpacing", 17.0f);
+        path.c_str(), "Spacing", "StatusBarToWeaponSpacing", 18.0f);
 
     ArmourSpacing = ReadFloat(
         path.c_str(), "Spacing", "ArmourSpacing", 4.0f);
