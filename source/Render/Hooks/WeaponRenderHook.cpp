@@ -275,8 +275,7 @@ namespace
 
         if (HUDManager::Get().IsUsingVanillaLayout())
         {
-            // Capture the actual GTA X/Y when Minimal or TAB uses
-            // native positions, including widescreen corrections.
+            // Keep GTA's positions in Minimal mode or during HUD Preview.
             CaptureWeaponPosition(
                 static_cast<int>(ctx.eax),
                 static_cast<int>(*reinterpret_cast<std::uint32_t*>(ctx.esp)),
