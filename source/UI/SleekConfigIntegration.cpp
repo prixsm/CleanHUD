@@ -407,6 +407,17 @@ namespace
                 static_cast<std::uint32_t>(value.integer);
         }
 
+        // Explain the layout controls once, above their individual groups.
+        ScSettingDesc layoutHelp = Describe(
+            "advanced_layout_help", "About these controls",
+            "Advanced Layout", "", SC_DESCRIPTION);
+        layoutHelp.description =
+            "Stack mode only. The default spacing and positions follow "
+            "GTA's original HUD, so the layout stays familiar. "
+            "Change them if you prefer more or less space.";
+        if (gApi->register_setting(gMod, &layoutHelp) != SC_OK)
+            return false;
+
         for (const auto& entry : FloatSettings)
         {
             value = {};
