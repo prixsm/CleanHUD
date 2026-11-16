@@ -126,8 +126,7 @@ namespace
 
     // SleekConfig's SC_ENUM supplies a scrollable, labelled list.
     // Values in CleanHUD.ini remain raw Win32 virtual-key codes.
-    // Use a fresh setting ID for this enum: the old SC_KEY setting
-    // saved raw VK numbers, which must not be mistaken for enum indices.
+    // Keep the dropdown's saved choices separate from direct key codes.
     struct PreviewKeyChoice
     {
         int VirtualKey;
@@ -402,7 +401,7 @@ namespace
             if (gApi->publish_value(gMod, entry.Id, &value) != SC_OK)
                 return false;
 
-            // Legacy INI values may not land exactly on the menu step.
+            // Preserve any valid INI value, even between slider steps.
             settings.*(entry.Field) =
                 static_cast<std::uint32_t>(value.integer);
         }
@@ -422,8 +421,7 @@ namespace
         {
             value = {};
             value.type = SC_FLOAT;
-            // INI values from older releases may use fractional steps.
-            // Publish whole units so the registry accepts step=1.0.
+            // Round spacing to whole numbers for SleekConfig.
             value.real = std::round(std::clamp(
                 settings.*(entry.Field), -1500.0f, 1500.0f));
 
