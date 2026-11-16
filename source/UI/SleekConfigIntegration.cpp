@@ -411,9 +411,9 @@ namespace
             "advanced_layout_help", "About these controls",
             "Advanced Layout", "", SC_DESCRIPTION);
         layoutHelp.description =
-            "Stack mode only. The default spacing and positions follow "
-            "GTA's original HUD, so the layout stays familiar. "
-            "Change them if you prefer more or less space.";
+            "The defaults follow GTA's original HUD positions. "
+            "Stack spacing and Weapon/Ammo positioning work only in "
+            "Stack mode; jetpack offsets work in both layouts.";
         if (gApi->register_setting(gMod, &layoutHelp) != SC_OK)
             return false;
 
