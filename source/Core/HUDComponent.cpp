@@ -57,10 +57,7 @@ float HUDComponent::GetLayoutProgress() const
             0.0f,
             1.0f);
 
-    /*
-     * Smoothstep.
-     * We'll use this for stack movement later.
-     */
+    // Ease the fade progress so HUD items slide into place smoothly.
     return
         t * t *
         (3.0f - 2.0f * t);
@@ -92,12 +89,7 @@ void HUDComponent::Hide()
 {
     mTimer.Hide();
 
-    /*
-     * Non-animated components retain the old
-     * immediate-hide behavior.
-     *
-     * This is what Wanted will use.
-     */
+    // Wanted stars appear and disappear without a fade.
     if (!mAnimated)
     {
         mTargetVisible = false;
