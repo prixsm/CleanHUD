@@ -530,13 +530,8 @@ void HUDManager::Update()
 
     if (!wasSessionInitialized)
     {
-        // The startup fallback used Update(true), leaving
-        // components partly/fully visible even though the HUD
-        // draw was suppressed. The earlier working build began
-        // each managed session with HideAll() instead.
-        //
-        // Clear those animation/timer states before constructing
-        // CleanHUD's first visible gameplay layout.
+        // Start each game with cleared fade timers so HUD items
+        // don't briefly appear during loading.
         HideAll();
         RestoreDisabledElements();
         mLayout.ResetHistory();
@@ -1235,8 +1230,7 @@ void HUDManager::BuildPlayerHUDLayout()
         (settings.Weapon && mWeaponIcon.IsVisible()) ||
         (ammoDisplayed && mAmmo.IsVisible());
 
-    // Resolve the spacing to whichever group is next
-    // in the visible stack, not the previous Weapon-first order.
+    // Use the gap for whichever HUD group is actually next.
     float moneySpacing = 0.0f;
 
     if (wantedDisplayed)
@@ -1298,8 +1292,8 @@ void HUDManager::BuildPlayerHUDLayout()
         0.0f,
         wantedSpacing);
 
-    // Armour, Breath and Health are now above Weapon/Ammo.
-    // The final visible bar owns the bar-to-weapon gap.
+    // Health, armour and breath sit above weapon and ammo.
+    // Add the weapon gap after the last visible status bar.
     const bool armourShown =
         armourDisplayed && mArmour.IsVisible();
 
@@ -1337,9 +1331,7 @@ void HUDManager::BuildPlayerHUDLayout()
             ? settings.StatusBarToWeaponSpacing
             : 0.0f);
 
-    // Weapon and Ammo share a group origin. Weapon reserves the
-    // configured distance to Ammo rather than using a fake height
-    // and cancelling trailing spacing.
+    // Keep weapon and ammo together at the selected distance.
     mLayout.Add(
         mWeaponIcon,
         settings.WeaponToAmmoVerticalOffset,
