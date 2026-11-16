@@ -122,10 +122,7 @@ void HUDComponent::Update(
     mTargetVisible =
         targetVisible;
 
-    /*
-     * Wanted and any future non-animated component
-     * use the original binary visibility behavior.
-     */
+    // Elements without animation switch visibility immediately.
     if (!mAnimated)
     {
         mVisibility =
@@ -183,10 +180,7 @@ void HUDComponent::Update(
                 mVisibility - step);
     }
 
-    /*
-     * During fade-out the GTA draw call must remain
-     * enabled until alpha reaches zero.
-     */
+    // Let GTA keep drawing the item until its fade-out finishes.
     if (targetVisible ||
         mVisibility > 0.0f)
     {
