@@ -58,8 +58,7 @@ namespace
             anchorY * (480.0f / 1080.0f) +
             (layoutWantedY - anchorY) * (560.0f / 1080.0f);
 
-        // Retain the game's existing max-health adjustment for
-        // wanted stars; unrelated to stack-relative displacement.
+        // Keep GTA's wanted-star adjustment for maximum health.
         constexpr float WantedHealthYOffset = 12.0f;
 
         const auto& playerInfo =
