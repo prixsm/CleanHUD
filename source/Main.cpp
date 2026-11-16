@@ -25,9 +25,7 @@ public:
                 HUDManager::Get().OnGameLoaded();
             };
         
-        // GTA SA exposes shutdownRwEvent, not shutdownEngineEvent.
-        // Detach before RenderWare shutdown; the adapter will register
-        // again on the game thread if the engine restarts.
+        // Disconnect from SleekConfig before GTA shuts down rendering.
         Events::shutdownRwEvent += []()
             {
                 SleekConfigIntegration::Detach();
