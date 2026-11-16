@@ -14,8 +14,8 @@
 
 namespace
 {
-    // This integration only registers settings. SleekConfig itself owns the
-    // F10 menu, D3D9 rendering, game input, and UI device lifecycle.
+    // CleanHUD provides its settings; SleekConfig handles the menu,
+    // controls and graphics.
     constexpr const char* ModId = "prixsm.cleanhud";
 
     const ScApi* gApi = nullptr;
@@ -54,8 +54,7 @@ namespace
         HUDSpacingPreviewGroup Second;
     };
 
-    // Simple controls live directly under their page; no extra
-    // collapsible headings for General, Elements or Visibility.
+    // Keep the basic settings directly on their pages.
     constexpr BoolSetting BoolSettings[] = {
         { "always_show_clock", "Always show Clock", "General", "", &HUDSettings::AlwaysShowClock, true },
         { "slide_stack", "Slide stack on entry", "General", "", &HUDSettings::SlideStack, false },
@@ -124,9 +123,8 @@ namespace
     };
 
 
-    // SleekConfig's SC_ENUM supplies a scrollable, labelled list.
-    // Values in CleanHUD.ini remain raw Win32 virtual-key codes.
-    // Keep the dropdown's saved choices separate from direct key codes.
+    // Show named keys in the menu but keep their numeric codes in the INI.
+    // Store dropdown choices separately from those codes.
     struct PreviewKeyChoice
     {
         int VirtualKey;
@@ -254,8 +252,7 @@ namespace
                 return i;
         }
 
-        // Retain uncommon custom keys loaded from an existing INI.
-        // This last menu entry does not modify their raw VK value.
+        // Keep custom key codes from the INI without changing them.
         return PreviewKeyCount;
     }
 
@@ -291,7 +288,7 @@ namespace
         setting.type = type;
         setting.default_value.type = type;
 
-        // Shown in SleekConfig's setting tooltip, not a new group.
+        // Show this help beside the setting, not as another group.
         if (std::strcmp(id, "vanilla_hud_key_choice") == 0)
             setting.description =
                 "Select a labelled Windows virtual-key (VK) code. "
@@ -349,9 +346,8 @@ namespace
         if (!gApi || !gMod)
             return false;
 
-        // register_setting uses its declared default, not the loaded INI.
-        // Publish INI values before the first SleekConfig registry tick.
-        // Saved SleekConfig DAT overrides are applied after these values.
+        // Load the INI values first. SleekConfig's saved settings
+        // can then override them.
         HUDSettings& settings = HUDSettings::Get();
         ScValue value = {};
 
@@ -428,8 +424,7 @@ namespace
             if (gApi->publish_value(gMod, entry.Id, &value) != SC_OK)
                 return false;
 
-            // Keep the active layout in sync with the rounded values
-            // displayed by SleekConfig.
+            // Use the same rounded values in both the game and the menu.
             settings.*(entry.Field) = value.real;
         }
 
@@ -457,7 +452,7 @@ namespace
                         PreviewKeyChoices[
                             proposed->integer].VirtualKey);
             }
-            // Custom VK option preserves the already configured INI VK.
+            // Leave the INI's custom key unchanged when selected.
             return 1;
         }
 
@@ -523,10 +518,8 @@ namespace
             const float previous = settings.*(entry.Field);
             settings.*(entry.Field) = proposed->real;
 
-            // Special jetpack X/Y preview requires a real equipped
-            // jetpack; unlike stack-spacing previews, it must also
-            // work in Minimal mode. Other sliders keep their normal
-            // adjacent-group previews.
+            // Preview the jetpack position only while equipped, in either
+            // layout. Other spacing sliders preview nearby HUD items.
             if (previous != proposed->real)
             {
                 if (entry.Field == &HUDSettings::JetpackIconOffsetX ||
@@ -554,15 +547,13 @@ namespace
 
     int SC_CALL OnSave(void*)
     {
-        // SleekConfig saves a DAT snapshot too. Keep CleanHUD.ini in sync
-        // with user-committed changes, preserving manual-INI workflows.
+        // Save the INI along with SleekConfig's saved settings.
         return HUDSettings::Get().Save() ? 1 : 0;
     }
 
     int SC_CALL OnLoad(void*)
     {
-        // SleekConfig's Reload action: INI provides the baseline,
-        // then its stored DAT settings take precedence.
+        // Reload the INI, then apply saved SleekConfig settings.
         HUDSettings::Get().Load();
         return PublishCurrentIniValues() ? 1 : 0;
     }
@@ -581,8 +572,7 @@ namespace
         if (gApi->register_setting(gMod, &mode) != SC_OK)
             return false;
 
-        // One page-level explanation replaces eight repeated tooltips.
-        // This is static help text, not a saved or user-editable option.
+        // Explain the Elements page once, without adding a saved setting.
         ScSettingDesc elementsHelp = Describe(
             "elements_behavior_help", "Elements behavior",
             "Elements", "", SC_DESCRIPTION);
@@ -633,9 +623,7 @@ namespace
                 skateboardOffset ? "Skateboard" : "Advanced Layout",
                 skateboardOffset ? "" : entry.Group, SC_FLOAT);
 
-            // The rendered layout moves at whole-unit increments.
-            // SleekConfig 1.1 determines numeric formatting from
-            // step (1.0 is displayed as an integer in its UI).
+            // Use whole-number steps for positioning sliders.
             setting.minimum = -1500.0;
             setting.maximum = 1500.0;
             setting.step = 1.0;
@@ -653,8 +641,7 @@ namespace
         }
 
 
-        // HUD Preview is registered last: its controls form the final
-        // SleekConfig page, with their own complete choice lists.
+        // Keep HUD Preview last, with both key and button lists.
         ScSettingDesc help = Describe(
             "hud_preview_help", "Hold to show vanilla positions",
             "HUD Preview", "", SC_DESCRIPTION);
@@ -705,14 +692,12 @@ namespace SleekConfigIntegration
             if (GetModuleHandleA("SleekConfig.asi"))
                 return;
 
-            // A mod loader may unload/reload the shared menu while the game
-            // stays running. Avoid reusing pointers into its old DLL.
+            // If SleekConfig reloads, don't reuse its old connection.
             gApi = nullptr;
             gMod = 0;
         }
 
-        // Do not load SleekConfig ourselves: independent installation and
-        // game startup order must not affect CleanHUD's normal operation.
+        // CleanHUD runs whether SleekConfig is installed or not.
         const ScApi* api = sleekconfig::FindApi();
 
         if (!api)
@@ -755,8 +740,7 @@ namespace SleekConfigIntegration
 
     void Detach()
     {
-        // Do not dereference a stale API pointer if another loader has
-        // already unloaded SleekConfig. Its registry also tracks owners.
+        // Don't call SleekConfig after it has been unloaded.
         if (gMod && GetModuleHandleA("SleekConfig.asi"))
             gApi->unregister_mod(gMod);
 
