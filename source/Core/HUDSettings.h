@@ -15,17 +15,16 @@ class HUDSettings
 public:
     static HUDSettings& Get();
 
-    // Loads only at plugin startup. Missing files are created with defaults.
+    // Load settings at startup, creating the INI if needed.
     void Load();
 
-    // Persists live editor settings to the existing INI.
+    // Save the current settings to the INI.
     bool Save() const;
 
     bool IsElementEnabled(HUDComponentType type) const;
 
-    // Hold a Win32 virtual key or an assigned GTA pad button to
-    // temporarily render the HUD at its native positions.
-    // Keyboard=Tab by default; pad action disabled (0) by default.
+    // Hold a key to show GTA's original HUD positions.
+    // Tab is the keyboard default; the mapped gamepad action is off.
     std::uint32_t VanillaHUDKey = 9;
     std::uint32_t VanillaHUDPadButton = 0;
     HUDMode Mode = HUDMode::Stack;
@@ -49,23 +48,21 @@ public:
     bool ShowOnVehicleLook = false;
     bool ShowOnThrowableAim = false;
 
-    // Restore normally hidden equipment/model icons by default.
+    // Show available phone, jetpack and custom weapon icons.
     bool ShowHiddenWeaponIcons = true;
-    // Extra horizontal adjustment relative to the jetpack icon's
-    // weapon-slot or side-by-side anchor, depending on the held weapon.
+    // Move the jetpack icon from its normal or side-by-side position.
     float JetpackIconOffsetX = 0.0f;
     float JetpackIconOffsetY = 0.0f;
 
-    // Optional skateboard-as-vehicle integration. The vehicle ID
-    // identifies riding; the icon model supplies its ICON texture.
-    // Carried skateboards remain under normal custom weapon handling.
+    // The vehicle ID detects riding; the icon model provides the image.
+    // A carried skateboard still uses the regular weapon icon.
     bool ShowSkateboardRidingIcon = false;
     std::uint32_t SkateboardVehicleModelId = 12500;
     std::uint32_t SkateboardIconModelId = 12400;
     float SkateboardIconOffsetX = 0.0f;
     float SkateboardIconOffsetY = 0.0f;
 
-    // Gap below the Clock, based on the first visible stack group.
+    // Choose the clock gap based on the next visible HUD item.
     float ClockToMoneySpacing = 25.0f;
     float ClockToWantedSpacing = 25.0f;
     float ClockToStatusBarSpacing = 22.0f;
@@ -79,8 +76,8 @@ public:
     float ArmourSpacing = 4.0f;
     float BreathSpacing = 4.0f;
 
-    // Stack mode only. Offsets apply to Weapon and Ammo together;
-    // the vertical distance controls the Ammo position beneath Weapon.
+    // In Stack mode, move weapon and ammo together and adjust
+    // the distance between them.
     float WeaponAmmoOffsetX = 12.0f;
     float WeaponAmmoOffsetY = -16.0f;
     float WeaponToAmmoVerticalOffset = 83.0f;
