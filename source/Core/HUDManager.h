@@ -7,9 +7,8 @@
 #include "HUDComponent.h"
 #include "../Layout/HUDLayout.h"
 
-// A preview target describes the two groups bordering one spacing value.
-// The editor names specific targets; HUDManager decides what GTA can
-// actually render without altering weapon, breath, armour or wanted state.
+// Identify the HUD groups on either side of a spacing slider.
+// Preview only items the game can actually show.
 enum class HUDSpacingPreviewGroup
 {
     Clock,
@@ -37,8 +36,8 @@ public:
     bool ShouldSuppressNativeFist() const;
     bool ShouldSuppressNativeWeaponSprite() const;
     bool ShouldDrawJetpackIcon() const;
-    // True only for unarmed/brass-knuckle slots, while the jetpack
-    // is visible and no cellphone occupies that slot.
+    // Use the weapon slot for the jetpack only when hands or
+    // brass knuckles are selected and the phone is not shown.
     bool ShouldReplaceWeaponWithJetpack() const;
     bool ShouldDrawSkateboardIcon() const;
     bool ShouldReplaceWeaponWithSkateboard() const;
@@ -53,16 +52,15 @@ public:
     void RestoreVanillaElements();
     void Update();
 
-    // Called on the main thread by SleekConfig when a spacing value
-    // changes. Refreshes the normal per-element visibility timers.
+    // Briefly show affected HUD items when a spacing slider moves.
     void PreviewSpacing(
         HUDSpacingPreviewGroup first,
         HUDSpacingPreviewGroup second);
 
-    // Preview the currently equipped jetpack during X/Y slider edits,
-    // including Minimal mode where stack spacing previews do not run.
+    // Show the equipped jetpack while adjusting its position,
+    // including in Minimal mode.
     void PreviewJetpackPosition();
-    // Previews a real skateboard ride without inventing a vehicle.
+    // Preview the skateboard icon only while actually riding it.
     void PreviewSkateboardPosition();
 
     static HUDManager& Get();
@@ -100,20 +98,19 @@ private:
     bool mNeedsReset = true;
     bool mVanillaLayoutLatched = false;
     bool mWasDead = false;
-    // Weapon changes are handled separately from confirmed ammo usage.
+    // Track weapon switches separately from ammunition use.
     bool mWeaponChangedThisFrame = false;
-    // Look-only preview may recognize an additional weapon only after
-    // observing a genuine drive-by during this vehicle occupancy.
+    // After a real drive-by shot, allow that weapon's look preview
+    // for the current vehicle.
     const CVehicle* mConfirmedDriveByVehicle = nullptr;
     eWeaponType mConfirmedDriveByWeapon = WEAPONTYPE_UNARMED;
 
-    // Only used to stop AlwaysShowClock=0 from hiding a preview
-    // before its ordinary mClock.ShowFor() timer expires.
+    // Keep a requested clock preview visible for its normal duration.
     VisibilityTimer mClockSpacingPreview;
-    // Jetpack is an on-equip event, unlike the continuously held phone task.
+    // Show the jetpack when equipped; the phone follows its active task.
     bool mJetpackWasEquipped = false;
     bool mSkateboardWasRiding = false;
-    // PHONE_OUT may end before its parent phone task is removed.
+    // The phone animation can finish before its task is cleared.
     bool mCellphonePuttingAway = false;
 
     // HUD components
@@ -125,7 +122,7 @@ private:
     HUDComponent mWeaponIcon;
     HUDComponent mAmmo;
     HUDComponent mWanted;
-    // Independent alphas; no native draw-call patches for supplemental icons.
+    // Extra icons fade independently without replacing GTA draw calls.
     HUDComponent mCellphoneIcon;
     HUDComponent mJetpackIcon;
     HUDComponent mSkateboardIcon;
@@ -189,8 +186,7 @@ private:
     void UpdateSpecialIcons();
     void UpdateSkateboardIcon();
     bool IsRidingConfiguredSkateboard() const;
-    // Equipment reveal keeps the underlying weapon and valid ammo
-    // on a common visibility window.
+    // Keep the weapon and ammo visible together when equipment changes.
     void ShowWeaponAndAmmoForEquipment(std::uint32_t duration);
     void UpdateAmmo();
     void UpdateVehicleFiring();
