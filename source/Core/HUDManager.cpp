@@ -1688,8 +1688,7 @@ void HUDManager::UpdateSpecialIcons()
     }
     else if (!mJetpackWasEquipped)
     {
-        // Normal CleanHUD visibility starts once per actual equip,
-        // not on every frame of continued flight.
+        // Show the jetpack when equipped, not on every flight frame.
         mJetpackIcon.ShowFor(mVisibleTime);
         ShowWeaponAndAmmoForEquipment(mVisibleTime);
     }
@@ -1745,8 +1744,8 @@ void HUDManager::UpdateSkateboardIcon()
     }
     else if (!riding)
     {
-        // Leaving this vehicle ends the ride, not the FadeOutMs
-        // animation. A held skateboard can take over its own slot.
+        // Fade the riding icon after dismounting. A held board
+        // can then use the normal weapon icon slot.
         mSkateboardIcon.Hide();
     }
 
