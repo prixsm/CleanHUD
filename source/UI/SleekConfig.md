@@ -5,9 +5,8 @@
 ## Getting started
 
 1. Install `CleanHUD.asi` and `CleanHUD.ini` together using your GTA San Andreas ASI loader. CleanHUD supports the **PC 1.0 US** version of the game.
-2. **Remove `CleanHUD.SA.asi` if you have an older copy.** Keeping both ASI files can cause problems.
-3. For in-game settings, install **SleekConfig 1.1.0 or newer** separately.
-4. In the game, press **F10**, open **Visuals**, then choose **CleanHUD**.
+2. For in-game settings, install **SleekConfig 1.1.0 or newer** separately.
+3. In the game, press **F10**, open **Visuals**, then choose **CleanHUD**.
 
 SleekConfig is optional. Without it, CleanHUD uses your INI settings normally.
 
@@ -19,7 +18,7 @@ SleekConfig is optional. Without it, CleanHUD uses your INI settings normally.
 | **Elements** | Which HUD items CleanHUD controls |
 | **Visibility** | How quickly items appear, stay visible and fade |
 | **Skateboard** | Skateboard mod support, model IDs and icon position |
-| **Advanced Layout** | Spacing and positions of HUD items |
+| **Advanced Layout** | Spacing and positions in Stack mode, based on GTA's original HUD |
 | **HUD Preview** | Keyboard or gamepad button to show GTA's original HUD positions |
 
 On the **Elements** page, **On** means CleanHUD controls an item. **Off** lets GTA or another HUD mod handle it.
@@ -41,7 +40,11 @@ Turning off an element under **Elements** gives control of that element back to 
 
 ## Move HUD items
 
-Open **Advanced Layout** to adjust gaps in Stack mode. Increasing a spacing value gives items more room. Moving a slider briefly shows the affected HUD items as a preview.
+Open **Advanced Layout** to adjust gaps and positions. These settings
+work **only in Stack mode**. The default values are based on GTA's
+original HUD positions, so everything stays familiar. Increase a
+spacing value to add more room between items. Moving a slider briefly
+shows the affected HUD items.
 
 **Weapon & Ammo Position** moves the weapon icon and ammo together. The default **Weapon to Ammo vertical offset** is **83**. If you use WidescreenFix with `ProportionalWeaponIcon=1`, try **87**.
 
@@ -102,7 +105,7 @@ When changing the INI manually, close the game first and restart it afterwards.
 | --- | --- |
 | F10 doesn't open CleanHUD's settings | Install SleekConfig 1.1.0 or newer; CleanHUD works without it |
 | HUD settings change back on restart | Choose **Save Mod**; check for an older SleekConfig DAT file |
-| Two CleanHUD ASI files installed | Remove the old `CleanHUD.SA.asi`; keep only `CleanHUD.asi` |
+
 | Custom or skateboard icon is missing | Enable hidden icons; check the model IDs and available icon textures |
 | Weapon and ammo look too far apart | Adjust **Weapon to Ammo vertical offset** (83 normally; try 87 with proportional weapon icons) |
 | Ctrl unexpectedly shows GTA's HUD | Set the mapped gamepad preview button to **0 - Off** |
