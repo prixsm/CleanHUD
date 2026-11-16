@@ -43,8 +43,7 @@ namespace
 
     static void HookedMoneyDraw(SafetyHookContext& ctx)
     {
-        // Disabled elements must retain their normal game draw call.
-        // The original no-position case otherwise skips Money.
+        // If CleanHUD doesn't manage Money, let GTA draw it normally.
         if (!HUDSettings::Get().Money)
             return;
 
