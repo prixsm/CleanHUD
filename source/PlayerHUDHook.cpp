@@ -13,13 +13,8 @@ namespace
 
     void __cdecl HookedDrawPlayerInfo()
     {
-        // The original game drawing calls are restored while
-        // a save/new game loads. Do not let that fallback flash
-        // the full vanilla HUD before CleanHUD's first layout.
-        //
-        // This hook is for the player HUD, not CFont menu text.
-        // When Health=0, preserve the requested vanilla Health
-        // startup behavior rather than gating the whole HUD.
+        // Avoid a HUD flash while loading a game.
+        // If CleanHUD does not manage Health, let GTA draw it normally.
         if (HUDSettings::Get().Health &&
             !HUDManager::Get().IsPlayerHUDInitialized())
         {

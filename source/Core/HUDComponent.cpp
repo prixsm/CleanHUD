@@ -57,10 +57,7 @@ float HUDComponent::GetLayoutProgress() const
             0.0f,
             1.0f);
 
-    /*
-     * Smoothstep.
-     * We'll use this for stack movement later.
-     */
+    // Ease the fade progress so HUD items slide into place smoothly.
     return
         t * t *
         (3.0f - 2.0f * t);
@@ -92,12 +89,7 @@ void HUDComponent::Hide()
 {
     mTimer.Hide();
 
-    /*
-     * Non-animated components retain the old
-     * immediate-hide behavior.
-     *
-     * This is what Wanted will use.
-     */
+    // Wanted stars appear and disappear without a fade.
     if (!mAnimated)
     {
         mTargetVisible = false;
@@ -130,10 +122,7 @@ void HUDComponent::Update(
     mTargetVisible =
         targetVisible;
 
-    /*
-     * Wanted and any future non-animated component
-     * use the original binary visibility behavior.
-     */
+    // Elements without animation switch visibility immediately.
     if (!mAnimated)
     {
         mVisibility =
@@ -191,10 +180,7 @@ void HUDComponent::Update(
                 mVisibility - step);
     }
 
-    /*
-     * During fade-out the GTA draw call must remain
-     * enabled until alpha reaches zero.
-     */
+    // Let GTA keep drawing the item until its fade-out finishes.
     if (targetVisible ||
         mVisibility > 0.0f)
     {

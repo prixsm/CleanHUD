@@ -2,10 +2,9 @@
 
 namespace SleekConfigIntegration
 {
-    // No hard dependency: does nothing until SleekConfig.asi is loaded.
-    // Call from the existing game-process event on the main thread.
+    // Connect to SleekConfig if it is installed, without requiring it.
     void TryAttach();
 
-    // Unregister before CleanHUD's process lifetime ends.
+    // Disconnect when CleanHUD shuts down.
     void Detach();
 }

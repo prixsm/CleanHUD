@@ -43,8 +43,7 @@ namespace
 
     static void HookedMoneyDraw(SafetyHookContext& ctx)
     {
-        // Disabled elements must retain their normal game draw call.
-        // The original no-position case otherwise skips Money.
+        // If CleanHUD doesn't manage Money, let GTA draw it normally.
         if (!HUDSettings::Get().Money)
             return;
 
@@ -60,9 +59,8 @@ namespace
                 HUDSettings::Get().Mode == HUDMode::Minimal &&
                 HUDManager::Get().IsPlayerHUDInitialized();
 
-            // Money has no patched draw call. Skip its original
-            // draw only while CleanHUD owns it and its timer is
-            // hidden; during startup leave vanilla drawing alone.
+            // Hide Money only when CleanHUD controls it and its
+            // visibility timer has ended. Leave GTA in charge at startup.
             if (!vanillaLayout || minimalHidden)
                 ctx.eip = 0x58F60C;
 

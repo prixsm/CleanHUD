@@ -45,16 +45,9 @@ namespace
             return;
         }
 
-        // GTA's wanted-star font uses a 560-unit vertical basis,
-        // whereas the old hook converted every stacked position using
-        // 480. That compresses Wanted's vertical displacement by 6/7:
-        // Money/Clock and the elements below move farther than the stars.
-        //
-        // Preserve the original top-of-stack placement by keeping the
-        // original 480 conversion at the layout anchor. Scale only the
-        // distance below the anchor using the wanted font's 560 basis.
-        // This makes wanted-to-neighbor gaps independent of how many
-        // elements are stacked above the stars.
+        // GTA draws wanted stars on a different vertical scale.
+        // Keep the original top position, then scale the gap below it
+        // so stars stay aligned with the other HUD items.
         const float anchorY =
             HUDRenderer::Get().GetAnchor().Y;
 
@@ -65,8 +58,7 @@ namespace
             anchorY * (480.0f / 1080.0f) +
             (layoutWantedY - anchorY) * (560.0f / 1080.0f);
 
-        // Retain the game's existing max-health adjustment for
-        // wanted stars; unrelated to stack-relative displacement.
+        // Keep GTA's wanted-star adjustment for maximum health.
         constexpr float WantedHealthYOffset = 12.0f;
 
         const auto& playerInfo =

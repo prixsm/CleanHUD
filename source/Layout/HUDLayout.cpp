@@ -6,7 +6,7 @@
 
 namespace
 {
-    // Ordering is independent of HUDComponentType's enum values.
+    // Follow the visible top-to-bottom order, not the enum order.
     constexpr std::array<HUDComponentType, 8> StackOrder = {
         HUDComponentType::Clock,
         HUDComponentType::Money,
@@ -83,9 +83,8 @@ void HUDLayout::PrepareStack(
             continue;
         }
 
-        // Animate each status bar into its own stack slot during
-        // fade-in, keeping progress monotonic so fading out does
-        // not reverse the movement.
+        // Slide status bars into place as they appear, without
+        // moving them backward during fade-out.
         if (settings.SlideStack && IsStatusBar(component.GetType()))
         {
             if (!mPreviouslyPresent[i])
@@ -103,13 +102,11 @@ void HUDLayout::PrepareStack(
 
         if (!mPreviouslyPresent[i])
         {
-            // New entries reserve their final slot. Status bars
-            // also animate visually as they enter this slot.
+            // Make room for new items; status bars slide into that room.
             mHoldEntrancePosition[i] = true;
 
-            // The permanently displayed Clock is the fixed
-            // anchor above the dynamic stack. Do not count it
-            // as an old stack member blocking new top entries.
+            // The always-visible clock stays fixed above the stack.
+            // It should not prevent other items from sliding in.
             const auto dynamicStackStart =
                 i > 0 && settings.AlwaysShowClock && settings.Clock
                 ? mPreviouslyPresent.begin() + 1
@@ -125,14 +122,12 @@ void HUDLayout::PrepareStack(
                 mPreviouslyPresent.end(),
                 [](bool visible) { return visible; });
 
-            // Only an insertion above the entire old stack
-            // is allowed to move the previously visible stack.
+            // Move existing items only when something appears above them.
             mSlideOnEntry[i] = settings.SlideStack &&
                 !hasVisibleAbove && hasVisibleBelow;
         }
 
-        // Preserve the occupied space during fade-out.
-        // Disappearance never runs a reverse slide.
+        // Keep the space during fade-out; do not slide items back.
         if (!mSlideOnEntry[i])
         {
             mStackProgress[i] = 1.0f;
@@ -170,8 +165,7 @@ void HUDLayout::PrepareStack(
                 upperSlotStillGrowing = true;
         }
 
-        // A component from an earlier frame is now part of
-        // the old stack, so a new top entry may move it.
+        // Items already visible may move down for a new top item.
         if ((mPreviouslyPresent[i] && newlyInsertedAbove) ||
             (component.GetVisibility() >= 1.0f &&
                 !upperSlotStillGrowing))
@@ -199,9 +193,7 @@ void HUDLayout::SetAnchor(float x, float y)
 
 void HUDLayout::ReserveSpace(float height, float spacingAfter)
 {
-    // This is a fixed layout slot, not a fading component.
-    // Both cursors must move equally so entering components
-    // and already-visible components share the same origin.
+    // Reserve a fixed space so incoming and visible items align.
     const float advance = height + spacingAfter;
 
     mCurrentY += advance;
@@ -227,10 +219,8 @@ void HUDLayout::Add(
     item.Component = &component;
     item.Type = component.GetType();
 
-    // The stack space itself still advances through mStackProgress.
-    // Move an entering status bar visually from one bar height above
-    // its settled slot, without changing spacing or sliding it back
-    // during fade-out.
+    // Slide a new status bar down into place without changing
+    // the gaps or reversing its movement during fade-out.
     const float entryShift =
         HUDSettings::Get().SlideStack && IsStatusBar(item.Type)
         ? height * (1.0f -

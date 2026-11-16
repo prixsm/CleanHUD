@@ -49,7 +49,7 @@ public:
     void Reset();
     void ResetHistory();
 
-    // Components in actual top-to-bottom layout order.
+    // Items ordered from top to bottom.
     void PrepareStack(
         const std::array<HUDComponent*, 8>& components);
 
@@ -58,8 +58,7 @@ public:
 
     void SetAnchor(float x, float y);
 
-    // Reserve room for a vanilla HUD element without adding it
-    // to CleanHUD's draw list or slide-in animation.
+    // Leave space for an item that GTA still draws itself.
     void ReserveSpace(float height, float spacingAfter);
 
     void Add(
@@ -81,14 +80,12 @@ private:
 
     static constexpr std::size_t ElementCount = 8;
 
-    // Previous frame's visible entries determine whether a
-    // newly inserted item is above something already shown.
+    // Check which items were already visible before sliding the stack.
     std::array<bool, ElementCount> mPreviouslyPresent = {};
     std::array<bool, ElementCount> mSlideOnEntry = {};
     std::array<bool, ElementCount> mHoldEntrancePosition = {};
     std::array<float, ElementCount> mStackProgress = {};
-    // Status bars animate their own entrance as well as the stack
-    // displacement caused by elements appearing above them.
+    // Status bars slide in, and the stack moves to make room.
     std::array<float, ElementCount> mStatusEntryProgress = {};
 
     std::vector<HUDLayoutItem> mItems;

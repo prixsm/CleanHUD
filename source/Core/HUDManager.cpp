@@ -79,8 +79,8 @@ namespace
             weaponType <= WEAPONTYPE_CANE;
     }
 
-    // GTA reconciles controller actions in CPad; GInput also feeds
-    // this state. Zero disables the gamepad binding.
+    // Read GTA's mapped controls, including GInput.
+    // Zero turns the gamepad binding off.
     static bool PadButtonHeld(std::uint32_t index)
     {
         if (index == 0)
@@ -154,8 +154,8 @@ namespace
     static VehicleFireCapability GetVehicleFireCapability(
         const CVehicle& vehicle)
     {
-        // Rhino and SWAT van do not use the driver's handheld
-        // weapon. Fire trucks DO allow side drive-by shooting.
+        // Rhino and SWAT vans use vehicle weapons; fire trucks
+        // can still allow handheld drive-by shooting.
         switch (vehicle.m_nModelIndex)
         {
         case MODEL_RHINO:
@@ -198,14 +198,13 @@ namespace
         case VehicleFireCapability::SideOnly:
             return IsLookingToOneSide(pad);
         case VehicleFireCapability::ForwardAndSide:
-            // Motorcycles can fire their handheld SMG forwards
-            // even when both camera-look buttons are held.
-            // Keep the existing rear-view restriction for quads.
+            // Motorcycles can shoot forwards with an SMG.
+            // Quads keep GTA's rear-view restriction.
             return vehicle.m_nVehicleSubClass == VEHICLE_BIKE ||
                 !pad.GetLookBehindForCar();
         default:
-            // Pedal-bike HUD remains based on ammo changes only.
-            // A bunny-hop/fire button isn't evidence of a shot.
+            // On bicycles, a jump button is not proof of shooting.
+            // Check actual ammunition use instead.
             return false;
         }
     }
@@ -333,10 +332,9 @@ bool HUDManager::ShouldDisplayAmmo() const
     const eWeaponType weaponType =
         weapon->m_eWeaponType;
 
-    // Use the selected weapon's actual skill, just like GTA's
-    // CHud::DrawAmmo. Extended weapon loaders may have no Poor
-    // skill entry for Standard-only weapons; omitting the skill
-    // made their ammo ineligible for Stack positioning.
+    // Check ammo using the weapon's actual skill, as GTA does.
+    // Some added weapons only have Standard-skill data;
+    // the default Poor skill would keep their ammo out of Stack.
     const CWeaponInfo* weaponInfo =
         CWeaponInfo::GetWeaponInfo(
             weaponType, mPlayer->GetWeaponSkill());
@@ -383,13 +381,9 @@ bool HUDManager::ShouldDisplayArmour() const
 
 void HUDManager::RestoreVanillaElements()
 {
-    // During startup, loading, or an uninitialized session
-    // always allow the game's original draw calls to run.
-    // Restoring the calls does NOT force GTA to draw HUD items
-    // when its own game state would normally hide them.
-    //
-    // CleanHUD takes ownership of the enabled elements once
-    // health/session initialization has completed.
+    // Let GTA handle the HUD during loading. Once gameplay starts,
+    // CleanHUD handles enabled items and still respects GTA's
+    // normal rules for hiding them.
     mClock.Update(true);
     mHealth.Update(true);
     mArmour.Update(true);
@@ -402,8 +396,7 @@ void HUDManager::RestoreDisabledElements()
 {
     const auto& settings = HUDSettings::Get();
 
-    // During managed gameplay, only elements explicitly disabled
-    // in the INI should remain controlled by vanilla drawing.
+    // Leave disabled HUD items under GTA's control.
     if (!settings.Clock)
         mClock.Update(true);
     if (!settings.Health)
@@ -420,8 +413,7 @@ void HUDManager::RestoreDisabledElements()
 
 void HUDManager::OnGameLoaded()
 {
-    // The engine can render before FindPlayerPed() becomes
-    // available, so return control to vanilla immediately.
+    // Let GTA draw the HUD until the player is available.
     RestoreVanillaElements();
     HUDRenderer::Get().Reset();
     mSessionInitialized = false;
@@ -461,8 +453,7 @@ void HUDManager::Update()
         mSkateboardWasRiding = false;
         mCellphonePuttingAway = false;
 
-        // Returning from gameplay to a frontend or loading
-        // screen must not leave our draw-call NOPs in place.
+        // Restore GTA's HUD calls before menus or loading screens.
         RestoreVanillaElements();
         HUDRenderer::Get().Reset();
         mLayout.ResetHistory();
@@ -530,13 +521,8 @@ void HUDManager::Update()
 
     if (!wasSessionInitialized)
     {
-        // The startup fallback used Update(true), leaving
-        // components partly/fully visible even though the HUD
-        // draw was suppressed. The earlier working build began
-        // each managed session with HideAll() instead.
-        //
-        // Clear those animation/timer states before constructing
-        // CleanHUD's first visible gameplay layout.
+        // Start each game with cleared fade timers so HUD items
+        // don't briefly appear during loading.
         HideAll();
         RestoreDisabledElements();
         mLayout.ResetHistory();
@@ -561,14 +547,12 @@ void HUDManager::Update()
     UpdateVehicleFiring();
     UpdateWanted();
 
-    // Aim-only visibility fades on release. Shot timers remain
-    // active rather than being erased by HUDComponent::Hide().
+    // Ending aim does not cancel the visibility time from shooting.
     const bool weaponAiming = IsWeaponAiming();
 
     mClock.Update(!settings.Clock || settings.AlwaysShowClock);
 
-    // Disabled CleanHUD elements retain vanilla draw calls.
-    // HUDLayout::Add excludes them from CleanHUD's stack.
+    // Disabled items stay with GTA and are not added to Stack.
     mHealth.Update(previewHeld || !settings.Health);
     mArmour.Update(previewHeld || !settings.Armour);
     mBreath.Update(previewHeld || !settings.Breath);
@@ -589,8 +573,7 @@ void HUDManager::Update()
             mAmmo.Reset();
     }
 
-    // Prepare one-way stack displacement from what was already
-    // visible in the preceding frame. Order must match layout.
+    // Move existing HUD items down only when a new item appears above.
     if (settings.Mode == HUDMode::Stack)
     {
         mLayout.PrepareStack({
@@ -601,8 +584,7 @@ void HUDManager::Update()
     }
     else
     {
-        // Minimal mode uses the same components and timers,
-        // but does not shift any of GTA's HUD coordinates.
+        // Minimal mode uses the same fades at GTA's original positions.
         mLayout.ResetHistory();
         BuildMinimalHUDLayout();
     }
@@ -860,8 +842,7 @@ void HUDManager::UpdateHealth()
 
     if (!HUDSettings::Get().Health)
     {
-        // Disabled Health is vanilla from startup, not a
-        // tracked CleanHUD element awaiting stabilization.
+        // Let GTA handle Health from the start when it is disabled.
         mLastHealth = currentHealth;
         mPreviousHealth = currentHealth;
         mWaitingForStableHealth = false;
@@ -1020,8 +1001,7 @@ void HUDManager::UpdateAmmo()
 
     if (capability == VehicleFireCapability::Bicycle)
     {
-        // Existing pedal-bike path: no inference from Fire,
-        // which also performs bunny hops.
+        // On bicycles, the fire button can also trigger a bunny hop.
         mAmmo.ShowFor(mVisibleTime);
         mWeaponIcon.ShowFor(mVisibleTime);
         return;
@@ -1031,10 +1011,9 @@ void HUDManager::UpdateAmmo()
         current.AmmoInClip < previous.AmmoInClip ||
         current.AmmoTotal < previous.AmmoTotal;
 
-    // A real decrease in CJ's held-weapon ammo is evidence of use
-    // regardless of controller mappings, weapon family or vehicle
-    // class. Trainer ammo edits can also qualify; no button alone
-    // will trigger a reveal. Weapon-switch changes are excluded.
+    // Show the HUD when the held weapon uses ammo, even with
+    // custom weapons or controls. Ignore weapon switches and
+    // button presses without shots; scripted ammo edits can count.
     if (!mWeaponChangedThisFrame && consumedAmmo &&
         ShouldDisplayAmmo())
     {
@@ -1057,11 +1036,8 @@ void HUDManager::UpdateVehicleFiring()
 
     const CWeapon* weapon = mPlayer->GetWeapon();
 
-    // A confirmed FIRING state belongs to CJ's held weapon, not the
-    // vehicle's turret or its horn. Accept it even if a drive-by mod
-    // uses non-SMG weapons, custom vehicles, or GInput's alternate
-    // analog/hotkey drive-by controls.
-    // No HUD reveal occurs from a button press alone.
+    // Check CJ's actual weapon firing, not the vehicle's horn
+    // or turret. This supports additional drive-by weapons.
     if (vehicle && weapon && ShouldDisplayAmmo() &&
         weapon->m_nAmmoTotal != 0 &&
         weapon->m_nState == WEAPONSTATE_FIRING)
@@ -1106,10 +1082,8 @@ bool HUDManager::IsWeaponAiming() const
 
         if (jetpackTask && !jetpackTask->m_bIsFinished)
         {
-            // GTA's jetpack processes the current weapon only for
-            // instant-hit weapons using the arm-aim flag. Read the
-            // active weapon info at runtime so weapon.dat changes
-            // are respected without hardcoding a weapon type list.
+            // While using a jetpack, GTA allows aiming with compatible
+            // weapons. Read current weapon data so mods can change this.
             const CWeaponInfo* info = CWeaponInfo::GetWeaponInfo(
                 weapon->m_eWeaponType,
                 mPlayer->GetWeaponSkill());
@@ -1118,8 +1092,8 @@ bool HUDManager::IsWeaponAiming() const
                 info->m_nWeaponFire == WEAPON_FIRE_INSTANT_HIT &&
                 info->m_nFlags.bAimWithArm;
 
-            // Mods can drive weapons without changing weapon.dat.
-            // Genuine FIRING state is evidence; aim input alone is not.
+            // For scripted weapons, require an actual shot;
+            // aiming alone does not count.
             const bool confirmedFiring =
                 weapon->m_nState == WEAPONSTATE_FIRING;
 
@@ -1135,10 +1109,8 @@ bool HUDManager::IsWeaponAiming() const
 
     const CVehicle* vehicle = mPlayer->m_pVehicle;
 
-    // Manual Driveby Refixed (and similar CLEO mods) starts GTA's
-    // drive-by task when its own configurable aim button is pressed.
-    // That aim button need not map to GetTarget/GetLookLeft/Right, so
-    // recognize the actual task before checking opt-in look previews.
+    // Some drive-by mods use their own aim button. Recognize
+    // GTA's active drive-by task instead of a particular key.
     if (mPlayer->m_pIntelligence &&
         (mPlayer->m_pIntelligence->FindTaskByType(
              TASK_SIMPLE_GANG_DRIVEBY) ||
@@ -1148,10 +1120,8 @@ bool HUDManager::IsWeaponAiming() const
         return true;
     }
 
-    // Side-looking preview remains opt-in. Recognize vanilla SMGs
-    // before firing; allow other weapon types after a confirmed shot
-    // in this vehicle. This prevents unrelated selected weapons from
-    // appearing merely because the player looks sideways.
+    // Side-looking preview is optional. GTA's usual SMGs qualify
+    // immediately; other weapons qualify after firing in this vehicle.
     const bool knownDriveByWeapon =
         IsDriveByWeapon(weapon->m_eWeaponType) ||
         (vehicle && mConfirmedDriveByVehicle == vehicle &&
@@ -1190,9 +1160,8 @@ void HUDManager::UpdateWanted()
 
 void HUDManager::BuildMinimalHUDLayout()
 {
-    // Keep only visibility/alpha data in HUDRenderer. Hooks
-    // use IsUsingVanillaLayout() to retain original GTA coords.
-    // No stack height or spacing is reserved in this mode.
+    // Minimal mode keeps GTA's positions with CleanHUD's fades.
+    // It does not need any Stack spacing.
     mLayout.Add(mClock, 0.0f, 0.0f, 0.0f);
     mLayout.Add(mMoney, 0.0f, 0.0f, 0.0f);
     mLayout.Add(mWanted, 0.0f, 0.0f, 0.0f);
@@ -1235,8 +1204,7 @@ void HUDManager::BuildPlayerHUDLayout()
         (settings.Weapon && mWeaponIcon.IsVisible()) ||
         (ammoDisplayed && mAmmo.IsVisible());
 
-    // Resolve the spacing to whichever group is next
-    // in the visible stack, not the previous Weapon-first order.
+    // Use the gap for whichever HUD group is actually next.
     float moneySpacing = 0.0f;
 
     if (wantedDisplayed)
@@ -1256,10 +1224,8 @@ void HUDManager::BuildPlayerHUDLayout()
             wantedSpacing = settings.WantedToWeaponSpacing;
     }
 
-    // The Clock is a fixed top-of-stack anchor. Its trailing
-    // gap belongs to whichever group currently sits directly
-    // below it, including when Clock=0 reserves vanilla space.
-    // When no group is visible the gap has no visible effect.
+    // Keep the clock at the top, or reserve room for GTA's clock.
+    // The next visible HUD group determines the gap below it.
     float clockSpacing = 0.0f;
 
     if (moneyDisplayed)
@@ -1298,8 +1264,8 @@ void HUDManager::BuildPlayerHUDLayout()
         0.0f,
         wantedSpacing);
 
-    // Armour, Breath and Health are now above Weapon/Ammo.
-    // The final visible bar owns the bar-to-weapon gap.
+    // Health, armour and breath sit above weapon and ammo.
+    // Add the weapon gap after the last visible status bar.
     const bool armourShown =
         armourDisplayed && mArmour.IsVisible();
 
@@ -1337,9 +1303,7 @@ void HUDManager::BuildPlayerHUDLayout()
             ? settings.StatusBarToWeaponSpacing
             : 0.0f);
 
-    // Weapon and Ammo share a group origin. Weapon reserves the
-    // configured distance to Ammo rather than using a fake height
-    // and cancelling trailing spacing.
+    // Keep weapon and ammo together at the selected distance.
     mLayout.Add(
         mWeaponIcon,
         settings.WeaponToAmmoVerticalOffset,
@@ -1354,15 +1318,14 @@ void HUDManager::BuildPlayerHUDLayout()
             ? mLayout.GetStackProgress(HUDComponentType::Weapon)
             : 1.0f;
 
-        // Preserve the existing one-way slide behavior when Ammo
-        // and Weapon enter the stack at different fade progress.
+        // Keep movement smooth when weapon and ammo appear separately.
         const float ammoPositionCorrection =
             mLayout.UsesFinalEntryPosition(HUDComponentType::Ammo)
             ? 0.0f
             : settings.WeaponToAmmoVerticalOffset *
                 (1.0f - weaponReservation);
 
-        // Ammo is the final item: its trailing reservation is unused.
+        // Ammo is last, so it needs no extra gap below.
         mLayout.Add(
             mAmmo,
             0.0f,
@@ -1376,8 +1339,7 @@ void HUDManager::PreviewSpacing(
     HUDSpacingPreviewGroup first,
     HUDSpacingPreviewGroup second)
 {
-    // SleekConfig callbacks run on the game thread. Never surface HUD
-    // components during new-game/load startup or frontend transitions.
+    // Do not preview HUD items in menus or during loading.
     if (!mSessionInitialized || !mPlayer || mNeedsReset ||
         HUDSettings::Get().Mode != HUDMode::Stack)
     {
@@ -1394,8 +1356,7 @@ void HUDManager::PreviewJetpackPosition()
 {
     const auto& settings = HUDSettings::Get();
 
-    // Do not invent an equipped jetpack or revive one being dropped.
-    // Unlike Stack spacing previews, this also works in Minimal mode.
+    // Preview only an equipped jetpack, in either layout.
     if (!mSessionInitialized || !mPlayer || mNeedsReset ||
         !settings.ShowHiddenWeaponIcons ||
         !mPlayer->m_pIntelligence ||
@@ -1404,9 +1365,8 @@ void HUDManager::PreviewJetpackPosition()
         return;
     }
 
-    // Only a real, unfinished jetpack task can be previewed. This
-    // rejects both midair F presses (which don't end that task) and
-    // old finished tasks waiting for the engine to detach them.
+    // Only preview an active jetpack, not a task that has ended.
+    // A midair exit-key press does not necessarily end the task.
     const CTaskSimpleJetPack* task =
         mPlayer->m_pIntelligence->GetTaskJetPack();
     if (!task || task->m_bIsFinished)
@@ -1419,8 +1379,7 @@ void HUDManager::PreviewJetpackPosition()
 void HUDManager::ShowWeaponAndAmmoForEquipment(
     std::uint32_t duration)
 {
-    // Keep weapon and ammo on the same visibility window when
-    // riding a skateboard or equipping a jetpack.
+    // Show weapon and ammo together when equipment changes.
     mWeaponIcon.ShowFor(duration);
 
     if (HUDSettings::Get().Ammo && ShouldDisplayAmmo())
@@ -1446,7 +1405,7 @@ void HUDManager::PreviewSpacingGroup(HUDSpacingPreviewGroup group)
     const auto& settings = HUDSettings::Get();
     const std::uint32_t duration = settings.VisibilityMs;
 
-    // Respect a zero-duration configuration and user-disabled elements.
+    // Don't preview disabled items or those set to zero duration.
     if (duration == 0)
         return;
 
@@ -1471,16 +1430,14 @@ void HUDManager::PreviewSpacingGroup(HUDSpacingPreviewGroup group)
         break;
 
     case HUDSpacingPreviewGroup::Wanted:
-        // The game only draws real wanted stars for an active wanted
-        // level. Do not fake a wanted level or reserve invisible space
-        // when the player has no stars.
+        // Only preview wanted stars when the player is wanted.
         if (settings.Wanted && HasWantedLevel())
             mWanted.Show();
         break;
 
     case HUDSpacingPreviewGroup::StatusBars:
-        // Health is the reliable visible reference bar; only include
-        // Armour/Breath when the game can actually display them.
+        // Use Health as the reference; include Armour and Breath
+        // only when GTA can show them.
         PreviewSpacingGroup(HUDSpacingPreviewGroup::Health);
         PreviewSpacingGroup(HUDSpacingPreviewGroup::Armour);
         PreviewSpacingGroup(HUDSpacingPreviewGroup::Breath);
@@ -1511,8 +1468,7 @@ void HUDManager::PreviewSpacingGroup(HUDSpacingPreviewGroup group)
         break;
 
     case HUDSpacingPreviewGroup::Breath:
-        // Outside underwater/depleted-air gameplay the vanilla
-        // breath bar is not drawable; do not create an empty slot.
+        // Don't reserve space for Breath when it isn't needed.
         if (settings.Breath && mBreath.IsVisible())
             mBreath.ShowFor(duration);
         break;
@@ -1562,8 +1518,7 @@ bool HUDManager::ShouldDrawSkateboardIcon() const
         return false;
     }
 
-    // After dismount, the CLEO script can restore the same board as
-    // a held weapon. Avoid drawing two copies during its fade-out.
+    // Avoid two skateboard icons when the board is held after dismounting.
     const CWeapon* weapon = mPlayer->GetWeapon();
     if (!IsRidingConfiguredSkateboard() && weapon &&
         weapon->m_eWeaponType != WEAPONTYPE_UNARMED &&
@@ -1600,8 +1555,7 @@ std::uint8_t HUDManager::GetCellphoneIconAlpha() const
 
 std::uint8_t HUDManager::GetJetpackIconAlpha() const
 {
-    // An unequip ends the *timer*, not the drawn fade-out.
-    // The alpha remains live until HUDComponent::Update reaches zero.
+    // Keep fading the icon after the item is put away.
     return HUDSettings::Get().ShowHiddenWeaponIcons &&
         mSessionInitialized ? mJetpackIcon.GetAlpha() : 0;
 }
@@ -1625,10 +1579,8 @@ bool HUDManager::ShouldReplaceWeaponWithJetpack() const
     if (!weapon)
         return false;
 
-    // Only truly unarmed slots are replaced. Throwables, melee,
-    // utility equipment and custom weapons have their own weapon
-    // icons, so keep them and place the jetpack alongside.
-    // A visible cellphone already occupies the main icon slot.
+    // Jetpack replaces fists or knuckles, but sits beside weapons.
+    // The phone uses the main slot when visible.
     const eWeaponType type = weapon->m_eWeaponType;
     return !ShouldDrawCellphoneIcon() &&
         (type == WEAPONTYPE_UNARMED ||
@@ -1655,8 +1607,7 @@ bool HUDManager::ShouldSuppressNativeWeaponSprite() const
         ShouldReplaceWeaponWithSkateboard())
         return true;
 
-    // During a phone task, suppress only knuckles; firearm icons
-    // continue through GTA's ordinary weapon rendering path.
+    // While using the phone, hide knuckles but keep firearm icons.
     return ShouldDrawCellphoneIcon() &&
         weapon->m_eWeaponType == WEAPONTYPE_BRASSKNUCKLE;
 }
@@ -1676,16 +1627,15 @@ int HUDManager::GetCustomWeaponIconModel() const
 
     const eWeaponType weaponType = weapon->m_eWeaponType;
 
-    // Values above UNUSED are GTA damage/event types, not safe
-    // weapon-info indices. Unarmed has no held weapon icon.
+    // Some weapon IDs are not valid for icon lookup.
+    // Unarmed does not have a held-weapon icon.
     if (weaponType <= WEAPONTYPE_UNARMED ||
         weaponType > WEAPONTYPE_UNUSED)
     {
         return 0;
     }
 
-    // GTA tracks the model actually attached to the player's hand,
-    // including when a weapon mod swaps Cane/Shovel for a skateboard.
+    // Use the model actually held, including replacement skateboards.
     const int heldModelId = mPlayer->m_nWeaponModelId;
 
     if (heldModelId <= 0 ||
@@ -1695,9 +1645,8 @@ int HUDManager::GetCustomWeaponIconModel() const
         return 0;
     }
 
-    // Native CHud and WeaponIconsTXD already draw the regular weapon
-    // model's icon. Only supplement a DIFFERENT held model, so
-    // ordinary weapons are never drawn twice.
+    // GTA or WeaponIconsTXD draws normal weapon icons.
+    // Add an extra icon only for a different held model.
     const CWeaponInfo* info = CWeaponInfo::GetWeaponInfo(
         weaponType, mPlayer->GetWeaponSkill());
 
@@ -1728,9 +1677,8 @@ void HUDManager::UpdateSpecialIcons()
     const CTaskSimpleJetPack* jetpackTask =
         intelligence->GetTaskJetPack();
 
-    // GTA ignores the exit button while airborne. The jetpack task
-    // itself is the source of truth: only start fading when the game
-    // has marked the task finished or actually removed the task.
+    // Don't fade the jetpack for a midair exit-key press.
+    // Wait until GTA actually ends the jetpack task.
     const bool jetpackEquipped =
         jetpackTask && !jetpackTask->m_bIsFinished;
 
@@ -1740,16 +1688,14 @@ void HUDManager::UpdateSpecialIcons()
     }
     else if (!mJetpackWasEquipped)
     {
-        // Normal CleanHUD visibility starts once per actual equip,
-        // not on every frame of continued flight.
+        // Show the jetpack when equipped, not on every flight frame.
         mJetpackIcon.ShowFor(mVisibleTime);
         ShowWeaponAndAmmoForEquipment(mVisibleTime);
     }
     mJetpackWasEquipped = jetpackEquipped;
 
-    // PHONE_OUT may still belong to the parent phone-use task.
-    // Stop extending the icon when this task begins, but allow the
-    // usual CleanHUD FadeOutMs instead of resetting its alpha.
+    // When the phone is put away, stop refreshing its timer
+    // and allow a normal fade-out.
     const bool puttingPhoneAway =
         intelligence->FindTaskByType(TASK_SIMPLE_PHONE_OUT) != nullptr;
     const bool anyPhoneTask = puttingPhoneAway ||
@@ -1762,8 +1708,7 @@ void HUDManager::UpdateSpecialIcons()
     else if (!anyPhoneTask)
         mCellphonePuttingAway = false;
 
-    // Keep the fade running after PHONE_OUT, even if its parent
-    // complex task remains attached for another few frames.
+    // Keep fading while GTA finishes the phone animation.
     const bool cellphoneEquipped = anyPhoneTask &&
         !mCellphonePuttingAway;
 
@@ -1799,8 +1744,8 @@ void HUDManager::UpdateSkateboardIcon()
     }
     else if (!riding)
     {
-        // Leaving this vehicle ends the ride, not the FadeOutMs
-        // animation. A held skateboard can take over its own slot.
+        // Fade the riding icon after dismounting. A held board
+        // can then use the normal weapon icon slot.
         mSkateboardIcon.Hide();
     }
 
