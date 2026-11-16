@@ -40,9 +40,10 @@ Turning off an element under **Elements** gives control of that element back to 
 
 ## Move HUD items
 
-Open **Advanced Layout** to adjust gaps and positions. These settings
-work **only in Stack mode**. The default values are based on GTA's
-original HUD positions, so everything stays familiar. Increase a
+Open **Advanced Layout** to adjust gaps and positions. The default
+values are based on GTA's original HUD positions, so the HUD stays
+familiar. **Spacing and Weapon/Ammo positioning work only in Stack
+mode**. Jetpack icon offsets also work in Minimal mode. Increase a
 spacing value to add more room between items. Moving a slider briefly
 shows the affected HUD items.
 
