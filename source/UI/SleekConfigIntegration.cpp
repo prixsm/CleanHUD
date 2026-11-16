@@ -561,7 +561,7 @@ namespace
         ScSettingDesc mode = Describe(
             "hud_mode", "HUD layout", "General", "", SC_ENUM);
 
-        mode.options = "Stack | Minimal";
+        mode.options = "Stack|Minimal";
         mode.minimum = 0;
         mode.maximum = 1;
         mode.step = 1;
@@ -664,11 +664,11 @@ namespace
             "vanilla_hud_pad_button", "Gamepad / mapped button",
             "HUD Preview", "", SC_ENUM);
         padButton.options =
-            " 0 - Off | 1 - LB/L1 | 2 - LT/L2 | 3 - RB/R1 | 4 - RT/R2 |"
-            " 5 - D-pad ↑ | 6 - D-pad ↓ | 7 - D-pad ← | 8 - D-pad → |"
-            " 9 - Back/Select | 10 - Start |"
-            " 11 - X/□ | 12 - Y/△ | 13 - A/X | 14 - B/○ |"
-            " 15 - LStick/L3 | 16 - RStick/R3";
+            "0 - Off|1 - LB/L1|2 - LT/L2|3 - RB/R1|4 - RT/R2|"
+            "5 - D-pad ↑|6 - D-pad ↓|7 - D-pad ←|8 - D-pad →|"
+            "9 - Back/Select|10 - Start|"
+            "11 - X/□|12 - Y/Δ|13 - A/X|14 - B/○|"
+            "15 - LStick/L3|16 - RStick/R3";
         padButton.minimum = 0;
         padButton.maximum = 16;
         padButton.step = 1;
