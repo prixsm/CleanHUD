@@ -19,9 +19,7 @@ namespace
 {
     static void CreateDefaultIniIfMissing(const char* path)
     {
-        // Keep source/CleanHUD.ini as the only maintained template:
-        // the resource compiler bundles its exact bytes into this ASI.
-        // Fetch the resource from our DLL, not gta_sa.exe.
+        // Read the bundled default INI from CleanHUD.asi.
         HMODULE module = nullptr;
 
         if (!GetModuleHandleExA(
@@ -52,7 +50,7 @@ namespace
         if (!data)
             return;
 
-        // CREATE_NEW never overwrites a user's existing INI.
+        // Never replace an existing INI.
         HANDLE file = CreateFileA(
             path,
             GENERIC_WRITE,
@@ -71,7 +69,7 @@ namespace
 
         CloseHandle(file);
 
-        // Avoid leaving a partial/corrupt configuration behind.
+        // Don't leave an incomplete INI behind.
         if (!saved || written != size)
             DeleteFileA(path);
     }
@@ -143,10 +141,8 @@ namespace
             0, 1) != 0;
     }
 
-    // WritePrivateProfileStringA normalizes edited INI entries to
-    // "Key=Value". Restore the template's "Key = Value" style only
-    // after Win32 has completed the actual save. Keep comments,
-    // ordering, unknown keys and line endings otherwise untouched.
+    // Save with readable "Key = Value" spacing while preserving
+    // comments, section order, and any other user settings.
     static bool RestoreIniSpacing(const std::string& path)
     {
         std::ifstream input(path, std::ios::binary);
@@ -161,8 +157,7 @@ namespace
         if (input.bad())
             return false;
 
-        // The original file must not still be open when MoveFileExA
-        // replaces it on Windows. An open stream can deny FILE_SHARE_DELETE.
+        // Close the INI before replacing it so Windows allows the move.
         input.close();
 
         std::string formatted;
@@ -209,7 +204,7 @@ namespace
                             ? std::string()
                             : line.substr(valueStart);
 
-                        // Retain any original indentation.
+                        // Keep the existing indentation.
                         line = line.substr(0, first) + key +
                             " = " + value;
                     }
@@ -233,8 +228,7 @@ namespace
         if (formatted == original)
             return true;
 
-        // Write a complete temporary file before replacing the original,
-        // so a failed formatting pass cannot truncate the saved INI.
+        // Finish the temporary INI before replacing the original.
         const std::string temporary = path + ".cleanhud.tmp";
         {
             std::ofstream output(
@@ -276,8 +270,7 @@ HUDSettings& HUDSettings::Get()
 
 void HUDSettings::Load()
 {
-    // Plugin-SDK resolves the directory of the ASI itself,
-    // including when installed in a subfolder of scripts.
+    // Find the INI beside CleanHUD.asi, even in a scripts subfolder.
     const std::string path =
         plugin::paths::GetPluginDirRelativePathA(
             "CleanHUD.ini");
@@ -439,8 +432,7 @@ bool HUDSettings::Save() const
     const auto putFloat = [&put](
         const char* section, const char* key, float value)
     {
-        // Always save a single decimal (e.g. 25.0) even though
-        // positions advance in whole virtual layout units.
+        // Save spacing with one decimal place, such as 25.0.
         char number[64] = {};
         const auto result = std::to_chars(
             number, number + sizeof(number) - 1,
@@ -511,20 +503,17 @@ bool HUDSettings::Save() const
             "General", "VanillaHUDPadButton", nullptr, path.c_str()))
         return false;
 
-    // Keep the saved INI free from unsupported configuration keys.
+    // Remove unsupported settings from the saved INI.
     if (!WritePrivateProfileStringA(
         "WeaponAmmo", "UnifiedWeaponIconScale", nullptr, path.c_str()))
         return false;
 
-    // A profile-cache flush can return FALSE (zero) by design even on
-    // success. The individual WritePrivateProfileStringA calls above
-    // already reported whether the settings were saved; do not treat
-    // the flush return value as a failed Save Mod operation.
+    // The Windows INI cache may return zero even after a successful
+    // flush. The individual settings writes are checked above.
     WritePrivateProfileStringA(
         nullptr, nullptr, nullptr, path.c_str());
 
-    // Restore the readable "Key = Value" style after Win32 normalizes
-    // entries, without discarding the INI's comments and group order.
+    // Restore "Key = Value" formatting without changing other notes.
     return RestoreIniSpacing(path);
 }
 
