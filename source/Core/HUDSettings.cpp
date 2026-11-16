@@ -127,8 +127,7 @@ namespace
         if (*end)
             return fallback;
 
-        // Displayed HUD coordinates move at whole virtual units.
-        // Normalize legacy fractions and bound the usable layout range.
+        // Keep spacing within the allowed range and round to whole units.
         return std::round(std::clamp(value, -1500.0f, 1500.0f));
     }
 
@@ -294,8 +293,7 @@ void HUDSettings::Load()
         ? HUDMode::Minimal
         : HUDMode::Stack;
 
-    // Older preview builds stored bindings in [General]. Read those
-    // as fallback; the dedicated [HUDPreview] section takes priority.
+    // Use [HUDPreview] when present; also accept keys in [General].
     const auto oldKey = ReadInt(
         path.c_str(), "General", "VanillaHUDKey", 9, 0, 255);
     const auto oldPadButton = ReadInt(
@@ -498,15 +496,15 @@ bool HUDSettings::Save() const
     success = putFloat("WeaponAmmoLayout", "WeaponAmmoOffsetX", WeaponAmmoOffsetX) && success;
     success = putFloat("WeaponAmmoLayout", "WeaponAmmoOffsetY", WeaponAmmoOffsetY) && success;
     success = putFloat("WeaponAmmoLayout", "WeaponToAmmoVerticalOffset", WeaponToAmmoVerticalOffset) && success;
-    // Always write these last so old INIs get a dedicated bottom section.
+    // Keep the HUD Preview settings together at the end of the INI.
     success = putInt("HUDPreview", "VanillaHUDKey", VanillaHUDKey) && success;
     success = putInt("HUDPreview", "VanillaHUDPadButton", VanillaHUDPadButton) && success;
 
     if (!success)
         return false;
 
-    // Migrate old binding entries without discarding other General
-    // settings. New values have already been saved in [HUDPreview].
+    // Remove duplicate bindings from [General] after saving them
+    // in [HUDPreview]. Leave unrelated settings untouched.
     if (!WritePrivateProfileStringA(
         "General", "VanillaHUDKey", nullptr, path.c_str()) ||
         !WritePrivateProfileStringA(
