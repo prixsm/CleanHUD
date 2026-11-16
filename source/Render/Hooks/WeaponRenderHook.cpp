@@ -44,15 +44,13 @@ namespace
     {
         float X = 0.0f;
         float Y = 0.0f;
-        // Retain the last confirmed native sprite dimensions across
-        // frames when a weapon texture isn't drawn. Dimensions are only
-        // valid at the screen resolution at which they were captured.
+        // Remember the last measured icon size while the icon is hidden.
+        // Recheck the size if the screen resolution changes.
         float Width = 0.0f;
         float Height = 0.0f;
         float CapturedScreenWidth = 0.0f;
         float CapturedScreenHeight = 0.0f;
-        // Native sprite's offset from the weapon slot anchor (which can
-        // differ when an external mod changes the icon's dimensions).
+        // Offset from GTA's weapon icon position, which other mods can change.
         float OffsetX = 0.0f;
         float OffsetY = 0.0f;
         float AnchorX = 0.0f;
@@ -61,8 +59,8 @@ namespace
         unsigned int Frame = std::numeric_limits<unsigned int>::max();
     };
 
-    // Only POD frame data is cached; RenderWare textures and TXD slots
-    // are resolved afresh to survive game/texture reloads.
+    // Store only icon measurements, not textures. Look up textures
+    // each time so game reloads don't leave invalid references.
     NativeWeaponPosition gNativeWeaponPosition;
 
     RwTexture* FindIconTexture(int modelId)
@@ -78,13 +76,12 @@ namespace
         if (!model)
             return nullptr;
 
-        // Match CHud::DrawWeaponIcon's model-name + ICON lookup key.
+        // Look up the same model-name + ICON texture that GTA uses.
         const unsigned int iconHash =
             CKeyGen::AppendStringToKey(model->m_nKey, "ICON");
 
-        // WeaponIconsTXD inserts its own dictionary ahead of the
-        // model's texture dictionary. Do the same for extra icons
-        // without touching the mod's two redirected call sites.
+        // Look for WeaponIconsTXD textures before the model's textures,
+        // without changing that mod's drawing hooks.
         const int customSlot = CTxdStore::FindTxdSlot("weaponicons");
 
         if (customSlot >= 0)
@@ -141,8 +138,8 @@ namespace
         const float screenWidth = plugin::screen::GetScreenWidth();
         const float screenHeight = plugin::screen::GetScreenHeight();
 
-        // Retain the last measured native icon size across intermittent
-        // draw frames; refresh the cached pixels when resolution changes.
+        // Reuse the last icon size when GTA skips a frame of drawing.
+        // Measure again after a resolution change.
         const bool haveMeasuredScale =
             p.Width > 0.0f && p.Height > 0.0f &&
             p.CapturedScreenWidth == screenWidth &&
@@ -174,10 +171,8 @@ namespace
         const float offsetScaleX = screenWidth / 1920.0f;
         const float offsetScaleY = screenHeight / 1080.0f;
 
-        // Fists/knuckles share their slot with the jetpack. All other
-        // equipped weapons, including throwables and custom held
-        // models, retain the slot; the jetpack draws beside them.
-        // The side-by-side position has a built-in 12-unit right shift.
+        // Jetpack replaces fists or knuckles but sits beside other weapons.
+        // The side-by-side position includes a 12-unit right shift.
         const float jetpackX = manager.ShouldReplaceWeaponWithJetpack()
             ? iconX + settings.JetpackIconOffsetX * offsetScaleX
             : iconX - iconWidth -
@@ -187,18 +182,15 @@ namespace
         const float jetpackY = iconY +
             settings.JetpackIconOffsetY * offsetScaleY;
 
-        // A phone occupies the normal weapon slot; the jetpack uses
-        // its side position instead of being hidden or overlapping.
+        // Keep the phone in the weapon slot and place jetpack beside it.
         if (manager.ShouldDrawJetpackIcon())
             DrawModelIcon(MODEL_JETPACK, jetpackX, jetpackY,
                 iconWidth, iconHeight, manager.GetJetpackIconAlpha());
 
         if (manager.ShouldDrawSkateboardIcon())
         {
-            // A riding skateboard is an independent vehicle-like
-            // icon: same measured native scale, separate fade timer.
-            // With bare hands it occupies the weapon slot. With a
-            // gun/throwable/custom weapon it sits left of that slot.
+            // The riding skateboard icon fades separately and uses GTA's
+            // weapon icon size. With another weapon, show it to the left.
             const float sideGap =
                 8.0f * (iconWidth / 47.0f);
             const float sideShift = 12.0f * offsetScaleX;
@@ -327,8 +319,7 @@ namespace
 
     static void HookedWeaponFistSprite(SafetyHookContext& ctx)
     {
-        // Fist uses CSprite2d::Draw(CRect, CRGBA), whereas normal
-        // weapons use CSprite::RenderOneXLUSprite. Capture both paths.
+        // GTA draws fists and weapons in different ways, so handle both.
         auto* stack = reinterpret_cast<std::uintptr_t*>(ctx.esp);
         if (stack[0] < WeaponIconStart || stack[0] >= WeaponIconEnd)
             return;
@@ -340,8 +331,7 @@ namespace
 
         if (HUDManager::Get().ShouldSuppressNativeFist())
         {
-            // Substitute a transparent color only for the native fist
-            // call; never mutate the game's original color storage.
+            // Hide only GTA's fist drawing; don't change GTA's saved colors.
             static const CRGBA transparent(255, 255, 255, 0);
             stack[2] = reinterpret_cast<std::uintptr_t>(&transparent);
         }
@@ -367,8 +357,7 @@ namespace
         if (!pos.Valid)
             return;
 
-        // The native weapon sprite supplies its final half-sizes and
-        // center as float arguments. Capture before adjusting alpha.
+        // Measure GTA's weapon icon before changing its transparency.
         const auto readFloat = [stack](int index)
         {
             float value = 0.0f;
@@ -388,8 +377,7 @@ namespace
         const std::uint32_t cleanAlpha =
             pos.Alpha;
 
-        // Phone suppresses knuckles; the jetpack replaces only bare
-        // hands or knuckles, not throwables, melee or other weapons.
+        // Phone hides knuckles; jetpack never replaces a real weapon icon.
         stack[9] = HUDManager::Get().ShouldSuppressNativeWeaponSprite()
             ? 0u : originalAlpha * cleanAlpha / 255u;
     }
@@ -411,16 +399,15 @@ void WeaponRenderHook::Install()
                 0x70D000),
             HookedWeaponSpriteAlpha);
 
-    // The unarmed icon uses a different sprite path from normal
-    // weapons. Tap its final rectangle to match WSF/MixSets scaling.
+    // Handle the fist icon's separate drawing path so its size
+    // still matches WidescreenFix and MixSets.
     SafetyHookMid& fistHook = WeaponFistSpriteHookStorage();
     fistHook = safetyhook::create_mid(
         reinterpret_cast<void*>(0x728350),
         HookedWeaponFistSprite);
 
-    // Draw after the game's HUD but before the screen-fade stage.
-    // No interception of WeaponIconsTXD's calls at
-    // 0x58D84B / 0x58E895, or of its TXD loading.
+    // Draw additional icons after GTA's HUD, before screen fades.
+    // Leave WeaponIconsTXD's hooks and texture loading untouched.
     plugin::Events::drawHudEvent += []()
     {
         DrawExtraWeaponIcons();
