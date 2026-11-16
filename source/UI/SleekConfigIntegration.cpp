@@ -141,16 +141,16 @@ namespace
         { 18, "Alt" },
         { 19, "Pause" },
         { 20, "Caps Lock" },
-        { 27, "Escape" },
+        { 27, "Esc" },
         { 32, "Space" },
         { 33, "Page Up" },
         { 34, "Page Down" },
         { 35, "End" },
         { 36, "Home" },
-        { 37, "Left Arrow" },
-        { 38, "Up Arrow" },
-        { 39, "Right Arrow" },
-        { 40, "Down Arrow" },
+        { 37, "←" },
+        { 38, "↑" },
+        { 39, "→" },
+        { 40, "↓" },
         { 45, "Insert" },
         { 46, "Delete" },
         { 48, "0" },
@@ -218,23 +218,23 @@ namespace
         { 123, "F12" },
         { 144, "Num Lock" },
         { 145, "Scroll Lock" },
-        { 160, "Left Shift" },
-        { 161, "Right Shift" },
-        { 162, "Left Ctrl" },
-        { 163, "Right Ctrl" },
-        { 164, "Left Alt" },
-        { 165, "Right Alt" },
-        { 186, "Semicolon" },
-        { 187, "Plus/Equals" },
-        { 188, "Comma" },
-        { 189, "Minus" },
-        { 190, "Period" },
-        { 191, "Slash" },
-        { 192, "Grave" },
-        { 219, "Left Bracket" },
+        { 160, "LShift" },
+        { 161, "RShift" },
+        { 162, "LCtrl" },
+        { 163, "RCtrl" },
+        { 164, "LAlt" },
+        { 165, "RAlt" },
+        { 186, ";" },
+        { 187, "=" },
+        { 188, "," },
+        { 189, "-" },
+        { 190, "." },
+        { 191, "/" },
+        { 192, "`" },
+        { 219, "[" },
         { 220, "Backslash" },
-        { 221, "Right Bracket" },
-        { 222, "Apostrophe" },
+        { 221, "]" },
+        { 222, "'" },
     };
 
     constexpr int PreviewKeyCount =
@@ -269,7 +269,7 @@ namespace
                 output += " - ";
                 output += choice.Label;
             }
-            output += "|Custom VK (configured in INI)";
+            output += "| Custom VK (configured in INI)";
             return output;
         }();
         return options;
@@ -292,18 +292,16 @@ namespace
         if (std::strcmp(id, "vanilla_hud_key_choice") == 0)
             setting.description =
                 "Select a labelled Windows virtual-key (VK) code. "
-                "Choose Off to disable; Tab is the default. "
-                "For any other VK code (0..255), edit CleanHUD.ini.";
+                "For any other VK code (0-255), edit CleanHUD.ini.";
         else if (std::strcmp(id, "vanilla_hud_pad_button") == 0)
             setting.description =
-                "Select a GTA gamepad action, with Xbox and PlayStation "
-                "labels. Off is the default. GTA/GInput can also map "
-                "keyboard keys to these same pad actions (e.g. "
-                "Ctrl may activate LB/L1). Not physical-pad-only.";
+                "Select a gamepad action, with Xbox and PlayStation labels. "
+                "The game can also map keyboard keys to these same pad "
+                "actions (e.g. Ctrl may activate LB/L1). ";
         else if (std::strcmp(id, "hud_mode") == 0)
             setting.description =
                 "Stack arranges temporary HUD elements vertically; "
-                "Minimal fades elements at GTA's original positions.";
+                "Minimal only fades elements with their original positions.";
         else if (std::strcmp(id, "always_show_clock") == 0)
             setting.description =
                 "Keep the clock visible above the Stack. When off, "
@@ -578,7 +576,7 @@ namespace
             "Elements", "", SC_DESCRIPTION);
         elementsHelp.description =
             "On: CleanHUD manages this element's visibility and layout. "
-            "Off: leave its rendering to GTA or another HUD mod.";
+            "Off: leave its rendering to the game or another HUD mod.";
 
         if (gApi->register_setting(gMod, &elementsHelp) != SC_OK)
             return false;
@@ -646,10 +644,8 @@ namespace
             "hud_preview_help", "Hold to show vanilla positions",
             "HUD Preview", "", SC_DESCRIPTION);
         help.description =
-            "Hold your chosen key or gamepad button to preview GTA's "
-            "original HUD positions. Release to resume CleanHUD. "
-            "Both dropdowns include the numeric INI codes; avoid "
-            "buttons already used by the game.";
+            "Hold your chosen key or gamepad button to preview the game's "
+            "original HUD positions. Release to resume CleanHUD. ";
         if (gApi->register_setting(gMod, &help) != SC_OK)
             return false;
 
@@ -665,13 +661,14 @@ namespace
             return false;
 
         ScSettingDesc padButton = Describe(
-            "vanilla_hud_pad_button", "Gamepad / mapped GTA button",
+            "vanilla_hud_pad_button", "Gamepad / mapped button",
             "HUD Preview", "", SC_ENUM);
         padButton.options =
-            "0 - Off|1 - LB/L1|2 - LT/L2|3 - RB/R1|4 - RT/R2|5 - D-pad Up|"
-            "6 - D-pad Down|7 - D-pad Left|8 - D-pad Right|9 - Back/Select|"
-            "10 - Start|11 - X/Square|12 - Y/Triangle|13 - A/Cross|"
-            "14 - B/Circle|15 - Left stick click/L3|16 - Right stick click/R3";
+            "0 - Off | 1 - LB/L1 | 2 - LT/L2 | 3 - RB/R1 | 4 - RT/R2 |"
+            "5 - D-pad ↑ | 6 - D-pad ↓ | 7 - D-pad ← | 8 - D-pad → |"
+            "9 - Back/Select | 10 - Start |"
+            "11 - X/□ | 12 - Y/△ | 13 - A/X | 14 - B/○ |"
+            "15 - LStick/L3 | 16 - RStick/R3";
         padButton.minimum = 0;
         padButton.maximum = 16;
         padButton.step = 1;
@@ -715,9 +712,9 @@ namespace SleekConfigIntegration
         mod.id = ModId;
         mod.name = "CleanHUD";
         mod.author = "prixsm";
-        mod.description = "HUD visibility, modes and live Stack spacing";
+        mod.description = "Full-fledged ASI recreation of Show only necessary hud and the unfinished vanilla Minimal HUD function";
         mod.version = "1.0";
-        mod.category = "Visuals";
+        mod.category = "HUD";
         mod.persistence = SC_EXTERNAL;
         mod.on_change = OnChanged;
         mod.on_load = OnLoad;
