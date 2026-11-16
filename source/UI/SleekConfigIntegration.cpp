@@ -664,11 +664,11 @@ namespace
             "vanilla_hud_pad_button", "Gamepad / mapped button",
             "HUD Preview", "", SC_ENUM);
         padButton.options =
-            "0 - Off | 1 - LB/L1 | 2 - LT/L2 | 3 - RB/R1 | 4 - RT/R2 |"
-            "5 - D-pad ↑ | 6 - D-pad ↓ | 7 - D-pad ← | 8 - D-pad → |"
-            "9 - Back/Select | 10 - Start |"
-            "11 - X/□ | 12 - Y/△ | 13 - A/X | 14 - B/○ |"
-            "15 - LStick/L3 | 16 - RStick/R3";
+            " 0 - Off | 1 - LB/L1 | 2 - LT/L2 | 3 - RB/R1 | 4 - RT/R2 |"
+            " 5 - D-pad ↑ | 6 - D-pad ↓ | 7 - D-pad ← | 8 - D-pad → |"
+            " 9 - Back/Select | 10 - Start |"
+            " 11 - X/□ | 12 - Y/△ | 13 - A/X | 14 - B/○ |"
+            " 15 - LStick/L3 | 16 - RStick/R3";
         padButton.minimum = 0;
         padButton.maximum = 16;
         padButton.step = 1;
@@ -712,7 +712,7 @@ namespace SleekConfigIntegration
         mod.id = ModId;
         mod.name = "CleanHUD";
         mod.author = "prixsm";
-        mod.description = "Full-fledged ASI recreation of Show only necessary hud and the unfinished vanilla Minimal HUD function";
+        mod.description = "Full-fledged and feature-filled recreation of Show only necessary hud and the unfinished vanilla Minimal HUD function";
         mod.version = "1.0";
         mod.category = "HUD";
         mod.persistence = SC_EXTERNAL;
