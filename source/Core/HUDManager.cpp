@@ -79,7 +79,7 @@ namespace
             weaponType <= WEAPONTYPE_CANE;
     }
 
-    // Read GTA's mapped controls, including GInput.
+    // Read the game's mapped controls, including GInput.
     // Zero turns the gamepad binding off.
     static bool PadButtonHeld(std::uint32_t index)
     {
@@ -199,7 +199,7 @@ namespace
             return IsLookingToOneSide(pad);
         case VehicleFireCapability::ForwardAndSide:
             // Motorcycles can shoot forwards with an SMG.
-            // Quads keep GTA's rear-view restriction.
+            // Quads keep the game's rear-view restriction.
             return vehicle.m_nVehicleSubClass == VEHICLE_BIKE ||
                 !pad.GetLookBehindForCar();
         default:
@@ -381,8 +381,8 @@ bool HUDManager::ShouldDisplayArmour() const
 
 void HUDManager::RestoreVanillaElements()
 {
-    // Let GTA handle the HUD during loading. Once gameplay starts,
-    // CleanHUD handles enabled items and still respects GTA's
+    // Let the game handle the HUD during loading. Once gameplay starts,
+    // CleanHUD handles enabled items and still respects the game's
     // normal rules for hiding them.
     mClock.Update(true);
     mHealth.Update(true);
@@ -396,7 +396,7 @@ void HUDManager::RestoreDisabledElements()
 {
     const auto& settings = HUDSettings::Get();
 
-    // Leave disabled HUD items under GTA's control.
+    // Leave disabled HUD items under the game's control.
     if (!settings.Clock)
         mClock.Update(true);
     if (!settings.Health)
@@ -453,7 +453,7 @@ void HUDManager::Update()
         mSkateboardWasRiding = false;
         mCellphonePuttingAway = false;
 
-        // Restore GTA's HUD calls before menus or loading screens.
+        // Restore the game's HUD calls before menus or loading screens.
         RestoreVanillaElements();
         HUDRenderer::Get().Reset();
         mLayout.ResetHistory();
@@ -584,7 +584,7 @@ void HUDManager::Update()
     }
     else
     {
-        // Minimal mode uses the same fades at GTA's original positions.
+        // Minimal mode uses the same fades at the game's original positions.
         mLayout.ResetHistory();
         BuildMinimalHUDLayout();
     }
@@ -1110,7 +1110,7 @@ bool HUDManager::IsWeaponAiming() const
     const CVehicle* vehicle = mPlayer->m_pVehicle;
 
     // Some drive-by mods use their own aim button. Recognize
-    // GTA's active drive-by task instead of a particular key.
+    // the game's active drive-by task instead of a particular key.
     if (mPlayer->m_pIntelligence &&
         (mPlayer->m_pIntelligence->FindTaskByType(
              TASK_SIMPLE_GANG_DRIVEBY) ||
@@ -1120,7 +1120,7 @@ bool HUDManager::IsWeaponAiming() const
         return true;
     }
 
-    // Side-looking preview is optional. GTA's usual SMGs qualify
+    // Side-looking preview is optional. The game's usual SMGs qualify
     // immediately; other weapons qualify after firing in this vehicle.
     const bool knownDriveByWeapon =
         IsDriveByWeapon(weapon->m_eWeaponType) ||
@@ -1160,7 +1160,7 @@ void HUDManager::UpdateWanted()
 
 void HUDManager::BuildMinimalHUDLayout()
 {
-    // Minimal mode keeps GTA's positions with CleanHUD's fades.
+    // Minimal mode keeps the game's positions with CleanHUD's fades.
     // It does not need any Stack spacing.
     mLayout.Add(mClock, 0.0f, 0.0f, 0.0f);
     mLayout.Add(mMoney, 0.0f, 0.0f, 0.0f);
@@ -1224,7 +1224,7 @@ void HUDManager::BuildPlayerHUDLayout()
             wantedSpacing = settings.WantedToWeaponSpacing;
     }
 
-    // Keep the clock at the top, or reserve room for GTA's clock.
+    // Keep the clock at the top, or reserve room for the game's clock.
     // The next visible HUD group determines the gap below it.
     float clockSpacing = 0.0f;
 

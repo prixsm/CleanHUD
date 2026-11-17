@@ -4,7 +4,7 @@
 
 ## Getting started
 
-1. Install `CleanHUD.asi` and `CleanHUD.ini` together using your GTA San Andreas ASI loader. CleanHUD supports the **PC 1.0 US** version of the game.
+1. Install `CleanHUD.asi` and `CleanHUD.ini` together using your GTA San Andreas ASI loader.
 2. For in-game settings, install **SleekConfig 1.1.0 or newer** separately.
 3. In the game, press **F10**, open **Visuals**, then choose **CleanHUD**.
 
@@ -18,18 +18,18 @@ SleekConfig is optional. Without it, CleanHUD uses your INI settings normally.
 | **Elements** | Which HUD items CleanHUD controls |
 | **Visibility** | How quickly items appear, stay visible and fade |
 | **Skateboard** | Skateboard mod support, model IDs and icon position |
-| **Advanced Layout** | Spacing and positions in Stack mode, based on GTA's original HUD |
-| **HUD Preview** | Keyboard or gamepad button to show GTA's original HUD positions |
+| **Advanced Layout** | Spacing and positions in Stack mode, based on the game's original HUD |
+| **HUD Preview** | Keyboard or gamepad button to show the game's original HUD positions |
 
-On the **Elements** page, **On** means CleanHUD controls an item. **Off** lets GTA or another HUD mod handle it.
+On the **Elements** page, **On** means CleanHUD controls an item. **Off** lets the game or another HUD mod handle it.
 
 Most changes appear right away. Use **Save Mod** to keep them after restarting the game. SleekConfig also supports named presets.
 
 ## Stack, Minimal and appearance
 
 - **Stack:** HUD items that need attention appear together along the right side of the screen.
-- **Minimal:** The same fade effects, but at GTA's original HUD positions.
-- **Always show Clock:** Keeps the clock visible. If you turn the Clock element off, GTA draws it instead.
+- **Minimal:** The same fade effects, but at the game's original HUD positions.
+- **Always show Clock:** Keeps the clock visible. If you turn the Clock element off, the game draws it instead.
 - **Slide stack on entry:** Gently moves items into their places in Stack mode.
 - **Visibility:** Fade in, Fade out and Duration control the timing. A duration of 3000 ms means 3 seconds.
 - **Show on foot aim:** Shows the weapon/ammo when aiming on foot.
@@ -41,7 +41,7 @@ Turning off an element under **Elements** gives control of that element back to 
 ## Move HUD items
 
 Open **Advanced Layout** to adjust gaps and positions. The default
-values are based on GTA's original HUD positions, so the HUD stays
+values are based on the game's original HUD positions, so the HUD stays
 familiar. **Spacing and Weapon/Ammo positioning work only in Stack
 mode**. Jetpack icon offsets also work in Minimal mode. Increase a
 spacing value to add more room between items. Moving a slider briefly
@@ -56,7 +56,7 @@ The jetpack has its own X/Y position controls. Skateboard X/Y controls are on th
 - **Shift** helps with fine slider adjustments.
 - **Ctrl+click** or **double-click** a number to type an exact value. This is particularly helpful for skateboard model IDs.
 
-Minimal mode keeps GTA's original positions, so Stack spacing changes won't move its HUD items.
+Minimal mode keeps the game's original positions, so Stack spacing changes won't move its HUD items.
 
 ## Cellphone, jetpack and custom weapon icons
 
@@ -81,11 +81,11 @@ If an older INI has `IconModelId=326`, change it to your skateboard's actual wea
 Open **HUD Preview**, the last settings page.
 
 - **Keyboard virtual key:** **Tab** by default.
-- **Gamepad / mapped GTA button:** **Off** by default.
+- **Gamepad / mapped button:** **Off** by default.
 
-Hold the selected key/button to see GTA's usual HUD positions. Release it to return to CleanHUD. Both menus show the code and the key/button name; `CleanHUD.ini` also includes the full choice lists.
+Hold the selected key/button to see the game's usual HUD positions. Release it to return to CleanHUD. Both menus show the code and the key/button name; `CleanHUD.ini` also includes the full choice lists.
 
-**Gamepad choices are GTA actions, not controller-only buttons.** A keyboard key mapped to the same action (for example Ctrl and LB/L1) can also trigger a preview. Leave this setting **Off** if that happens.
+**Gamepad choices are game actions, not controller-only buttons.** A keyboard key mapped to the same action (for example Ctrl and LB/L1) can also trigger a preview. Leave this setting **Off** if you don't prefer this.
 
 For uncommon keyboard keys, enter a number from **0 to 255** under `[HUDPreview]` in the INI. `0` disables the binding.
 
@@ -108,5 +108,5 @@ When changing the INI manually, close the game first and restart it afterwards.
 | HUD settings change back on restart | Choose **Save Mod**; check for an older SleekConfig DAT file |
 
 | Custom or skateboard icon is missing | Enable hidden icons; check the model IDs and available icon textures |
-| Weapon and ammo look too far apart | Adjust **Weapon to Ammo vertical offset** (83 normally; try 87 with proportional weapon icons) |
+| Weapon and ammo look too far apart | Adjust **Weapon to Ammo vertical offset** (Set to 87 if you have ProportionalWeaponIcons=1 in WidescreenFix.ini) |
 | Ctrl unexpectedly shows GTA's HUD | Set the mapped gamepad preview button to **0 - Off** |

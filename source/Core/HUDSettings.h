@@ -23,7 +23,7 @@ public:
 
     bool IsElementEnabled(HUDComponentType type) const;
 
-    // Hold a key to show GTA's original HUD positions.
+    // Hold a key to show the game's original HUD positions.
     // Tab is the keyboard default; the mapped gamepad action is off.
     std::uint32_t VanillaHUDKey = 9;
     std::uint32_t VanillaHUDPadButton = 0;

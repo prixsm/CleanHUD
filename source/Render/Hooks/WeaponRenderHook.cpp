@@ -50,7 +50,7 @@ namespace
         float Height = 0.0f;
         float CapturedScreenWidth = 0.0f;
         float CapturedScreenHeight = 0.0f;
-        // Offset from GTA's weapon icon position, which other mods can change.
+        // Offset from the game's weapon icon position, which other mods can change.
         float OffsetX = 0.0f;
         float OffsetY = 0.0f;
         float AnchorX = 0.0f;
@@ -189,7 +189,7 @@ namespace
 
         if (manager.ShouldDrawSkateboardIcon())
         {
-            // The riding skateboard icon fades separately and uses GTA's
+            // The riding skateboard icon fades separately and uses the game's
             // weapon icon size. With another weapon, show it to the left.
             const float sideGap =
                 8.0f * (iconWidth / 47.0f);
@@ -267,7 +267,7 @@ namespace
 
         if (HUDManager::Get().IsUsingVanillaLayout())
         {
-            // Keep GTA's positions in Minimal mode or during HUD Preview.
+            // Keep the game's positions in Minimal mode or during HUD Preview.
             CaptureWeaponPosition(
                 static_cast<int>(ctx.eax),
                 static_cast<int>(*reinterpret_cast<std::uint32_t*>(ctx.esp)),
@@ -331,7 +331,7 @@ namespace
 
         if (HUDManager::Get().ShouldSuppressNativeFist())
         {
-            // Hide only GTA's fist drawing; don't change GTA's saved colors.
+            // Hide only the game's fist drawing; don't change the game's saved colors.
             static const CRGBA transparent(255, 255, 255, 0);
             stack[2] = reinterpret_cast<std::uintptr_t>(&transparent);
         }
@@ -357,7 +357,7 @@ namespace
         if (!pos.Valid)
             return;
 
-        // Measure GTA's weapon icon before changing its transparency.
+        // Measure the game's weapon icon before changing its transparency.
         const auto readFloat = [stack](int index)
         {
             float value = 0.0f;
@@ -406,7 +406,7 @@ void WeaponRenderHook::Install()
         reinterpret_cast<void*>(0x728350),
         HookedWeaponFistSprite);
 
-    // Draw additional icons after GTA's HUD, before screen fades.
+    // Draw additional icons after the game's HUD, before screen fades.
     // Leave WeaponIconsTXD's hooks and texture loading untouched.
     plugin::Events::drawHudEvent += []()
     {

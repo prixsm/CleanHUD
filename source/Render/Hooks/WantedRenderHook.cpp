@@ -45,7 +45,7 @@ namespace
             return;
         }
 
-        // GTA draws wanted stars on a different vertical scale.
+        // The game draws wanted stars on a different vertical scale.
         // Keep the original top position, then scale the gap below it
         // so stars stay aligned with the other HUD items.
         const float anchorY =
@@ -58,7 +58,7 @@ namespace
             anchorY * (480.0f / 1080.0f) +
             (layoutWantedY - anchorY) * (560.0f / 1080.0f);
 
-        // Keep GTA's wanted-star adjustment for maximum health.
+        // Keep the game's wanted-star adjustment for maximum health.
         constexpr float WantedHealthYOffset = 12.0f;
 
         const auto& playerInfo =
