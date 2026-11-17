@@ -355,13 +355,13 @@ void HUDSettings::Load()
         path.c_str(), "Skateboard", "IconOffsetY", 0.0f);
 
     ClockToMoneySpacing = ReadFloat(
-        path.c_str(), "Spacing", "ClockToMoneySpacing", 25.0f);
+        path.c_str(), "Spacing", "ClockToMoneySpacing", 22.0f);
 
     ClockToWantedSpacing = ReadFloat(
         path.c_str(), "Spacing", "ClockToWantedSpacing", 25.0f);
 
     ClockToStatusBarSpacing = ReadFloat(
-        path.c_str(), "Spacing", "ClockToStatusBarSpacing", 18.0f);
+        path.c_str(), "Spacing", "ClockToStatusBarSpacing", 19.0f);
 
     ClockToWeaponSpacing = ReadFloat(
         path.c_str(), "Spacing", "ClockToWeaponSpacing", 30.0f);
@@ -370,7 +370,7 @@ void HUDSettings::Load()
         path.c_str(), "Spacing", "MoneyToWantedSpacing", 25.0f);
 
     MoneyToStatusBarSpacing = ReadFloat(
-        path.c_str(), "Spacing", "MoneyToStatusBarSpacing", 22.0f);
+        path.c_str(), "Spacing", "MoneyToStatusBarSpacing", 21.0f);
 
     MoneyToWeaponSpacing = ReadFloat(
         path.c_str(), "Spacing", "MoneyToWeaponSpacing", 35.0f);

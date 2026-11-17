@@ -62,13 +62,13 @@ public:
     float SkateboardIconOffsetX = 0.0f;
     float SkateboardIconOffsetY = 0.0f;
 
-    float ClockToMoneySpacing = 25.0f;
+    float ClockToMoneySpacing = 22.0f;
     float ClockToWantedSpacing = 25.0f;
-    float ClockToStatusBarSpacing = 18.0f;
+    float ClockToStatusBarSpacing = 19.0f;
     float ClockToWeaponSpacing = 30.0f;
     float MoneyToWantedSpacing = 25.0f;
     float MoneyToWeaponSpacing = 35.0f;
-    float MoneyToStatusBarSpacing = 22.0f;
+    float MoneyToStatusBarSpacing = 21.0f;
     float WantedToWeaponSpacing = 32.0f;
     float WantedToStatusBarSpacing = 22.0f;
     float StatusBarToWeaponSpacing = 18.0f;

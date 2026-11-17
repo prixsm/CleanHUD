@@ -82,17 +82,17 @@ namespace
     };
 
     constexpr FloatSetting FloatSettings[] = {
-        { "clock_to_money", "Clock to Money", "Clock", &HUDSettings::ClockToMoneySpacing, 25.0f,
+        { "clock_to_money", "Clock to Money", "Clock", &HUDSettings::ClockToMoneySpacing, 22.0f,
             HUDSpacingPreviewGroup::Clock, HUDSpacingPreviewGroup::Money },
         { "clock_to_wanted", "Clock to Wanted", "Clock", &HUDSettings::ClockToWantedSpacing, 25.0f,
             HUDSpacingPreviewGroup::Clock, HUDSpacingPreviewGroup::Wanted },
-        { "clock_to_status", "Clock to Status Bar", "Clock", &HUDSettings::ClockToStatusBarSpacing, 18.0f,
+        { "clock_to_status", "Clock to Status Bar", "Clock", &HUDSettings::ClockToStatusBarSpacing, 19.0f,
             HUDSpacingPreviewGroup::Clock, HUDSpacingPreviewGroup::StatusBars },
         { "clock_to_weapon", "Clock to Weapon", "Clock", &HUDSettings::ClockToWeaponSpacing, 30.0f,
             HUDSpacingPreviewGroup::Clock, HUDSpacingPreviewGroup::Weapon },
         { "money_to_wanted", "Money to Wanted", "Money", &HUDSettings::MoneyToWantedSpacing, 25.0f,
             HUDSpacingPreviewGroup::Money, HUDSpacingPreviewGroup::Wanted },
-        { "money_to_status", "Money to Status Bar", "Money", &HUDSettings::MoneyToStatusBarSpacing, 22.0f,
+        { "money_to_status", "Money to Status Bar", "Money", &HUDSettings::MoneyToStatusBarSpacing, 21.0f,
             HUDSpacingPreviewGroup::Money, HUDSpacingPreviewGroup::StatusBars },
         { "money_to_weapon", "Money to Weapon", "Money", &HUDSettings::MoneyToWeaponSpacing, 35.0f,
             HUDSpacingPreviewGroup::Money, HUDSpacingPreviewGroup::Weapon },
